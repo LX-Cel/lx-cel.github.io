@@ -1,0 +1,861 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>时间复杂度与空间复杂度分析 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在算法竞赛和面试中，根据题目给出的数据量大小来推断所需算法的时间复杂度和空间复杂度，是一项至关重要的核心技能。它能迅速排除掉不切实际的暴力解法，将思考方向聚焦在可行的算法上。  一、核心原理：计算机的运算速度这个推断方法的基石是对现代计算机运算速度的一个估算。在算法竞赛平台（如 LeetCode、Codeforces、牛客网等）上，评测机通常能在 1秒内执行大约 10^7 到 10^8 次计算操作">
+<meta property="og:type" content="article">
+<meta property="og:title" content="时间复杂度与空间复杂度分析">
+<meta property="og:url" content="https://lx-cel.github.io/2025/08/16/%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="在算法竞赛和面试中，根据题目给出的数据量大小来推断所需算法的时间复杂度和空间复杂度，是一项至关重要的核心技能。它能迅速排除掉不切实际的暴力解法，将思考方向聚焦在可行的算法上。  一、核心原理：计算机的运算速度这个推断方法的基石是对现代计算机运算速度的一个估算。在算法竞赛平台（如 LeetCode、Codeforces、牛客网等）上，评测机通常能在 1秒内执行大约 10^7 到 10^8 次计算操作">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/27.png">
+<meta property="article:published_time" content="2025-08-16T08:15:38.000Z">
+<meta property="article:modified_time" content="2025-08-15T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="数据结构与算法">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/27.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/08/16/%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '时间复杂度与空间复杂度分析',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">25</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">4</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/27.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">时间复杂度与空间复杂度分析</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">时间复杂度与空间复杂度分析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-08-16T08:15:38.000Z" title="发表于 2025-08-16 16:15:38">2025-08-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-15T16:00:00.000Z" title="更新于 2025-08-16 00:00:00">2025-08-16</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/">数据结构与算法</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>在算法竞赛和面试中，根据题目给出的数据量大小来推断所需算法的时间复杂度和空间复杂度，是一项至关重要的核心技能。它能迅速排除掉不切实际的暴力解法，将思考方向聚焦在可行的算法上。</p>
+<hr>
+<h3 id="一、核心原理：计算机的运算速度"><a href="#一、核心原理：计算机的运算速度" class="headerlink" title="一、核心原理：计算机的运算速度"></a>一、核心原理：计算机的运算速度</h3><p>这个推断方法的基石是对现代计算机运算速度的一个估算。在算法竞赛平台（如 LeetCode、Codeforces、牛客网等）上，评测机通常能在 <strong>1秒内执行大约 10^7 到 10^8 次计算操作</strong>。</p>
+<p>为了保险起见，我们通常以 <strong>10^8</strong> 作为上限参考，但更稳妥的估算是 <strong>10^7</strong>。这意味着，如果你的算法总计算量超过了这个数量级，就很可能会“超时”（Time Limit Exceeded, TLE）。</p>
+<p><strong>基本公式：<code>数据规模 N</code> 带入 <code>时间复杂度表达式</code> ≈ <code>总计算量</code> ≤ <code>10^8</code></strong></p>
+<h3 id="二、时间复杂度-“速查表”-Cheat-Sheet"><a href="#二、时间复杂度-“速查表”-Cheat-Sheet" class="headerlink" title="二、时间复杂度 “速查表” (Cheat Sheet)"></a>二、时间复杂度 “速查表” (Cheat Sheet)</h3><p>这张表是解决算法问题的“第一直觉”，强烈建议记在心里。假设题目给出的主要数据规模是 <code>N</code>。</p>
+<table>
+<thead>
+<tr>
+<th>数据规模 N 的范围</th>
+<th>可接受的时间复杂度</th>
+<th>常见算法示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>N ≤ 10~12</td>
+<td>O(N!)、O(N * 2^N)</td>
+<td><strong>阶乘&#x2F;指数级</strong>：全排列（Permutations）、子集生成（Subsets）、状压DP（Bitmask DP）。通常是涉及小规模暴力搜索的题目。</td>
+</tr>
+<tr>
+<td>N ≤ 18~22</td>
+<td>O(2^N)</td>
+<td><strong>指数级</strong>：同上，状压DP、涉及所有子集的暴力搜索、折半搜索（Meet-in-the-middle）。</td>
+</tr>
+<tr>
+<td>N ≤ 50</td>
+<td>O(N^4)</td>
+<td><strong>四次方</strong>：比较少见，可能出现在一些动态规划问题中，或者涉及四重循环的暴力解法。</td>
+</tr>
+<tr>
+<td>N ≤ 100</td>
+<td>O(N^3)</td>
+<td><strong>三次方</strong>：Floyd-Warshall 所有点对最短路算法、三重循环的动态规划、一些涉及三维计算的几何问题。</td>
+</tr>
+<tr>
+<td>N ≤ 2,000 ~ 5,000</td>
+<td>O(N^2)</td>
+<td><strong>二次方</strong>：基础的动态规划（如最长公共子序列）、双重循环的暴力枚举（如 Two Sum 暴力解）、Dijkstra&#x2F;Prim 的朴素版、图的邻接矩阵存储下的遍历。</td>
+</tr>
+<tr>
+<td>N ≤ 10^5 ~ 10^6</td>
+<td>O(N log N)</td>
+<td><strong>线性对数级</strong>：这是最常见的复杂度要求。高效排序算法（快速排序、归并排序）、堆（优先队列）、二分查找（Binary Search）、线段树、树状数组、Dijkstra 的堆优化版。任何需要排序预处理的题目基本都是这个复杂度。</td>
+</tr>
+<tr>
+<td>N ≤ 10^6 ~ 10^7</td>
+<td>O(N)</td>
+<td><strong>线性级</strong>：单次遍历（数组、字符串、链表）、双指针算法（Two Pointers）、哈希表（Hash Table）、广度优先搜索（BFS）、深度优先搜索（DFS）、KMP 算法、动态规划的优化（如单调队列优化）。</td>
+</tr>
+<tr>
+<td>N ≤ 10^9 ~ 10^18 (及以上)</td>
+<td>O(log N)、O(sqrt(N))、O(1)</td>
+<td><strong>对数级&#x2F;根号级&#x2F;常数级</strong>：<br> <strong>O(log N)</strong>: 二分查找、快速幂、求最大公约数（GCD）。通常输入是一个很大的数字，而不是一个包含 N 个元素的数组。<br> <strong>O(sqrt(N))</strong>: 判断一个数是否为质数、分解质因数。<br> <strong>O(1)</strong>: 纯数学公式或位运算。</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="三、如何进行分析：一个思考流程"><a href="#三、如何进行分析：一个思考流程" class="headerlink" title="三、如何进行分析：一个思考流程"></a>三、如何进行分析：一个思考流程</h3><p>当你拿到一道题时，遵循以下步骤：</p>
+<ol>
+<li><p><strong>立刻寻找数据范围</strong>：</p>
+<ul>
+<li>找到题目描述最后部分的 “Constraints” 或 “数据范围” 部分。</li>
+<li>关注所有变量的上限，比如数组长度 <code>n</code>、查询次数 <code>q</code>、数值大小 <code>m</code> 等。</li>
+</ul>
+</li>
+<li><p><strong>匹配速查表，确定复杂度上界</strong>：</p>
+<ul>
+<li>将最大的 <code>N</code> 值代入速查表，找到对应的“可接受的时间复杂度”。</li>
+<li><strong>示例</strong>：如果题目说 <code>1 &lt;= n &lt;= 10^5</code>，你的大脑应该立刻响起警报：“<code>O(N^2)</code> 会超时，我必须寻找 <code>O(N log N)</code> 或 <code>O(N)</code> 的解法。”</li>
+</ul>
+</li>
+<li><p><strong>考虑多个变量的情况</strong>：</p>
+<ul>
+<li>有时题目会有多个输入规模，如 <code>N</code> 和 <code>M</code>。</li>
+<li>你需要将它们都考虑进去。例如，一个图论问题有 <code>V</code> 个顶点和 <code>E</code> 条边。<ul>
+<li>如果算法是 <code>O(V * E)</code>，你需要计算 <code>V * E</code> 的最大值是否在 <code>10^8</code> 以内。</li>
+<li>如果算法是 <code>O(V + E)</code>，你就计算 <code>V + E</code> 的最大值。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><strong>从复杂度反推算法类型</strong>：</p>
+<ul>
+<li><strong><code>O(N log N)</code></strong> -&gt; 是不是需要先排序？是不是可以用二分查找？是不是可以用堆？</li>
+<li><strong><code>O(N)</code></strong> -&gt; 是不是可以用哈希表来优化查找？是不是可以用双指针？</li>
+<li><strong><code>O(log N)</code></strong> -&gt; 题目是不是具有单调性，可以用二分查找答案？是不是一个大数问题，需要用快速幂？</li>
+<li><strong><code>O(2^N)</code></strong> -&gt; 是不是要枚举所有状态&#x2F;子集？是不是状压DP？</li>
+<li><strong><code>O(N^2)</code></strong> -&gt; 是不是一个动态规划问题，<code>dp[i][j]</code> 表示某种状态？</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="四、空间复杂度分析"><a href="#四、空间复杂度分析" class="headerlink" title="四、空间复杂度分析"></a>四、空间复杂度分析</h3><p>空间复杂度的限制通常比时间宽松，但同样重要。</p>
+<ul>
+<li><strong>常见内存限制</strong>：64MB, 128MB, 256MB。</li>
+<li><strong>估算方法</strong>：<ul>
+<li>一个 <code>int</code> (32位) 或 <code>float</code> 占用 4 字节。</li>
+<li>一个 <code>long long</code> (64位) 或 <code>double</code> 占用 8 字节。</li>
+<li>一个 <code>char</code> 占用 1 字节。</li>
+</ul>
+</li>
+<li><strong>快速估算</strong>：<ul>
+<li>开一个 <code>int</code> 数组 <code>a[10^6]</code> 需要 <code>10^6 * 4</code> 字节 ≈ 4MB。</li>
+<li>开一个 <code>int</code> 数组 <code>a[10^7]</code> 需要 <code>10^7 * 4</code> 字节 ≈ 40MB。</li>
+<li>开一个 <code>int</code> 二维数组 <code>dp[5000][5000]</code> 需要 <code>5000 * 5000 * 4</code> 字节 ≈ 100MB。</li>
+</ul>
+</li>
+</ul>
+<p><strong>空间复杂度推断规则</strong>：</p>
+<ul>
+<li>如果 <code>N &lt;= 5000</code>，那么 <code>O(N^2)</code> 的空间（如 <code>dp[N][N]</code>）是可行的。</li>
+<li>如果 <code>N &gt;= 10^5</code>，那么 <code>O(N^2)</code> 的空间<strong>绝对不可行</strong>。你必须寻找 <code>O(N)</code> 或 <code>O(log N)</code> 空间复杂度的算法。</li>
+<li><strong>注意递归深度</strong>：DFS 或递归算法的栈空间也计入空间复杂度。如果递归深度达到 <code>N</code>，空间复杂度就是 <code>O(N)</code>。</li>
+</ul>
+<hr>
+<h3 id="五、例题"><a href="#五、例题" class="headerlink" title="五、例题"></a>五、例题</h3><p><strong>例题 1：Two Sum (两数之和)</strong></p>
+<ul>
+<li><strong>题目</strong>：给定一个整数数组 <code>nums</code> 和一个目标值 <code>target</code>，请你在该数组中找出和为目标值的那两个整数，并返回他们的数组下标。</li>
+<li><strong>数据范围</strong>：<code>2 &lt;= nums.length &lt;= 10^5</code>， <code>-10^9 &lt;= nums[i] &lt;= 10^9</code>。</li>
+</ul>
+<p><strong>分析</strong>：</p>
+<ol>
+<li><strong>数据量</strong>：<code>N</code> 最大为 <code>10^5</code>。</li>
+<li><strong>匹配速查表</strong>：<code>N = 10^5</code> -&gt; 必须是 <code>O(N log N)</code> 或 <code>O(N)</code>。</li>
+<li><strong>排除暴力解</strong>：<code>O(N^2)</code> 的双重循环解法 <code>(10^5)^2 = 10^&#123;10&#125;</code>，远超 <code>10^8</code>，必定超时。</li>
+<li><strong>寻找高效解</strong>：<ul>
+<li><code>O(N log N)</code> 的思路？可以先排序，然后使用双指针。这是一个可行解。</li>
+<li><code>O(N)</code> 的思路？能否一次遍历就解决问题？我们需要快速查找 <code>target - nums[i]</code> 是否存在。什么数据结构查找快？哈希表！</li>
+</ul>
+</li>
+<li><strong>结论</strong>：这道题的正解是使用哈希表，达到 <code>O(N)</code> 时间复杂度和 <code>O(N)</code> 空间复杂度。</li>
+</ol>
+<p><strong>例题 2：最长上升子序列</strong></p>
+<ul>
+<li><strong>题目</strong>：给定一个无序的整数数组，找到其中最长上升子序列的长度。</li>
+<li><strong>数据范围</strong>：<code>1 &lt;= nums.length &lt;= 2500</code>。</li>
+</ul>
+<p><strong>分析</strong>：</p>
+<ol>
+<li><strong>数据量</strong>：<code>N</code> 最大为 <code>2500</code>。</li>
+<li><strong>匹配速查表</strong>：<code>N = 2500</code> -&gt; <code>O(N^2)</code> 是可以接受的！<code>2500^2 = 6,250,000</code>，在 <code>10^7</code> ~ <code>10^8</code> 范围内。</li>
+<li><strong>思考算法</strong>：<code>O(N^2)</code> 让我立刻想到基础的动态规划。<ul>
+<li>定义 <code>dp[i]</code> 为以 <code>nums[i]</code> 结尾的最长上升子序列的长度。</li>
+<li>状态转移方程：<code>dp[i] = max(dp[j]) + 1</code>，其中 <code>0 &lt;= j &lt; i</code> 且 <code>nums[j] &lt; nums[i]</code>。</li>
+<li>这个 DP 解法正好是两重循环，时间复杂度为 <code>O(N^2)</code>。</li>
+</ul>
+</li>
+<li><strong>结论</strong>：<code>O(N^2)</code> 的 DP 算法是这道题的可以通过的解法。</li>
+</ol>
+<ul>
+<li><strong>进阶</strong>：如果这道题的数据范围扩大到 <code>N &lt;= 10^5</code> 呢？<ul>
+<li><code>O(N^2)</code> 就会超时。</li>
+<li>我们需要 <code>O(N log N)</code> 的解法。这就引导我们去思考更优化的方法，比如 “耐心排序法”（patience sorting）配合二分查找。</li>
+</ul>
+</li>
+</ul>
+<h3 id="六、常见算法和数据结构的时间与空间复杂度"><a href="#六、常见算法和数据结构的时间与空间复杂度" class="headerlink" title="六、常见算法和数据结构的时间与空间复杂度"></a>六、常见算法和数据结构的时间与空间复杂度</h3><p>表中使用的符号：</p>
+<ul>
+<li><strong>n</strong>: 输入数据的元素数量（例如数组的长度）</li>
+<li><strong>k</strong>: 数据的范围或桶的数量（例如计数排序中的最大值）</li>
+<li><strong>V</strong>: 图中顶点的数量 (Vertices)</li>
+<li><strong>E</strong>: 图中边的数量 (Edges)</li>
+<li><strong>log n</strong>: 通常指以 2 为底的对数</li>
+</ul>
+<h4 id="1-基础数据结构"><a href="#1-基础数据结构" class="headerlink" title="1. 基础数据结构"></a>1. 基础数据结构</h4><table>
+<thead>
+<tr>
+<th>数据结构</th>
+<th>操作</th>
+<th>平均时间复杂度</th>
+<th>最坏时间复杂度</th>
+<th>空间复杂度</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>数组 (Array &#x2F; Vector)</strong></td>
+<td>访问 (Access)</td>
+<td><code>O(1)</code></td>
+<td><code>O(1)</code></td>
+<td><code>O(n)</code></td>
+<td>连续内存，通过索引直接访问</td>
+</tr>
+<tr>
+<td></td>
+<td>搜索 (Search)</td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td></td>
+<td>需要线性扫描</td>
+</tr>
+<tr>
+<td></td>
+<td>插入&#x2F;删除 (末尾)</td>
+<td><code>O(1)</code> (摊销)</td>
+<td><code>O(n)</code></td>
+<td></td>
+<td>动态数组在扩容时为 <code>O(n)</code>，但摊销后为 <code>O(1)</code></td>
+</tr>
+<tr>
+<td></td>
+<td>插入&#x2F;删除 (中间)</td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td></td>
+<td>需要移动后续元素</td>
+</tr>
+<tr>
+<td><strong>链表 (Linked List)</strong></td>
+<td>访问&#x2F;搜索</td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td>需要从头节点开始遍历</td>
+</tr>
+<tr>
+<td></td>
+<td>插入&#x2F;删除 (头部)</td>
+<td><code>O(1)</code></td>
+<td><code>O(1)</code></td>
+<td></td>
+<td>只需修改头指针</td>
+</tr>
+<tr>
+<td></td>
+<td>插入&#x2F;删除 (尾部)</td>
+<td><code>O(n)</code>&#x2F;<code>O(1)</code></td>
+<td><code>O(n)</code>&#x2F;<code>O(1)</code></td>
+<td></td>
+<td>单链表需遍历到尾部(<code>O(n)</code>)，若有尾指针则为 <code>O(1)</code></td>
+</tr>
+<tr>
+<td></td>
+<td>插入&#x2F;删除 (中间)</td>
+<td><code>O(1)</code></td>
+<td><code>O(1)</code></td>
+<td></td>
+<td><strong>前提是已持有该节点的前驱指针</strong>，否则查找需要 <code>O(n)</code></td>
+</tr>
+<tr>
+<td><strong>栈 (Stack)</strong> &#x2F; <strong>队列 (Queue)</strong></td>
+<td>推入&#x2F;弹出 (Push&#x2F;Pop)</td>
+<td><code>O(1)</code></td>
+<td><code>O(1)</code></td>
+<td><code>O(n)</code></td>
+<td>通常基于数组或链表实现</td>
+</tr>
+<tr>
+<td><strong>哈希表 (Hash Table)</strong></td>
+<td>搜索&#x2F;插入&#x2F;删除</td>
+<td><code>O(1)</code></td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td><strong>最坏情况</strong>发生在所有元素哈希冲突，退化为链表&#x2F;数组</td>
+</tr>
+<tr>
+<td><strong>二叉搜索树 (BST)</strong></td>
+<td>搜索&#x2F;插入&#x2F;删除</td>
+<td><code>O(log n)</code></td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td><strong>平均情况</strong>对应树平衡，<strong>最坏情况</strong>对应树退化为链表</td>
+</tr>
+<tr>
+<td><strong>平衡二叉搜索树 (AVL, Red-Black)</strong></td>
+<td>搜索&#x2F;插入&#x2F;删除</td>
+<td><code>O(log n)</code></td>
+<td><code>O(log n)</code></td>
+<td><code>O(n)</code></td>
+<td>通过自平衡操作保证最坏情况下的对数时间复杂度</td>
+</tr>
+<tr>
+<td><strong>堆 (Heap &#x2F; Priority Queue)</strong></td>
+<td>插入 (Insert)</td>
+<td><code>O(log n)</code></td>
+<td><code>O(log n)</code></td>
+<td><code>O(n)</code></td>
+<td>将元素放入末尾再向上调整</td>
+</tr>
+<tr>
+<td></td>
+<td>查看最大&#x2F;小值 (Peek)</td>
+<td><code>O(1)</code></td>
+<td><code>O(1)</code></td>
+<td></td>
+<td>根节点即为最值</td>
+</tr>
+<tr>
+<td></td>
+<td>提取最大&#x2F;小值 (Pop)</td>
+<td><code>O(log n)</code></td>
+<td><code>O(log n)</code></td>
+<td></td>
+<td>交换头尾元素，再向下调整</td>
+</tr>
+<tr>
+<td></td>
+<td>建堆 (Heapify)</td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code></td>
+<td></td>
+<td>从非叶子节点开始向下调整，比逐个插入 <code>(O(n log n))</code> 更快</td>
+</tr>
+<tr>
+<td><strong>字典树 (Trie &#x2F; Prefix Tree)</strong></td>
+<td>搜索&#x2F;插入&#x2F;删除</td>
+<td><code>O(L)</code></td>
+<td><code>O(L)</code></td>
+<td><code>O(N*Σ)</code></td>
+<td><code>L</code>为单词长度, <code>N</code>为总词数, <code>Σ</code>为字符集大小。空间开销大</td>
+</tr>
+<tr>
+<td><strong>并查集 (Disjoint Set Union)</strong></td>
+<td>查找 (Find) &#x2F; 合并 (Union)</td>
+<td><code>O(α(n))</code></td>
+<td><code>O(α(n))</code></td>
+<td><code>O(n)</code></td>
+<td>使用路径压缩和按秩&#x2F;大小合并优化后，<code>α(n)</code>为反阿克曼函数，接近常数</td>
+</tr>
+</tbody></table>
+<hr>
+<h4 id="2-排序算法"><a href="#2-排序算法" class="headerlink" title="2. 排序算法"></a>2. 排序算法</h4><table>
+<thead>
+<tr>
+<th>算法 (Algorithm)</th>
+<th>最好时间复杂度</th>
+<th>平均时间复杂度</th>
+<th>最坏时间复杂度</th>
+<th>空间复杂度</th>
+<th>稳定性</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>冒泡排序 (Bubble Sort)</strong></td>
+<td><code>O(n)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(1)</code></td>
+<td>稳定</td>
+<td>最好情况是已排序，只需遍历一次</td>
+</tr>
+<tr>
+<td><strong>选择排序 (Selection Sort)</strong></td>
+<td><code>O(n²)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(1)</code></td>
+<td>不稳定</td>
+<td>交换操作可能打乱相同元素的相对顺序</td>
+</tr>
+<tr>
+<td><strong>插入排序 (Insertion Sort)</strong></td>
+<td><code>O(n)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(1)</code></td>
+<td>稳定</td>
+<td>数据基本有序时效率很高</td>
+</tr>
+<tr>
+<td><strong>归并排序 (Merge Sort)</strong></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n)</code></td>
+<td>稳定</td>
+<td>性能稳定，但需要额外空间</td>
+</tr>
+<tr>
+<td><strong>快速排序 (Quick Sort)</strong></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(log n)</code></td>
+<td>不稳定</td>
+<td>最坏情况是 pivot 总是选到最大&#x2F;小值</td>
+</tr>
+<tr>
+<td><strong>堆排序 (Heap Sort)</strong></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(n log n)</code></td>
+<td><code>O(1)</code></td>
+<td>不稳定</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>希尔排序 (Shell Sort)</strong></td>
+<td><code>O(n)</code></td>
+<td><code>O(n^1.3)</code>~&#96;O(n²)&#96;</td>
+<td><code>O(n²)</code></td>
+<td><code>O(1)</code></td>
+<td>不稳定</td>
+<td>复杂度与步长序列选择有关</td>
+</tr>
+<tr>
+<td><strong>计数排序 (Counting Sort)</strong></td>
+<td><code>O(n+k)</code></td>
+<td><code>O(n+k)</code></td>
+<td><code>O(n+k)</code></td>
+<td><code>O(n+k)</code></td>
+<td>稳定</td>
+<td><code>k</code>为整数范围，适合范围不大的整数排序</td>
+</tr>
+<tr>
+<td><strong>桶排序 (Bucket Sort)</strong></td>
+<td><code>O(n+k)</code></td>
+<td><code>O(n+k)</code></td>
+<td><code>O(n²)</code></td>
+<td><code>O(n+k)</code></td>
+<td>稳定</td>
+<td>适用于数据均匀分布的情况</td>
+</tr>
+<tr>
+<td><strong>基数排序 (Radix Sort)</strong></td>
+<td><code>O(d*(n+k))</code></td>
+<td><code>O(d*(n+k))</code></td>
+<td><code>O(d*(n+k))</code></td>
+<td><code>O(n+k)</code></td>
+<td>稳定</td>
+<td><code>d</code>为位数，<code>k</code>为基数</td>
+</tr>
+</tbody></table>
+<hr>
+<h4 id="3-搜索算法"><a href="#3-搜索算法" class="headerlink" title="3. 搜索算法"></a>3. 搜索算法</h4><table>
+<thead>
+<tr>
+<th>算法 (Algorithm)</th>
+<th>数据结构要求</th>
+<th>时间复杂度</th>
+<th>空间复杂度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>线性搜索 (Linear Search)</strong></td>
+<td>无</td>
+<td><code>O(n)</code></td>
+<td><code>O(1)</code></td>
+</tr>
+<tr>
+<td><strong>二分搜索 (Binary Search)</strong></td>
+<td>有序数组</td>
+<td><code>O(log n)</code></td>
+<td><code>O(1)</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h4 id="4-图论算法"><a href="#4-图论算法" class="headerlink" title="4. 图论算法"></a>4. 图论算法</h4><p><strong>前提</strong>：图的表示方式会影响复杂度。以下复杂度主要基于 <strong>邻接表 (Adjacency List)</strong>，这是稀疏图（<code>E</code> 远小于 <code>V²</code>）的标准表示法。若使用邻接矩阵，复杂度中的 <code>E</code> 往往会变成 <code>V²</code>。</p>
+<table>
+<thead>
+<tr>
+<th>算法类别</th>
+<th>算法 (Algorithm)</th>
+<th>时间复杂度</th>
+<th>空间复杂度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>图遍历</strong></td>
+<td><strong>广度优先搜索 (BFS)</strong></td>
+<td><code>O(V+E)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>深度优先搜索 (DFS)</strong></td>
+<td><code>O(V+E)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td><strong>单源最短路径</strong></td>
+<td><strong>Dijkstra</strong> (堆优化)</td>
+<td><code>O(E log V)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Bellman-Ford</strong></td>
+<td><code>O(V*E)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>SPFA</strong> (队列优化Bellman-Ford)</td>
+<td>平均 <code>O(kE)</code>, 最坏 <code>O(V*E)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td><strong>所有顶点对最短路径</strong></td>
+<td><strong>Floyd-Warshall</strong></td>
+<td><code>O(V³)</code></td>
+<td><code>O(V²)</code></td>
+</tr>
+<tr>
+<td><strong>最小生成树</strong></td>
+<td><strong>Prim</strong> (堆优化)</td>
+<td><code>O(E log V)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>Kruskal</strong> (并查集)</td>
+<td><code>O(E log E)</code> 或 <code>O(E log V)</code></td>
+<td><code>O(V+E)</code></td>
+</tr>
+<tr>
+<td><strong>拓扑排序</strong></td>
+<td><strong>Kahn’s 算法</strong> (BFS)</td>
+<td><code>O(V+E)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>DFS</strong></td>
+<td><code>O(V+E)</code></td>
+<td><code>O(V)</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h4 id="5-其他重要算法"><a href="#5-其他重要算法" class="headerlink" title="5. 其他重要算法"></a>5. 其他重要算法</h4><table>
+<thead>
+<tr>
+<th>算法类别</th>
+<th>算法 (Algorithm)</th>
+<th>时间复杂度</th>
+<th>空间复杂度</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>动态规划 (Dynamic Programming)</strong></td>
+<td><strong>斐波那契数列</strong></td>
+<td><code>O(n)</code></td>
+<td><code>O(n)</code>&#x2F;<code>O(1)</code></td>
+<td><code>O(1)</code>空间可通过状态压缩实现</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>0&#x2F;1 背包问题</strong></td>
+<td><code>O(N*W)</code></td>
+<td><code>O(N*W)</code>&#x2F;<code>O(W)</code></td>
+<td><code>N</code>为物品数，<code>W</code>为背包容量。空间可压缩</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>最长公共子序列 (LCS)</strong></td>
+<td><code>O(N*M)</code></td>
+<td><code>O(N*M)</code></td>
+<td><code>N</code>,<code>M</code>为两字符串长度</td>
+</tr>
+<tr>
+<td><strong>字符串匹配</strong></td>
+<td><strong>暴力匹配</strong></td>
+<td><code>O(N*M)</code></td>
+<td><code>O(1)</code></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>KMP</strong></td>
+<td><code>O(N+M)</code></td>
+<td><code>O(M)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>分治 (Divide and Conquer)</strong></td>
+<td>(作为思想，见归并&#x2F;快排等)</td>
+<td>通常 <code>O(n log n)</code></td>
+<td>通常 <code>O(log n)</code>或<code>O(n)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>数论</strong></td>
+<td><strong>求最大公约数 (GCD)</strong> - 欧几里得</td>
+<td><code>O(log(min(a,b)))</code></td>
+<td><code>O(1)</code></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>素数筛 (Sieve of Eratosthenes)</strong></td>
+<td><code>O(n log log n)</code></td>
+<td><code>O(n)</code></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td><strong>快速幂 (Exponentiation by Squaring)</strong></td>
+<td><code>O(log n)</code></td>
+<td><code>O(1)</code></td>
+<td>计算 <code>a^n</code></td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/08/16/%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90/">https://lx-cel.github.io/2025/08/16/时间复杂度与空间复杂度分析/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/">数据结构与算法</a></div><div class="post-share"><div class="social-share" data-image="/img/27.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2025/08/16/Python%E4%B8%AD%E7%9A%84%E8%A3%85%E9%A5%B0%E5%99%A8/" title="Python中的装饰器"><img class="cover" src="/img/26.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Python中的装饰器</div></div><div class="info-2"><div class="info-item-1">1. 开篇：为什么需要装饰器？装饰器的核心思想是在不修改被装饰对象（通常是函数或方法）的源代码和调用方式的前提下，为其增加额外的功能。 一个简单的问题场景假设我们有一个核心业务函数： 12def business_logic():    print(&quot;执行核心业务逻辑...&quot;)  现在，我们有一个新的需求：在每次执行这个函数前后，打印一条日志，记录函数的开始和结束。 不使用装饰器的解决方案方案一：直接修改函数代码（最差的方式） 1234def business_logic():    print(&quot;开始执行函数...&quot;)    print(&quot;执行核心业务逻辑...&quot;)    print(&quot;函数执行结束。&quot;)   弊端： 违反了开放&#x2F;封闭原则：我们修改了函数的内部实现。 代码冗余：如果有很多函数都需要这个日志功能，我们就得在每个函数里重复添加这些代码，违反了 DRY (Don’t Repeat Yourself)...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/01/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%951%E2%80%94%E2%80%94%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5%E4%B8%8E%E5%A4%8D%E6%9D%82%E5%BA%A6/" title="数据结构与算法1——基本概念与复杂度"><img class="cover" src="/img/12.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-01-06</div><div class="info-item-2">数据结构与算法1——基本概念与复杂度</div></div><div class="info-2"><div class="info-item-1">1. 算法的定义算法是解决特定问题求解步骤的描述，在计算机中表现为指令的有限序列，并且每条指令表示一个或多个操作。 2. 算法的特性算法具有五个基本特性：输入、输出、有穷性、确定性和可行性。 2.1 输入输出算法通常具有零个或多个输入，但至少有一个或多个输出。输出的形式可以是打印输出，也可以是返回一个或多个值。 2.2 有穷性有穷性指算法在执行有限的步骤之后，自动结束而不会出现无限循环，并且每一个步骤在可接受的时间内完成。 2.3 确定性确定性指算法的每一步骤都具有确定的含义，不会出现二义性。 2.4 可行性可行性指算法的每一步都必须是可行的，也就是说每一步都能够执行有限次数完成。可行性意味着算法可以转化为程序上机运行，并得到正确的结果。 3. 算法设计的要求算法设计的要求包括正确性、可读性、健壮性、高效率和低内存需求。 3.1...</div></div></div></a><a class="pagination-related" href="/2025/01/07/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%952%E2%80%94%E6%95%B0%E7%BB%84/" title="数据结构与算法2—数组"><img class="cover" src="/img/13.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-01-07</div><div class="info-item-2">数据结构与算法2—数组</div></div><div class="info-2"><div class="info-item-1">数组是一种常见的线性数据结构，其将相同类型的元素存储在连续的内存空间中，我们将元素在数组中的位置称为该元素的索引。 1. 数组的常用操作1.1 初始化数组初始化数组时，我们可以根据需求选用数组的两种初始化方式：无初始值、给定初始值。在未指定初始值的情况下，大多数编程语言会将数组元素初始化为0，但是经过实测，C++和C在数组为初始化时，大多数情况下不会将数组初始化为0，特别是使用new或malloc创建动态数组时数组元素都是随机值，因此在C++和C中建议创建完数组后就立刻将其初始化： 123456789101112/* 初始化数组arr */// 将数组存储在栈上int size = 5;int arr[5] = &#123;0&#125;;printf(&quot;数组 arr = &quot;);printArray(arr, 5);/* 初始化数组nums */// 将数组存储在栈上int nums[5] = &#123;1, 2, 3, 4, 5&#125;;printf(&quot;数组 nums = &quot;);printArray(nums,...</div></div></div></a><a class="pagination-related" href="/2025/01/08/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%953%E2%80%94%E9%93%BE%E8%A1%A8/" title="数据结构与算法3—链表"><img class="cover" src="/img/14.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-01-08</div><div class="info-item-2">数据结构与算法3—链表</div></div><div class="info-2"><div class="info-item-1">内存空间是所有程序的公共资源，在一个复杂的系统运行环境下，空闲的内存空间可能散落在内存各处。我们知道，存储数组的内存空间必须是连续的，而当数组非常大时，内存可能无法提供如此大的连续空间。此时链表的灵活性优势就体现出来了。 链表是一种线性数据结构，其中的每个元素都是一个节点对象，各个节点通过“引用”或“指针”相连接。引用记录了下一个节点的内存地址，通过它可以从当前节点访问到下一个节点。 链表的设计使得各个节点可以分散存储在内存各处，它们的内存地址无须连续。 链表节点ListNode除了包含值，还需额外保存一个引用（指针）。因此在相同数据量下，链表比数组占用更多的内存空间。 1. 链表结构体不同编程语言中的链表结构体如下所示： 12345/* 链表节点结构体 */typedef struct ListNode &#123;    int val;               // 节点值    struct ListNode *next; // 指向下一节点的引用&#125; ListNode; 1234567/* 链表节点 */struct ListNode &#123;   ...</div></div></div></a><a class="pagination-related" href="/2025/01/08/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%954%E2%80%94%E5%88%97%E8%A1%A8/" title="数据结构与算法4—列表"><img class="cover" src="/img/15.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-01-08</div><div class="info-item-2">数据结构与算法4—列表</div></div><div class="info-2"><div class="info-item-1">列表（list）是一个抽象的数据结构概念，表示元素的有序集合，支持元素访问、修改、添加、删除和遍历等操作，无需使用者考虑容量限制的问题。列表可以基于链表或数组实现。  链表天然可以看作一个列表，其支持元素增删改查操作，并且可以灵活动态扩容。 数组也支持元素增删改查，但由于其长度不可变，因此只能看作一个具有长度限制的列表。  由于数组不具备扩展长度的能力，因此可以使用动态数组来实现列表。它继承了数组的各项优点，并且可以在程序运行过程中进行动态扩容。 许多编程语言中的标准库提供的列表是基于动态数组实现的，例如Python中的list、Java中的ArrayList、C++中的vector和C#中的List等。通常，将列表和动态数组视为等同的概念。 1. 列表常用操作1.1 初始化列表列表的初始化可以采用“无初始值”和“有初始值”这两种初始化方法： 12345/* 初始化列表 */// 无初始值vector&lt;int&gt; nums1;// 有初始值vector&lt;int&gt; nums = &#123; 1, 3, 2, 5, 4 &#125;; 1.2...</div></div></div></a><a class="pagination-related" href="/2025/01/08/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%955%E2%80%94%E6%A0%88/" title="数据结构与算法5—栈"><img class="cover" src="/img/16.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-01-08</div><div class="info-item-2">数据结构与算法5—栈</div></div><div class="info-2"><div class="info-item-1">栈（stack）是一种遵循先入后出逻辑的线性数据结构。 如图所示，我们将堆叠元素的顶部称为“栈顶”，底部称为“栈底”。将把元素添加到栈顶的操作叫做“入栈”，删除栈顶元素的操作叫做“出栈”。 1. 栈的常用操作栈的常用操作如下表所示：    方法 描述 时间复杂度    push() 元素入栈（添加至栈顶） $O(1)$   pop() 栈顶元素出栈 $O(1)$   peek() 访问栈顶元素 $O(1)$   通常情况下，一些编程语言内置了栈类。当没有提供栈类时，可以将该语言的“数组”或“链表”当作栈来使用，并在程序逻辑上忽略与栈无关的操作。C++具有栈类stack可以直接使用，而Python的列表也有能轻易实现栈操作的方法，因此下面以C为例实现栈。 2. 栈的实现栈可以视为一种受限制的数组或链表，因为它只能在栈顶添加或删除元素。换句话说，我们可以通过屏蔽数组或链表的部分无关操作，使其对外表现的逻辑符合栈的特性。 2.1...</div></div></div></a><a class="pagination-related" href="/2025/05/29/%E5%9B%9E%E6%BA%AF/" title="回溯"><img class="cover" src="/img/17.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-29</div><div class="info-item-2">回溯</div></div><div class="info-2"><div class="info-item-1">回溯算法（backtracking algorithm）是一种通过穷举来解决问题的办法，其本质是一种暴力搜索算法。它的核心思想是从一个初始状态出发，暴力搜索所有可能遇到的解决方案，当遇到正确的解则将其记录，直到找到解或尝试了所有可能的选择都无法找到解为止。 框架1234567891011121314151617def backtrack(state: State, choices: list[choice], res: list[state]):    &quot;&quot;&quot;回溯算法框架&quot;&quot;&quot;    # 判断是否为解    if is_solution(state):        # 记录解        record_solution(state, res)        # 不再继续搜索        return    # 遍历所有选择    for choice in choices:        # 剪枝：判断选择是否合法        if is_valid(state, choice):            #...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">25</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">5</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">4</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86%EF%BC%9A%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%9A%84%E8%BF%90%E7%AE%97%E9%80%9F%E5%BA%A6"><span class="toc-text">一、核心原理：计算机的运算速度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6-%E2%80%9C%E9%80%9F%E6%9F%A5%E8%A1%A8%E2%80%9D-Cheat-Sheet"><span class="toc-text">二、时间复杂度 “速查表” (Cheat Sheet)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%A6%82%E4%BD%95%E8%BF%9B%E8%A1%8C%E5%88%86%E6%9E%90%EF%BC%9A%E4%B8%80%E4%B8%AA%E6%80%9D%E8%80%83%E6%B5%81%E7%A8%8B"><span class="toc-text">三、如何进行分析：一个思考流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90"><span class="toc-text">四、空间复杂度分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E4%BE%8B%E9%A2%98"><span class="toc-text">五、例题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E5%B8%B8%E8%A7%81%E7%AE%97%E6%B3%95%E5%92%8C%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E7%9A%84%E6%97%B6%E9%97%B4%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6"><span class="toc-text">六、常见算法和数据结构的时间与空间复杂度</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%9F%BA%E7%A1%80%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-text">1. 基础数据结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95"><span class="toc-text">2. 排序算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E6%90%9C%E7%B4%A2%E7%AE%97%E6%B3%95"><span class="toc-text">3. 搜索算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E5%9B%BE%E8%AE%BA%E7%AE%97%E6%B3%95"><span class="toc-text">4. 图论算法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E5%85%B6%E4%BB%96%E9%87%8D%E8%A6%81%E7%AE%97%E6%B3%95"><span class="toc-text">5. 其他重要算法</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/08/16/%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90/" title="时间复杂度与空间复杂度分析"><img src="/img/27.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="时间复杂度与空间复杂度分析"/></a><div class="content"><a class="title" href="/2025/08/16/%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90/" title="时间复杂度与空间复杂度分析">时间复杂度与空间复杂度分析</a><time datetime="2025-08-16T08:15:38.000Z" title="发表于 2025-08-16 16:15:38">2025-08-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/16/Python%E4%B8%AD%E7%9A%84%E8%A3%85%E9%A5%B0%E5%99%A8/" title="Python中的装饰器"><img src="/img/26.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Python中的装饰器"/></a><div class="content"><a class="title" href="/2025/08/16/Python%E4%B8%AD%E7%9A%84%E8%A3%85%E9%A5%B0%E5%99%A8/" title="Python中的装饰器">Python中的装饰器</a><time datetime="2025-08-16T07:50:22.000Z" title="发表于 2025-08-16 15:50:22">2025-08-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/16/Python%E4%B8%AD%E7%9A%84%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F/" title="Python中的全局变量与局部变量"><img src="/img/25.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Python中的全局变量与局部变量"/></a><div class="content"><a class="title" href="/2025/08/16/Python%E4%B8%AD%E7%9A%84%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F/" title="Python中的全局变量与局部变量">Python中的全局变量与局部变量</a><time datetime="2025-08-16T07:16:17.000Z" title="发表于 2025-08-16 15:16:17">2025-08-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式"><img src="/img/24.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—lambda表达式"/></a><div class="content"><a class="title" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式">CPP学习笔记—lambda表达式</a><time datetime="2025-08-16T06:51:53.000Z" title="发表于 2025-08-16 14:51:53">2025-08-16</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/07/28/%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE/" title="二分查找"><img src="/img/23.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="二分查找"/></a><div class="content"><a class="title" href="/2025/07/28/%E4%BA%8C%E5%88%86%E6%9F%A5%E6%89%BE/" title="二分查找">二分查找</a><time datetime="2025-07-28T08:56:18.000Z" title="发表于 2025-07-28 16:56:18">2025-07-28</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
