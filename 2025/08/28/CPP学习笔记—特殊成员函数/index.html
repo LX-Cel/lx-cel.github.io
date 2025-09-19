@@ -1,0 +1,399 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CPP学习笔记—特殊成员函数 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="1. 引言：对象生命周期与 RAIIC++ 中，对象有明确的生命周期：它被创建，然后在使用结束后被销毁。构造函数、拷贝构造函数、拷贝赋值运算符、移动构造函数、移动赋值运算符和析构函数这六个函数（通常被称为特殊成员函数）就是用来管理这个生命周期的。它们控制着对象的：  创建 (Construction) 销毁 (Destruction) 拷贝 (Copying) 移动 (Moving)  它们是实现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPP学习笔记—特殊成员函数">
+<meta property="og:url" content="https://lx-cel.github.io/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="1. 引言：对象生命周期与 RAIIC++ 中，对象有明确的生命周期：它被创建，然后在使用结束后被销毁。构造函数、拷贝构造函数、拷贝赋值运算符、移动构造函数、移动赋值运算符和析构函数这六个函数（通常被称为特殊成员函数）就是用来管理这个生命周期的。它们控制着对象的：  创建 (Construction) 销毁 (Destruction) 拷贝 (Copying) 移动 (Moving)  它们是实现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/33.png">
+<meta property="article:published_time" content="2025-08-28T06:55:22.000Z">
+<meta property="article:modified_time" content="2025-08-27T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/33.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CPP学习笔记—特殊成员函数',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/33.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">CPP学习笔记—特殊成员函数</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CPP学习笔记—特殊成员函数</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-08-28T06:55:22.000Z" title="发表于 2025-08-28 14:55:22">2025-08-28</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-27T16:00:00.000Z" title="更新于 2025-08-28 00:00:00">2025-08-28</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/cpp/">cpp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h3 id="1-引言：对象生命周期与-RAII"><a href="#1-引言：对象生命周期与-RAII" class="headerlink" title="1. 引言：对象生命周期与 RAII"></a>1. 引言：对象生命周期与 RAII</h3><p>C++ 中，对象有明确的生命周期：它被创建，然后在使用结束后被销毁。<strong>构造函数、拷贝构造函数、拷贝赋值运算符、移动构造函数、移动赋值运算符和析构函数</strong>这六个函数（通常被称为<strong>特殊成员函数</strong>）就是用来管理这个生命周期的。它们控制着对象的：</p>
+<ul>
+<li><strong>创建</strong> (Construction)</li>
+<li><strong>销毁</strong> (Destruction)</li>
+<li><strong>拷贝</strong> (Copying)</li>
+<li><strong>移动</strong> (Moving)</li>
+</ul>
+<p>它们是实现 C++ 核心设计哲学 <strong>RAII (Resource Acquisition Is Initialization)</strong> 的基石。RAII 意味着在对象的构造函数中获取资源（如内存、文件句柄、锁），并在其析构函数中释放资源，从而将资源的生命周期与对象的生命周期绑定在一起，避免资源泄漏。</p>
+<h3 id="2-核心示例：一个简单的-Buffer-类"><a href="#2-核心示例：一个简单的-Buffer-类" class="headerlink" title="2. 核心示例：一个简单的 Buffer 类"></a>2. 核心示例：一个简单的 <code>Buffer</code> 类</h3><p>我们将使用一个简单的 <code>Buffer</code> 类来贯穿整个讲解。这个类在堆上分配了一块整数数组，因此它需要手动管理内存资源。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span> <span class="comment">// For std::copy</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Buffer</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span>* _ptr;</span><br><span class="line">    <span class="type">size_t</span> _size;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 我们将在这里填充这六个特殊成员函数</span></span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (_ptr) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; _size; ++i) &#123;</span><br><span class="line">                std::cout &lt;&lt; _ptr[i] &lt;&lt; <span class="string">&quot; &quot;</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        std::cout &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-构造函数-Constructor"><a href="#3-构造函数-Constructor" class="headerlink" title="3. 构造函数 (Constructor)"></a>3. 构造函数 (Constructor)</h3><ul>
+<li><strong>目的</strong>：<strong>初始化</strong>一个新创建的对象，为其分配所需资源，并建立一个有效的初始状态。</li>
+<li><strong>特征</strong>：函数名与类名相同，没有返回类型。</li>
+<li><strong>何时调用</strong>：当一个新对象被创建时。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Buffer 类中</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 参数化构造函数</span></span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">Buffer</span><span class="params">(<span class="type">size_t</span> size)</span> : _ptr(new int[size]), _size(size) &#123;</span></span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Constructor called (size=&quot;</span> &lt;&lt; size &lt;&lt; <span class="string">&quot;)&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        <span class="comment">// 初始化 buffer 内容，例如全为0</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; _size; ++i) &#123;</span><br><span class="line">            _ptr[i] = <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 默认构造函数 (创建一个空 Buffer)</span></span><br><span class="line">    <span class="built_in">Buffer</span>() : _ptr(<span class="literal">nullptr</span>), _size(<span class="number">0</span>) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Default Constructor called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>重点</strong>：使用 <strong>成员初始化列表 (Member Initializer List)</strong>（即冒号 <code>:</code> 后面的部分）来初始化成员。这比在构造函数体 <code>&#123;&#125;</code> 内赋值更高效，对于 <code>const</code> 成员或引用成员来说是必须的。</li>
+</ul>
+<hr>
+<h3 id="4-析构函数-Destructor"><a href="#4-析构函数-Destructor" class="headerlink" title="4. 析构函数 (Destructor)"></a>4. 析构函数 (Destructor)</h3><ul>
+<li><strong>目的</strong>：在对象生命周期结束时 <strong>清理</strong> 对象，释放其占有的资源。</li>
+<li><strong>特征</strong>：函数名前面有一个波浪号 <code>~</code>，没有返回类型，也没有参数。</li>
+<li><strong>何时调用</strong>：当对象离开其作用域、<code>delete</code>一个指向对象的指针时，或程序结束时（对于全局&#x2F;静态对象）。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Buffer 类中</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    ~<span class="built_in">Buffer</span>() &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Destructor called (size=&quot;</span> &lt;&lt; _size &lt;&lt; <span class="string">&quot;)&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">delete</span>[] _ptr; <span class="comment">// 释放构造函数中分配的内存</span></span><br><span class="line">        _ptr = <span class="literal">nullptr</span>; <span class="comment">// 好的实践，防止悬挂指针</span></span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>重点</strong>：如果你的类被用作基类，并且你希望通过基类指针 <code>delete</code> 派生类对象，那么析构函数 <strong>必须</strong> 声明为 <code>virtual</code>（<code>virtual ~Buffer()</code>），以防止资源泄漏。</li>
+</ul>
+<hr>
+<h3 id="5-拷贝构造函数-Copy-Constructor"><a href="#5-拷贝构造函数-Copy-Constructor" class="headerlink" title="5. 拷贝构造函数 (Copy Constructor)"></a>5. 拷贝构造函数 (Copy Constructor)</h3><ul>
+<li><strong>目的</strong>：使用一个 <strong>已存在的同类对象</strong> 来 <strong>创建一个新的对象</strong>。这是“拷贝”语义的来源。</li>
+<li><strong>特征</strong>：参数是此类的一个 <code>const</code> 引用。<code>const</code> 是因为我们不应该修改源对象，引用 <code>&amp;</code> 是为了避免无限递归的拷贝。</li>
+<li><strong>何时调用</strong>：<ol>
+<li><code>Buffer b2 = b1;</code> 或 <code>Buffer b2(b1);</code> (初始化)</li>
+<li>函数按值传递对象：<code>void func(Buffer b);</code></li>
+<li>函数按值返回对象：<code>Buffer func();</code></li>
+</ol>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Buffer 类中</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 拷贝构造函数 (实现深拷贝)</span></span><br><span class="line">    <span class="built_in">Buffer</span>(<span class="type">const</span> Buffer&amp; other) : _ptr(<span class="keyword">new</span> <span class="type">int</span>[other._size]), _size(other._size) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Copy Constructor called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        <span class="comment">// 复制源对象 buffer 中的内容，而不是仅仅复制指针</span></span><br><span class="line">        std::<span class="built_in">copy</span>(other._ptr, other._ptr + other._size, _ptr);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>重点</strong>：如果你不提供，编译器会生成一个默认的拷贝构造函数，它执行 <strong>浅拷贝</strong>（只复制指针 <code>_ptr</code> 的值，不复制其指向的数据），这会导致两个对象指向同一块内存，从而引发“重复释放”的严重错误。因此，对于管理资源的类，<strong>必须</strong> 实现深拷贝。</li>
+</ul>
+<hr>
+<h3 id="6-拷贝赋值运算符-Copy-Assignment-Operator"><a href="#6-拷贝赋值运算符-Copy-Assignment-Operator" class="headerlink" title="6. 拷贝赋值运算符 (Copy Assignment Operator)"></a>6. 拷贝赋值运算符 (Copy Assignment Operator)</h3><ul>
+<li><strong>目的</strong>：将一个 <strong>已存在的对象</strong> 的值赋给另一个 <strong>已存在的对象</strong>。</li>
+<li><strong>特征</strong>：通常返回一个指向当前对象的引用 (<code>*this</code>) 以支持链式赋值 (<code>a = b = c;</code>)。</li>
+<li><strong>何时调用</strong>：<code>b2 = b1;</code> (赋值，此时 b1 和 b2 都已经存在)。</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Buffer 类中</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Buffer&amp; <span class="keyword">operator</span>=(<span class="type">const</span> Buffer&amp; other) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Copy Assignment Operator called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 1. 检查自赋值 (非常重要！)</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> == &amp;other) &#123;</span><br><span class="line">            <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 释放当前对象已有的资源</span></span><br><span class="line">        <span class="keyword">delete</span>[] _ptr;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. 分配新资源并从源对象拷贝数据 (深拷贝)</span></span><br><span class="line">        _size = other._size;</span><br><span class="line">        _ptr = <span class="keyword">new</span> <span class="type">int</span>[other._size];</span><br><span class="line">        std::<span class="built_in">copy</span>(other._ptr, other._ptr + other._size, _ptr);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 4. 返回 *this</span></span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>重点</strong>：自赋值检查 (<code>if (this == &amp;other)</code>) 是防止在 <code>b1 = b1;</code> 这种情况下，提前 <code>delete</code> 掉自己的资源导致后续无法拷贝。</li>
+</ul>
+<hr>
+<h3 id="7-“三之法则”-The-Rule-of-Three"><a href="#7-“三之法则”-The-Rule-of-Three" class="headerlink" title="7. “三之法则” (The Rule of Three)"></a>7. “三之法则” (The Rule of Three)</h3><p>这是一个经典的 C++ 设计准则：<br><strong>如果你需要显式声明析构函数、拷贝构造函数或拷贝赋值运算符中的任何一个，那么你几乎肯定需要将这三个都声明。</strong><br>我们的 <code>Buffer</code> 类就是完美范例：因为它需要自定义析构函数来释放内存，所以它也必须自定义拷贝操作来实现深拷贝。</p>
+<hr>
+<h3 id="8-移动构造函数-Move-Constructor-C-11"><a href="#8-移动构造函数-Move-Constructor-C-11" class="headerlink" title="8. 移动构造函数 (Move Constructor) - C++11"></a>8. 移动构造函数 (Move Constructor) - C++11</h3><ul>
+<li><strong>目的</strong>：从一个临时对象（右值，如函数返回值）<strong>“窃取”或“转移”</strong> 资源来构造一个新对象。这比深拷贝高效得多，因为它避免了内存的重新分配和数据的复制。</li>
+<li><strong>特征</strong>：参数是一个非 <code>const</code> 的右值引用 (<code>&amp;&amp;</code>)。</li>
+<li><strong>何时调用</strong>：当用一个右值初始化对象时，例如 <code>Buffer b(create_buffer());</code> 或 <code>Buffer b(std::move(another_buffer));</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Buffer 类中</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 移动构造函数</span></span><br><span class="line">    <span class="built_in">Buffer</span>(Buffer&amp;&amp; other) <span class="keyword">noexcept</span> </span><br><span class="line">        : _ptr(other._ptr), _size(other._size) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Move Constructor called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 1. &quot;窃取&quot;资源</span></span><br><span class="line">        <span class="comment">// 已经通过初始化列表完成</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 将源对象置于一个有效的、可析构的状态</span></span><br><span class="line">        <span class="comment">//    这是关键！防止源对象的析构函数释放我们刚刚&quot;窃取&quot;的资源</span></span><br><span class="line">        other._ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        other._size = <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>重点</strong>：移动构造函数应该是 <code>noexcept</code> 的，这向编译器承诺它不会抛出异常，使得标准库容器（如 <code>std::vector</code>）在需要重新分配内存时可以安全地使用移动而非拷贝，从而获得巨大性能提升。</li>
+</ul>
+<hr>
+<h3 id="9-移动赋值运算符-Move-Assignment-Operator-C-11"><a href="#9-移动赋值运算符-Move-Assignment-Operator-C-11" class="headerlink" title="9. 移动赋值运算符 (Move Assignment Operator) - C++11"></a>9. 移动赋值运算符 (Move Assignment Operator) - C++11</h3><ul>
+<li><strong>目的</strong>：将一个临时对象（右值）的资源 <strong>“窃取”</strong> 给一个已存在的对象。</li>
+<li><strong>特征</strong>：参数是右值引用 <code>&amp;&amp;</code>，返回 <code>*this</code>。</li>
+<li><strong>何时调用</strong>：当将一个右值赋给一个已存在的对象时，例如 <code>b = create_buffer();</code> 或 <code>b = std::move(another_buffer);</code></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在 Buffer 类中</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Buffer&amp; <span class="keyword">operator</span>=(Buffer&amp;&amp; other) <span class="keyword">noexcept</span> &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Move Assignment Operator called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> == &amp;other) &#123; <span class="comment">// 检查自移动</span></span><br><span class="line">            <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 1. 释放当前对象的资源</span></span><br><span class="line">        <span class="keyword">delete</span>[] _ptr;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. &quot;窃取&quot;源对象的资源</span></span><br><span class="line">        _ptr = other._ptr;</span><br><span class="line">        _size = other._size;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. 将源对象置于有效、可析构的状态</span></span><br><span class="line">        other._ptr = <span class="literal">nullptr</span>;</span><br><span class="line">        other._size = <span class="number">0</span>;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="10-“五之法则”-The-Rule-of-Five-与-“零之法则”-The-Rule-of-Zero"><a href="#10-“五之法则”-The-Rule-of-Five-与-“零之法则”-The-Rule-of-Zero" class="headerlink" title="10. “五之法则” (The Rule of Five) 与 “零之法则” (The Rule of Zero)"></a>10. “五之法则” (The Rule of Five) 与 “零之法则” (The Rule of Zero)</h3><ul>
+<li><p><strong>五之法则 (Rule of Five)</strong>：C++11 后的扩展。如果一个类需要自定义析构、拷贝或移动操作中的任何一个，那么它可能需要全部五个。</p>
+</li>
+<li><p><strong>零之法则 (Rule of Zero)</strong> - <strong>现代 C++ 最佳实践</strong>：<br><strong>你的类应该只负责业务逻辑，而将资源管理委托给专门的 RAII 类（如 <code>std::vector</code>, <code>std::string</code>, <code>std::unique_ptr</code>, <code>std::shared_ptr</code>）。</strong><br>如果遵循此法则，你的类通常 <strong>不需要</strong> 手动编写任何特殊成员函数，编译器自动生成的版本会做正确的事。</p>
+<p><strong>使用零之法则重写 <code>Buffer</code> 类：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">ModernBuffer</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; _data; <span class="comment">// std::vector 内部已经正确实现了所有五个特殊函数！</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">ModernBuffer</span>(<span class="type">size_t</span> size) : _data(size) &#123;&#125; <span class="comment">// 简洁</span></span><br><span class="line">    <span class="comment">// 不需要手动写析构、拷贝、移动函数！</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<hr>
+<h3 id="11-总结"><a href="#11-总结" class="headerlink" title="11. 总结"></a>11. 总结</h3><table>
+<thead>
+<tr>
+<th align="left">函数名称</th>
+<th align="left">签名示例</th>
+<th align="left">目的</th>
+<th align="left">触发示例 (<code>b1</code>, <code>b2</code> 已存在)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>构造函数</strong></td>
+<td align="left"><code>Buffer(size_t size);</code></td>
+<td align="left">创建并初始化新对象</td>
+<td align="left"><code>Buffer b1(10);</code></td>
+</tr>
+<tr>
+<td align="left"><strong>析构函数</strong></td>
+<td align="left"><code>~Buffer();</code></td>
+<td align="left">销毁对象，释放资源</td>
+<td align="left">(自动调用) <code>&#125;</code> 或 <code>delete ptr;</code></td>
+</tr>
+<tr>
+<td align="left"><strong>拷贝构造函数</strong></td>
+<td align="left"><code>Buffer(const Buffer&amp; other);</code></td>
+<td align="left">用 <code>other</code> 创建一个 <strong>新对象</strong></td>
+<td align="left"><code>Buffer b3 = b1;</code></td>
+</tr>
+<tr>
+<td align="left"><strong>拷贝赋值运算符</strong></td>
+<td align="left"><code>Buffer&amp; operator=(const Buffer&amp; other);</code></td>
+<td align="left">将 <code>other</code> 赋给一个 <strong>已存在对象</strong></td>
+<td align="left"><code>b2 = b1;</code></td>
+</tr>
+<tr>
+<td align="left"><strong>移动构造函数 (C++11)</strong></td>
+<td align="left"><code>Buffer(Buffer&amp;&amp; other) noexcept;</code></td>
+<td align="left">从临时对象 <code>other</code> <strong>窃取资源</strong> 创建新对象</td>
+<td align="left"><code>Buffer b3 = create_buffer();</code></td>
+</tr>
+<tr>
+<td align="left"><strong>移动赋值运算符 (C++11)</strong></td>
+<td align="left"><code>Buffer&amp; operator=(Buffer&amp;&amp; other) noexcept;</code></td>
+<td align="left">从临时对象 <code>other</code> <strong>窃取资源</strong> 给已存在对象</td>
+<td align="left"><code>b2 = std::move(b1);</code></td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/">https://lx-cel.github.io/2025/08/28/CPP学习笔记—特殊成员函数/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/cpp/">cpp</a></div><div class="post-share"><div class="social-share" data-image="/img/33.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img class="cover" src="/img/34.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CPP学习笔记—智能指针</div></div><div class="info-2"><div class="info-item-1">1. 为什么需要智能指针？在 C&#x2F;C++ 中，内存管理是一个核心但又极易出错的话题。传统的内存管理依赖于程序员手动使用 new 和 delete (或 malloc 和 free) 来申请和释放内存。这导致了几个经典的问题：  内存泄漏 (Memory Leaks)：忘记调用 delete。当一个动态分配的对象不再被使用，但其内存没有被释放时，这块内存就无法被再次使用，造成了内存泄漏。长时间运行的程序中，内存泄漏会耗尽系统资源，导致程序崩溃。 悬挂指针 (Dangling Pointers)：一个指针指向的内存已经被释放，但指针本身没有被置为 nullptr。如果之后不小心通过这个悬挂指针访问或修改内存，会导致未定义行为（Undefined Behavior），通常表现为程序崩溃或数据损坏。 重复释放 (Double Free)：对同一块内存调用两次或多次 delete。这也是一种严重的未定义行为，通常会导致程序崩溃。 异常安全问题：在 new 和 delete 之间如果发生异常，delete 语句可能永远不会被执行，从而导致内存泄漏。  12345678void...</div></div></div></a><a class="pagination-related" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="CPP学习笔记—深拷贝与浅拷贝"><img class="cover" src="/img/32.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CPP学习笔记—深拷贝与浅拷贝</div></div><div class="info-2"><div class="info-item-1">C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。  1. 问题的根源：指针和动态内存要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 int, double）或者不持有动态资源的对象（如 std::string，它自己内部处理好了深拷贝），那么我们通常不需要关心这个问题。 问题出现在当一个类的成员变量是指针，并且这个指针指向了在堆（Heap）上动态分配的内存时。 来看一个简单的例子，一个自定义的字符串包装类： 123456789101112131415161718class MyString &#123;private:    char* _data;    size_t _len;public:    MyString(const char* s = &quot;&quot;) &#123;        _len = strlen(s);        _data = new char[_len + 1]; //...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式"><img class="cover" src="/img/24.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-16</div><div class="info-item-2">CPP学习笔记—lambda表达式</div></div><div class="info-2"><div class="info-item-1">Lambda 表达式是 C++11 引入的一项革命性特性，它极大地改变了 C++ 的编程风格，尤其是在与标准模板库（STL）配合使用时。它允许我们在代码中需要一个函数的地方，直接定义一个匿名的、临时的函数对象。  1. 什么是 Lambda 表达式？简单来说，Lambda 表达式就是一个可调用的代码单元，可以把它理解为一个匿名的内联函数。与普通函数不同，它可以在函数内部定义，并且可以“捕获”其所在作用域中的变量。 2. 为什么需要 Lambda 表达式？在 C++11 之前，如果想向一个算法（如 std::sort）传递一个简单的、一次性的比较逻辑，通常需要：  定义一个全局函数或静态成员函数：这会污染命名空间，并且逻辑与使用它的地方相隔甚远。 定义一个函数对象（Functor）：需要编写一个完整的类，重载 operator()。这非常繁琐。  Lambda 的优势：  代码局部性：将逻辑直接写在使用它的地方，代码更紧凑，可读性更高。 简洁性：避免了编写独立的函数或函数对象类的样板代码。 状态捕获：可以方便地访问和使用其定义作用域内的变量，这是普通函数难以做到的。   3....</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%8C%87%E9%92%88/" title="CPP学习笔记—指针"><img class="cover" src="/img/21.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—指针</div></div><div class="info-2"><div class="info-item-1">一、指针到底是什么？—— 内存地址的“房卡”想象一下计算机的内存是一家长长的酒店，里面有无数的房间，每个房间都有一个独一无二的门牌号（内存地址）。  普通变量：就像一个房间，里面存放着具体的东西（值）。 1int age = 25; // 在一个叫 `age` 的房间里，放了数字 25。  指针：它本身也是一个变量，但它里面存放的不是普通的东西，而是一张房卡。这张房卡上写着另一个房间的门牌号。   所以，指针是一个存储了另一个变量内存地址的变量。通过这张“房卡”，我们就能找到并操作那个特定的“房间”。  二、两大核心操作符：&amp; (取地址) 和 * (解引用)要玩转指针，必须掌握这两个“魔法”操作符。 1. &amp; (取地址符) —— “制作房卡”&amp; 符号的作用是获取一个变量的内存地址。可以把它读作“…的地址”。 12345int age = 25;       // 一个存放 25 的房间 `age`int* p_age = &amp;age;  // 创建一张叫 `p_age` 的房卡，                    // 上面记录 `age`...</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93%EF%BC%88STL%EF%BC%89%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" title="CPP学习笔记—标准模板库（STL）中的容器"><img class="cover" src="/img/22.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—标准模板库（STL）中的容器</div></div><div class="info-2"><div class="info-item-1">一、什么是容器？为什么它如此重要？简单来说，C++ 容器是用来存储和管理一组对象的类模板。它们就像是工具箱里不同种类的收纳盒：有的适合快速取放（像数组），有的适合保持物品有序（像分类文件柜），还有的适合快速查找（像带索引的卡片盒）。 使用 STL 容器的好处是巨大的：  代码更简洁：你无需从零开始实现链表、哈希表等复杂数据结构。 性能更优越：STL 容器经过了高度优化，性能通常比手写的要好。 代码更安全：它们处理了内存管理的细节，减少了内存泄漏和越界访问的风险。 互操作性强：所有容器都遵循一套统一的接口（如 begin(), end(), size()），可以与 STL 的迭代器和算法无缝协作，威力倍增。   二、容器的分类与概览C++ 的容器主要分为四大类，分别是序列容器、关联容器、无序关联容器和容器适配器。    类别 容器 特点    序列容器 vector, deque, list, array 元素按线性顺序排列，可通过位置访问。   关联容器 map, set, multimap, multiset 元素根据键值自动排序，查找速度快 (O(log...</div></div></div></a><a class="pagination-related" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img class="cover" src="/img/37.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-19</div><div class="info-item-2">CPP学习笔记——unordered_map</div></div><div class="info-2"><div class="info-item-1"> 1. unordered_map 是什么？std::unordered_map 是 C++ 标准模板库（STL）中的一个关联容器，它存储了由“键（Key）”和“值（Value）”组成的元素对（std::pair&lt;const Key, Value&gt;）。它的核心特点是：  无序性：元素在容器内的存储顺序是无序的，遍历 unordered_map 时，得到的元素顺序与插入顺序无关，并且在不同编译环境下可能不同。 基于哈希表：其内部实现是一个哈希表（Hash Table）。 高效查询：由于使用了哈希表，它提供了非常快的平均时间复杂度的操作： 插入、删除、查找：平均 O(1) 最坏情况：O(N)，其中 N 是容器中元素的数量（当发生严重的哈希冲突时）。    核心概念：哈希表为了理解 unordered_map，需要了解哈希表的工作原理：  哈希函数 (Hash Function)：当插入一个键值对时，unordered_map 会使用一个哈希函数将“键”转换成一个整数，这个整数被称为哈希值（Hash Code）。 桶 (Bucket)：unordered_map...</div></div></div></a><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/" title="CPP学习笔记—多态"><img class="cover" src="/img/31.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-27</div><div class="info-item-2">CPP学习笔记—多态</div></div><div class="info-2"><div class="info-item-1">什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。 在 C++ 中，这个“遥控器”就是基类指针或引用，而“电视机”和“空调”就是派生类对象。 C++ 中的多态分类C++ 中的多态主要分为两类：  静态多态（编译时多态）：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。 动态多态（运行时多态）：在程序运行期间才能确定调用哪个函数。这是我们通常所说的...</div></div></div></a><a class="pagination-related" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img class="cover" src="/img/34.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-29</div><div class="info-item-2">CPP学习笔记—智能指针</div></div><div class="info-2"><div class="info-item-1">1. 为什么需要智能指针？在 C&#x2F;C++ 中，内存管理是一个核心但又极易出错的话题。传统的内存管理依赖于程序员手动使用 new 和 delete (或 malloc 和 free) 来申请和释放内存。这导致了几个经典的问题：  内存泄漏 (Memory Leaks)：忘记调用 delete。当一个动态分配的对象不再被使用，但其内存没有被释放时，这块内存就无法被再次使用，造成了内存泄漏。长时间运行的程序中，内存泄漏会耗尽系统资源，导致程序崩溃。 悬挂指针 (Dangling Pointers)：一个指针指向的内存已经被释放，但指针本身没有被置为 nullptr。如果之后不小心通过这个悬挂指针访问或修改内存，会导致未定义行为（Undefined Behavior），通常表现为程序崩溃或数据损坏。 重复释放 (Double Free)：对同一块内存调用两次或多次 delete。这也是一种严重的未定义行为，通常会导致程序崩溃。 异常安全问题：在 new 和 delete 之间如果发生异常，delete 语句可能永远不会被执行，从而导致内存泄漏。  12345678void...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%BC%95%E8%A8%80%EF%BC%9A%E5%AF%B9%E8%B1%A1%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%B8%8E-RAII"><span class="toc-text">1. 引言：对象生命周期与 RAII</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%A0%B8%E5%BF%83%E7%A4%BA%E4%BE%8B%EF%BC%9A%E4%B8%80%E4%B8%AA%E7%AE%80%E5%8D%95%E7%9A%84-Buffer-%E7%B1%BB"><span class="toc-text">2. 核心示例：一个简单的 Buffer 类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0-Constructor"><span class="toc-text">3. 构造函数 (Constructor)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0-Destructor"><span class="toc-text">4. 析构函数 (Destructor)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0-Copy-Constructor"><span class="toc-text">5. 拷贝构造函数 (Copy Constructor)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E6%8B%B7%E8%B4%9D%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6-Copy-Assignment-Operator"><span class="toc-text">6. 拷贝赋值运算符 (Copy Assignment Operator)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E2%80%9C%E4%B8%89%E4%B9%8B%E6%B3%95%E5%88%99%E2%80%9D-The-Rule-of-Three"><span class="toc-text">7. “三之法则” (The Rule of Three)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E7%A7%BB%E5%8A%A8%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0-Move-Constructor-C-11"><span class="toc-text">8. 移动构造函数 (Move Constructor) - C++11</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-%E7%A7%BB%E5%8A%A8%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6-Move-Assignment-Operator-C-11"><span class="toc-text">9. 移动赋值运算符 (Move Assignment Operator) - C++11</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-%E2%80%9C%E4%BA%94%E4%B9%8B%E6%B3%95%E5%88%99%E2%80%9D-The-Rule-of-Five-%E4%B8%8E-%E2%80%9C%E9%9B%B6%E4%B9%8B%E6%B3%95%E5%88%99%E2%80%9D-The-Rule-of-Zero"><span class="toc-text">10. “五之法则” (The Rule of Five) 与 “零之法则” (The Rule of Zero)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-%E6%80%BB%E7%BB%93"><span class="toc-text">11. 总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img src="/img/37.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记——unordered_map"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map">CPP学习笔记——unordered_map</a><time datetime="2025-09-19T08:09:17.000Z" title="发表于 2025-09-19 16:09:17">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="算法模板"/></a><div class="content"><a class="title" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板">算法模板</a><time datetime="2025-09-15T01:13:48.000Z" title="发表于 2025-09-15 09:13:48">2025-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组"><img src="/img/35.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="数据结构与算法—树状数组"/></a><div class="content"><a class="title" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组">数据结构与算法—树状数组</a><time datetime="2025-09-06T02:08:01.000Z" title="发表于 2025-09-06 10:08:01">2025-09-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img src="/img/34.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—智能指针"/></a><div class="content"><a class="title" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针">CPP学习笔记—智能指针</a><time datetime="2025-08-29T01:58:51.000Z" title="发表于 2025-08-29 09:58:51">2025-08-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数"><img src="/img/33.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—特殊成员函数"/></a><div class="content"><a class="title" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数">CPP学习笔记—特殊成员函数</a><time datetime="2025-08-28T06:55:22.000Z" title="发表于 2025-08-28 14:55:22">2025-08-28</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

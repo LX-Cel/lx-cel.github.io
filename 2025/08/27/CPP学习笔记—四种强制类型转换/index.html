@@ -1,0 +1,474 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CPP学习笔记—四种强制类型转换 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="C++中的四种强制类型转换：static_cast、dynamic_cast、const_cast 和 reinterpret_cast。 为什么需要新的类型转换？在C++之前，C语言使用一种通用的强制类型转换语法，例如 (new_type)expression 或 new_type(expression)。这种C风格的转换方式存在几个问题：  过于粗暴：它可以在任何类型之间进行转换，无论是相关的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPP学习笔记—四种强制类型转换">
+<meta property="og:url" content="https://lx-cel.github.io/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%9B%9B%E7%A7%8D%E5%BC%BA%E5%88%B6%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="C++中的四种强制类型转换：static_cast、dynamic_cast、const_cast 和 reinterpret_cast。 为什么需要新的类型转换？在C++之前，C语言使用一种通用的强制类型转换语法，例如 (new_type)expression 或 new_type(expression)。这种C风格的转换方式存在几个问题：  过于粗暴：它可以在任何类型之间进行转换，无论是相关的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/30.png">
+<meta property="article:published_time" content="2025-08-27T06:18:28.000Z">
+<meta property="article:modified_time" content="2025-08-26T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/30.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%9B%9B%E7%A7%8D%E5%BC%BA%E5%88%B6%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CPP学习笔记—四种强制类型转换',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/30.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">CPP学习笔记—四种强制类型转换</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CPP学习笔记—四种强制类型转换</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-08-27T06:18:28.000Z" title="发表于 2025-08-27 14:18:28">2025-08-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-26T16:00:00.000Z" title="更新于 2025-08-27 00:00:00">2025-08-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/cpp/">cpp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>C++中的四种强制类型转换：<code>static_cast</code>、<code>dynamic_cast</code>、<code>const_cast</code> 和 <code>reinterpret_cast</code>。</p>
+<h3 id="为什么需要新的类型转换？"><a href="#为什么需要新的类型转换？" class="headerlink" title="为什么需要新的类型转换？"></a>为什么需要新的类型转换？</h3><p>在C++之前，C语言使用一种通用的强制类型转换语法，例如 <code>(new_type)expression</code> 或 <code>new_type(expression)</code>。这种C风格的转换方式存在几个问题：</p>
+<ol>
+<li><strong>过于粗暴</strong>：它可以在任何类型之间进行转换，无论是相关的还是不相关的，这使得它非常不安全。</li>
+<li><strong>意图不明</strong>：从语法上无法清晰地看出程序员想要做什么样的转换（例如，是移除const、进行继承体系中的转换，还是进行底层的位模式重新解释）。</li>
+<li><strong>难以搜索</strong>：在代码库中搜索 <code>(</code> 符号来定位所有的类型转换是非常困难的，不利于代码审查和维护。</li>
+</ol>
+<p>为了解决这些问题，C++引入了四个功能更明确、更安全的命名转换操作符。它们让代码的意图更加清晰，并允许编译器进行更严格的检查。</p>
+<hr>
+<h3 id="1-static-cast"><a href="#1-static-cast" class="headerlink" title="1. static_cast"></a>1. <code>static_cast</code></h3><p><code>static_cast</code> 是最常用、最“温和”的类型转换，它的转换在<strong>编译时</strong>进行检查。它主要用于处理那些编译器认为“合理”或“有道理”的类型转换。</p>
+<h4 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">static_cast</span>&lt;new_type&gt;(expression);</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用场合"><a href="#使用场合" class="headerlink" title="使用场合"></a>使用场合</h4><ol>
+<li><p><strong>相关类型间的转换（继承体系中）</strong></p>
+<ul>
+<li><strong>上行转换（Upcasting）</strong>：将派生类的指针或引用转换为基类的指针或引用。这是安全的，因为派生类对象本身就是一个基类对象。虽然通常是隐式进行的，但显式使用 <code>static_cast</code> 可以让代码意图更明确。</li>
+<li><strong>下行转换（Downcasting）</strong>：将基类的指针或引用转换为派生类的指针或引用。<strong>这是不安全的</strong>，因为它不进行运行时检查。程序员必须自己保证这个转换是有效的（即基类指针确实指向一个派生类对象）。如果转换无效，将导致未定义行为（Undefined Behavior）。</li>
+</ul>
+</li>
+<li><p><strong>基本数据类型之间的转换</strong></p>
+<ul>
+<li>例如，<code>int</code> 转 <code>double</code>，<code>char</code> 转 <code>int</code> 等。这和C风格的转换效果类似，但更具可读性。</li>
+</ul>
+</li>
+<li><p><strong>空指针 <code>void*</code> 与其他类型指针之间的转换</strong></p>
+<ul>
+<li>将任何类型的指针转换为 <code>void*</code> 是安全的。</li>
+<li>将 <code>void*</code> 转换回原始类型的指针也是可以的，但程序员需要确保转换的类型是正确的。</li>
+</ul>
+</li>
+<li><p><strong>枚举类型与整型之间的转换</strong></p>
+<ul>
+<li>将枚举值转换为整型，或将整型转换为枚举类型。</li>
+</ul>
+</li>
+</ol>
+<h4 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived</span> : <span class="keyword">public</span> Base &#123;&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 1. 继承体系中的转换</span></span><br><span class="line">    Derived d;</span><br><span class="line">    Base* pb = &amp;d; <span class="comment">// 隐式上行转换</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 显式上行转换 (安全)</span></span><br><span class="line">    Base* pb_static = <span class="built_in">static_cast</span>&lt;Base*&gt;(&amp;d); </span><br><span class="line"></span><br><span class="line">    <span class="comment">// 不安全的下行转换 (程序员保证其正确性)</span></span><br><span class="line">    Derived* pd_static = <span class="built_in">static_cast</span>&lt;Derived*&gt;(pb); </span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 基本数据类型转换</span></span><br><span class="line">    <span class="type">double</span> pi = <span class="number">3.14159</span>;</span><br><span class="line">    <span class="type">int</span> truncated_pi = <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(pi); <span class="comment">// truncated_pi 的值为 3</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Truncated Pi: &quot;</span> &lt;&lt; truncated_pi &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. void* 指针转换</span></span><br><span class="line">    <span class="type">int</span> a = <span class="number">10</span>;</span><br><span class="line">    <span class="type">void</span>* p_void = <span class="built_in">static_cast</span>&lt;<span class="type">void</span>*&gt;(&amp;a);</span><br><span class="line">    <span class="type">int</span>* p_int = <span class="built_in">static_cast</span>&lt;<span class="type">int</span>*&gt;(p_void);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Value from void*: &quot;</span> &lt;&lt; *p_int &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-dynamic-cast"><a href="#2-dynamic-cast" class="headerlink" title="2. dynamic_cast"></a>2. <code>dynamic_cast</code></h3><p><code>dynamic_cast</code> 是专门用于处理<strong>多态类型</strong>的转换，它在<strong>运行时</strong>进行类型检查，因此具有一定的性能开销。</p>
+<h4 id="语法-1"><a href="#语法-1" class="headerlink" title="语法"></a>语法</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">dynamic_cast</span>&lt;new_type&gt;(expression);</span><br></pre></td></tr></table></figure>
+
+<h4 id="关键要求"><a href="#关键要求" class="headerlink" title="关键要求"></a>关键要求</h4><ul>
+<li>只能用于包含虚函数（virtual function）的类（即多态类），因为运行时类型信息（RTTI）是存储在虚函数表（vtable）中的。</li>
+<li>只能用于指针或引用类型的转换。</li>
+</ul>
+<h4 id="使用场合-1"><a href="#使用场合-1" class="headerlink" title="使用场合"></a>使用场合</h4><ol>
+<li><strong>安全的下行转换（Safe Downcasting）</strong><ul>
+<li>这是 <code>dynamic_cast</code> 最核心的用途。当你有一个基类指针或引用，但不确定它实际指向的是哪个派生类对象时，可以使用 <code>dynamic_cast</code> 来安全地尝试转换。</li>
+<li><strong>对于指针</strong>：如果转换成功，它会返回一个指向派生类对象的有效指针；如果转换失败（即基类指针并未指向目标派生类对象），它会返回 <code>nullptr</code>。</li>
+<li><strong>对于引用</strong>：如果转换成功，它会返回一个指向派生类对象的引用；如果转换失败，它会抛出一个 <code>std::bad_cast</code> 异常。</li>
+</ul>
+</li>
+</ol>
+<h4 id="代码示例-1"><a href="#代码示例-1" class="headerlink" title="代码示例"></a>代码示例</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Base</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Base</span>() &#123;&#125; <span class="comment">// 必须有虚函数才能使用 dynamic_cast</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived1</span> : <span class="keyword">public</span> Base &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">derived1_func</span><span class="params">()</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;Called Derived1 function.\n&quot;</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Derived2</span> : <span class="keyword">public</span> Base &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">derived2_func</span><span class="params">()</span> </span>&#123; std::cout &lt;&lt; <span class="string">&quot;Called Derived2 function.\n&quot;</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">process</span><span class="params">(Base* ptr)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 尝试转换为 Derived1 指针</span></span><br><span class="line">    <span class="keyword">if</span> (Derived1* d1 = <span class="built_in">dynamic_cast</span>&lt;Derived1*&gt;(ptr)) &#123;</span><br><span class="line">        d1-&gt;<span class="built_in">derived1_func</span>();</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="comment">// 尝试转换为 Derived2 指针</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (Derived2* d2 = <span class="built_in">dynamic_cast</span>&lt;Derived2*&gt;(ptr)) &#123;</span><br><span class="line">        d2-&gt;<span class="built_in">derived2_func</span>();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Unknown derived type.\n&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Base* b1 = <span class="keyword">new</span> <span class="built_in">Derived1</span>();</span><br><span class="line">    Base* b2 = <span class="keyword">new</span> <span class="built_in">Derived2</span>();</span><br><span class="line">    Base* b3 = <span class="keyword">new</span> <span class="built_in">Base</span>();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">process</span>(b1); <span class="comment">// 输出: Called Derived1 function.</span></span><br><span class="line">    <span class="built_in">process</span>(b2); <span class="comment">// 输出: Called Derived2 function.</span></span><br><span class="line">    <span class="built_in">process</span>(b3); <span class="comment">// 输出: Unknown derived type.</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">delete</span> b1;</span><br><span class="line">    <span class="keyword">delete</span> b2;</span><br><span class="line">    <span class="keyword">delete</span> b3;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="3-const-cast"><a href="#3-const-cast" class="headerlink" title="3. const_cast"></a>3. <code>const_cast</code></h3><p><code>const_cast</code> 是四种转换中唯一一个能改变 <strong>常量性（const）</strong> 或 <strong>易变性（volatile）</strong> 的。它不能改变变量的类型。</p>
+<h4 id="语法-2"><a href="#语法-2" class="headerlink" title="语法"></a>语法</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">const_cast</span>&lt;new_type&gt;(expression);</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用场合-2"><a href="#使用场合-2" class="headerlink" title="使用场合"></a>使用场合</h4><ol>
+<li><strong>移除 <code>const</code> 属性</strong><ul>
+<li>最常见的场景是当你需要调用一个非 <code>const</code> 成员函数或一个接受非 <code>const</code> 参数的函数，但你手中只有一个 <code>const</code> 对象、指针或引用。</li>
+<li><strong>警告</strong>：如果你对一个本身被定义为 <code>const</code> 的对象使用 <code>const_cast</code> 并尝试修改它，结果是<strong>未定义行为</strong>。<code>const_cast</code> 的安全使用前提是，被转换的对象本身不是 <code>const</code> 的。</li>
+</ul>
+</li>
+</ol>
+<h4 id="代码示例-2"><a href="#代码示例-2" class="headerlink" title="代码示例"></a>代码示例</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 一个老旧的 C-style API，它接受 char* 但保证不修改内容</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">legacy_c_api</span><span class="params">(<span class="type">char</span>* str)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Legacy API received: &quot;</span> &lt;&lt; str &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">const</span> std::string my_str = <span class="string">&quot;Hello&quot;</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// my_str.c_str() 返回 const char*，但 legacy_c_api 需要 char*</span></span><br><span class="line">    <span class="comment">// 我们知道这个 API 不会修改数据，所以可以安全地使用 const_cast</span></span><br><span class="line">    <span class="built_in">legacy_c_api</span>(<span class="built_in">const_cast</span>&lt;<span class="type">char</span>*&gt;(my_str.<span class="built_in">c_str</span>()));</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 危险的用法示例</span></span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> val = <span class="number">10</span>;</span><br><span class="line">    <span class="type">int</span>* ptr = <span class="built_in">const_cast</span>&lt;<span class="type">int</span>*&gt;(&amp;val);</span><br><span class="line">    <span class="comment">// *ptr = 20; // ！！！未定义行为 (UB)！val 本身是 const 的</span></span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> non_const_val = <span class="number">20</span>;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span>* const_ptr = &amp;non_const_val;</span><br><span class="line">    <span class="type">int</span>* modifiable_ptr = <span class="built_in">const_cast</span>&lt;<span class="type">int</span>*&gt;(const_ptr);</span><br><span class="line">    *modifiable_ptr = <span class="number">30</span>; <span class="comment">// 这是安全的，因为 non_const_val 本身不是 const</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;non_const_val is now: &quot;</span> &lt;&lt; non_const_val &lt;&lt; std::endl; <span class="comment">// 输出 30</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="4-reinterpret-cast"><a href="#4-reinterpret-cast" class="headerlink" title="4. reinterpret_cast"></a>4. <code>reinterpret_cast</code></h3><p><code>reinterpret_cast</code> 是最强大、最危险的类型转换。它执行的是底层的、与实现相关的位模式重新解释，基本上是告诉编译器：“别管类型系统了，就当这块内存是另一种类型”。</p>
+<h4 id="语法-3"><a href="#语法-3" class="headerlink" title="语法"></a>语法</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">reinterpret_cast</span>&lt;new_type&gt;(expression);</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用场合-3"><a href="#使用场合-3" class="headerlink" title="使用场合"></a>使用场合</h4><p><code>reinterpret_cast</code> 的使用场景非常有限，通常只在低级编程中出现。</p>
+<ol>
+<li><p><strong>指针与整型之间的转换</strong></p>
+<ul>
+<li>将指针地址存为一个整数，或者将一个整数地址恢复为指针。这在某些需要序列化指针或与硬件交互的场景中有用。</li>
+</ul>
+</li>
+<li><p><strong>不相关类型指针之间的转换</strong></p>
+<ul>
+<li>例如，将 <code>int*</code> 转换为 <code>char*</code> 以便按字节访问一个整数，或者在自定义内存分配器等场景中进行转换。</li>
+<li>这种转换完全绕过了类型系统，极易出错。</li>
+</ul>
+</li>
+<li><p><strong>函数指针的转换</strong></p>
+<ul>
+<li>在不同类型的函数指针之间进行转换，但调用转换后的函数指针可能导致未定义行为。</li>
+</ul>
+</li>
+</ol>
+<h4 id="代码示例-3"><a href="#代码示例-3" class="headerlink" title="代码示例"></a>代码示例</h4><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdint&gt;</span> <span class="comment">// for uintptr_t</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> i = <span class="number">65</span>; <span class="comment">// ASCII &#x27;A&#x27;</span></span><br><span class="line">    <span class="type">int</span>* p_int = &amp;i;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 将 int* 转换为 char*，按字节查看 int</span></span><br><span class="line">    <span class="type">char</span>* p_char = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">char</span>*&gt;(p_int);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;First byte of int &quot;</span> &lt;&lt; i &lt;&lt; <span class="string">&quot; is: &quot;</span> &lt;&lt; *p_char &lt;&lt; std::endl; <span class="comment">// 在小端系统上会输出 &#x27;A&#x27;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 指针与整型之间的转换</span></span><br><span class="line">    <span class="type">uintptr_t</span> addr = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">uintptr_t</span>&gt;(p_int);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Address as integer: &quot;</span> &lt;&lt; std::hex &lt;&lt; addr &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span>* p_int_restored = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">int</span>*&gt;(addr);</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Value from restored pointer: &quot;</span> &lt;&lt; std::dec &lt;&lt; *p_int_restored &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>警告</strong>：<code>reinterpret_cast</code> 是不可移植的，其行为依赖于具体的编译器和平台。应尽可能避免使用它。</p>
+<hr>
+<h3 id="上行转换-Upcasting"><a href="#上行转换-Upcasting" class="headerlink" title="上行转换 (Upcasting)"></a>上行转换 (Upcasting)</h3><h4 id="1-什么是上行转换？"><a href="#1-什么是上行转换？" class="headerlink" title="1. 什么是上行转换？"></a>1. 什么是上行转换？</h4><p>上行转换是指将一个<strong>派生类（Derived Class）<strong>的指针或引用转换为其</strong>基类（Base Class）<strong>的指针或引用。这个转换是沿着继承层次结构</strong>向上</strong>的，所以称为“上行”。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> &#123;&#125;;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> : <span class="keyword">public</span> Animal &#123;&#125;;</span><br><span class="line"></span><br><span class="line">Dog myDog;</span><br><span class="line">Animal&amp; animalRef = myDog;         <span class="comment">// 上行转换 (引用)</span></span><br><span class="line">Animal* animalPtr = &amp;myDog;        <span class="comment">// 上行转换 (指针)</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-为什么是安全的？"><a href="#2-为什么是安全的？" class="headerlink" title="2. 为什么是安全的？"></a>2. 为什么是安全的？</h4><p>上行转换是<strong>绝对安全</strong>的，并且通常是<strong>隐式进行</strong>的，不需要显式使用强制类型转换。</p>
+<p>这是基于 <strong>“is-a”</strong>（是一个）的继承关系。派生类对象包含了基类的所有成员和方法，因此一个派生类对象 <em>本身就是</em> 一个基类对象。当我们将 <code>Dog*</code> 转换为 <code>Animal*</code> 时，我们只是限制了我们的“视野”，让我们只能通过这个 <code>Animal*</code> 指针访问 <code>Animal</code> 类中定义的成员。我们不会访问到任何不存在的东西。</p>
+<h4 id="3-应用场景在哪里？"><a href="#3-应用场景在哪里？" class="headerlink" title="3. 应用场景在哪里？"></a>3. 应用场景在哪里？</h4><p>上行转换是实现<strong>多态</strong>的核心。没有上行转换，多态几乎无法工作。</p>
+<p><strong>主要应用场景：实现多态和代码复用</strong></p>
+<p>假设我们有一个动物园，里面有各种动物，它们都会叫，但叫声不同。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Some generic animal sound...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Animal</span>() &#123;&#125; <span class="comment">// 多态基类需要虚析构函数</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> : <span class="keyword">public</span> Animal &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Woof! Woof!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Cat</span> : <span class="keyword">public</span> Animal &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Meow!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这个函数接受任何 Animal 类型的引用，实现了代码复用</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">make_animal_speak</span><span class="params">(<span class="type">const</span> Animal&amp; animal)</span> </span>&#123;</span><br><span class="line">    animal.<span class="built_in">makeSound</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Dog myDog;</span><br><span class="line">    Cat myCat;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 场景1: 函数参数多态</span></span><br><span class="line">    <span class="comment">// 这里发生了隐式的上行转换，myDog 和 myCat 被当做 Animal 对待</span></span><br><span class="line">    <span class="built_in">make_animal_speak</span>(myDog); <span class="comment">// 输出: Woof! Woof!</span></span><br><span class="line">    <span class="built_in">make_animal_speak</span>(myCat); <span class="comment">// 输出: Meow!</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 场景2: 容器多态</span></span><br><span class="line">    <span class="comment">// 使用一个基类指针的容器来管理所有派生类对象</span></span><br><span class="line">    std::vector&lt;std::unique_ptr&lt;Animal&gt;&gt; zoo;</span><br><span class="line">    zoo.<span class="built_in">push_back</span>(std::<span class="built_in">make_unique</span>&lt;Dog&gt;()); <span class="comment">// Dog* 隐式上行转换为 Animal*</span></span><br><span class="line">    zoo.<span class="built_in">push_back</span>(std::<span class="built_in">make_unique</span>&lt;Cat&gt;()); <span class="comment">// Cat* 隐式上行转换为 Animal*</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 我们可以用统一的方式处理容器中所有不同类型的对象</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">const</span> <span class="keyword">auto</span>&amp; animal : zoo) &#123;</span><br><span class="line">        animal-&gt;<span class="built_in">makeSound</span>(); <span class="comment">// 动态绑定，调用各自的 makeSound 版本</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>总结</strong>：上行转换让我们能够用一个通用的基类接口来处理所有不同的派生类对象，极大地提高了代码的灵活性和可扩展性。</p>
+<hr>
+<h3 id="下行转换-Downcasting"><a href="#下行转换-Downcasting" class="headerlink" title="下行转换 (Downcasting)"></a>下行转换 (Downcasting)</h3><h4 id="1-什么是下行转换？"><a href="#1-什么是下行转换？" class="headerlink" title="1. 什么是下行转换？"></a>1. 什么是下行转换？</h4><p>下行转换是指将一个<strong>基类（Base Class）<strong>的指针或引用转换为其</strong>派生类（Derived Class）<strong>的指针或引用。这个转换是沿着继承层次结构</strong>向下</strong>的，所以称为“下行”。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Animal* animalPtr = <span class="keyword">new</span> <span class="built_in">Dog</span>(); <span class="comment">// 指针实际指向一个 Dog 对象</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 尝试将基类指针转换为派生类指针</span></span><br><span class="line">Dog* dogPtr = <span class="built_in">static_cast</span>&lt;Dog*&gt;(animalPtr); <span class="comment">// 不安全的下行转换</span></span><br><span class="line">Dog* dogPtr_safe = <span class="built_in">dynamic_cast</span>&lt;Dog*&gt;(animalPtr); <span class="comment">// 安全的下行转换</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="2-为什么是不安全的？"><a href="#2-为什么是不安全的？" class="headerlink" title="2. 为什么是不安全的？"></a>2. 为什么是不安全的？</h4><p>下行转换是<strong>不安全</strong>的，因为它无法在编译时保证转换的正确性。一个基类指针可能指向任何一个派生类对象，或者就是一个基类对象。如果你把它转换成一个错误的派生类类型，然后试图访问该派生类特有的成员，就会导致<strong>未定义行为（Undefined Behavior）</strong>，通常是程序崩溃。</p>
+<p>这就是为什么C++提供了两种下行转换的方式：</p>
+<ul>
+<li><strong><code>static_cast</code>（不安全）</strong>：它在编译时进行转换，不进行任何运行时检查。它假设程序员已经100%确定这个转换是正确的。如果转换错误，后果自负。性能较高。</li>
+<li><strong><code>dynamic_cast</code>（安全）</strong>：它在运行时进行检查，以确定转换是否有效。<ul>
+<li>对于指针：如果转换成功，返回有效的派生类指针；如果失败（比如 <code>Animal*</code> 实际指向一个 <code>Cat</code> 对象，但你试图转为 <code>Dog*</code>），则返回 <code>nullptr</code>。</li>
+<li>对于引用：如果转换成功，返回有效的派生类引用；如果失败，则抛出 <code>std::bad_cast</code> 异常。</li>
+<li><strong>前提</strong>：<code>dynamic_cast</code> 只能用于带有虚函数的多态类。</li>
+</ul>
+</li>
+</ul>
+<h4 id="3-应用场景在哪里？-1"><a href="#3-应用场景在哪里？-1" class="headerlink" title="3. 应用场景在哪里？"></a>3. 应用场景在哪里？</h4><p>尽管我们应该尽量通过虚函数来避免下行转换，但在某些情况下它仍然是必要或方便的。</p>
+<p><strong>主要应用场景：调用派生类特有的方法</strong></p>
+<p>当你通过基类指针处理一组对象时，有时你需要判断某个对象是否是某个特定的派生类型，并调用它独有的方法。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> : <span class="keyword">public</span> Animal &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123; <span class="comment">/* ... */</span> &#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">wagTail</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="comment">// 这是 Dog 特有的方法</span></span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;The dog is wagging its tail.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Cat</span> : <span class="keyword">public</span> Animal &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123; <span class="comment">/* ... */</span> &#125;</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">purr</span><span class="params">()</span> <span class="type">const</span> </span>&#123; <span class="comment">// 这是 Cat 特有的方法</span></span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;The cat is purring.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">process_animal</span><span class="params">(Animal* animal)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!animal) <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    animal-&gt;<span class="built_in">makeSound</span>(); <span class="comment">// 调用通用的多态方法</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 现在，我们想调用派生类特有的方法</span></span><br><span class="line">    <span class="comment">// 使用安全的 dynamic_cast</span></span><br><span class="line">    <span class="keyword">if</span> (Dog* dog = <span class="built_in">dynamic_cast</span>&lt;Dog*&gt;(animal)) &#123;</span><br><span class="line">        dog-&gt;<span class="built_in">wagTail</span>(); <span class="comment">// 转换成功，可以安全调用</span></span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (Cat* cat = <span class="built_in">dynamic_cast</span>&lt;Cat*&gt;(animal)) &#123;</span><br><span class="line">        cat-&gt;<span class="built_in">purr</span>(); <span class="comment">// 转换成功，可以安全调用</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    std::unique_ptr&lt;Animal&gt; myDog = std::<span class="built_in">make_unique</span>&lt;Dog&gt;();</span><br><span class="line">    std::unique_ptr&lt;Animal&gt; myCat = std::<span class="built_in">make_unique</span>&lt;Cat&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">process_animal</span>(myDog.<span class="built_in">get</span>());</span><br><span class="line">    <span class="comment">// 输出:</span></span><br><span class="line">    <span class="comment">// Woof! Woof!</span></span><br><span class="line">    <span class="comment">// The dog is wagging its tail.</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">process_animal</span>(myCat.<span class="built_in">get</span>());</span><br><span class="line">    <span class="comment">// 输出:</span></span><br><span class="line">    <span class="comment">// Meow!</span></span><br><span class="line">    <span class="comment">// The cat is purring.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>总结</strong>：当下多态接口无法满足需求，你必须访问派生类提供的特定功能时，就需要使用下行转换。在这种情况下，<strong>强烈推荐使用 <code>dynamic_cast</code></strong> 来保证类型安全。频繁使用下行转换有时也暗示着类的设计可能存在问题（比如，某些功能也许应该被提升到基类接口中）。</p>
+<table>
+<thead>
+<tr>
+<th align="left">特性</th>
+<th align="left">上行转换 (Upcasting)</th>
+<th align="left">下行转换 (Downcasting)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>方向</strong></td>
+<td align="left">派生类 → 基类</td>
+<td align="left">基类 → 派生类</td>
+</tr>
+<tr>
+<td align="left"><strong>安全性</strong></td>
+<td align="left"><strong>总是安全的</strong></td>
+<td align="left"><strong>本质上不安全</strong>，需要运行时检查</td>
+</tr>
+<tr>
+<td align="left"><strong>转换方式</strong></td>
+<td align="left">通常是<strong>隐式</strong>的，也可使用 <code>static_cast</code></td>
+<td align="left">必须是<strong>显式</strong>的</td>
+</tr>
+<tr>
+<td align="left"><strong>常用转换符</strong></td>
+<td align="left">(隐式) 或 <code>static_cast</code></td>
+<td align="left"><code>dynamic_cast</code> (安全) 或 <code>static_cast</code> (不安全)</td>
+</tr>
+<tr>
+<td align="left"><strong>核心目的</strong></td>
+<td align="left">实现<strong>多态</strong>，统一处理不同对象</td>
+<td align="left">调用<strong>派生类特有</strong>的功能</td>
+</tr>
+<tr>
+<td align="left"><strong>设计思想</strong></td>
+<td align="left">符合“is-a”关系，是良好设计的基石</td>
+<td align="left">有时是必要的，但过多使用可能意味着设计缺陷</td>
+</tr>
+</tbody></table>
+<hr>
+<h3 id="总结与对比"><a href="#总结与对比" class="headerlink" title="总结与对比"></a>总结与对比</h3><table>
+<thead>
+<tr>
+<th align="left">转换操作符</th>
+<th align="left">主要用途</th>
+<th align="left">检查时机</th>
+<th align="left">安全性</th>
+<th align="left">核心场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong><code>static_cast</code></strong></td>
+<td align="left">“合理的”类型转换</td>
+<td align="left">编译时</td>
+<td align="left">中等（下行转换不安全）</td>
+<td align="left">基本类型转换、继承体系中的上&#x2F;下行转换（需程序员保证安全）</td>
+</tr>
+<tr>
+<td align="left"><strong><code>dynamic_cast</code></strong></td>
+<td align="left">多态类型安全的下行转换</td>
+<td align="left">运行时</td>
+<td align="left">高</td>
+<td align="left">在继承体系中，安全地将基类指针&#x2F;引用转换为派生类指针&#x2F;引用</td>
+</tr>
+<tr>
+<td align="left"><strong><code>const_cast</code></strong></td>
+<td align="left">添加或移除 <code>const</code>&#x2F;<code>volatile</code></td>
+<td align="left">编译时</td>
+<td align="left">低（易导致UB）</td>
+<td align="left">与不符合 <code>const</code> 规范的旧API交互</td>
+</tr>
+<tr>
+<td align="left"><strong><code>reinterpret_cast</code></strong></td>
+<td align="left">底层位模式重新解释</td>
+<td align="left">编译时</td>
+<td align="left">极低（非常危险）</td>
+<td align="left">低级内存操作、指针与整数转换、不相关指针转换</td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%9B%9B%E7%A7%8D%E5%BC%BA%E5%88%B6%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/">https://lx-cel.github.io/2025/08/27/CPP学习笔记—四种强制类型转换/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/cpp/">cpp</a></div><div class="post-share"><div class="social-share" data-image="/img/30.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/" title="CPP学习笔记—多态"><img class="cover" src="/img/31.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CPP学习笔记—多态</div></div><div class="info-2"><div class="info-item-1">什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。 在 C++ 中，这个“遥控器”就是基类指针或引用，而“电视机”和“空调”就是派生类对象。 C++ 中的多态分类C++ 中的多态主要分为两类：  静态多态（编译时多态）：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。 动态多态（运行时多态）：在程序运行期间才能确定调用哪个函数。这是我们通常所说的...</div></div></div></a><a class="pagination-related" href="/2025/08/22/%E5%9F%BA%E6%9C%AC%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/" title="基本排序算法"><img class="cover" src="/img/29.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">基本排序算法</div></div><div class="info-2"><div class="info-item-1">一、冒泡排序1. 什么是冒泡排序？冒泡排序（Bubble Sort）是一种简单直观的排序算法。它得名于其工作方式，即较小（或较大）的元素会像水中的气泡一样，通过不断交换，慢慢“浮”到数列的顶端。 a. 核心思想它重复地遍历待排序的数列，一次比较两个相邻的元素，如果它们的顺序（如从大到小或从小到大）错误就把它们交换过来。遍历数列的工作会重复地进行，直到没有再需要交换的元素为止，这意味着整个数列已经排序完成。 b. 工作原理 比较相邻元素：从列表的第一个元素开始，比较它和下一个元素。 交换：如果第一个元素比第二个元素大（以升序为例），就交换它们的位置。 向后移动：继续比较下一对相邻的元素（即新的第二个和第三个元素），重复步骤2。 完成一轮：持续这个过程，直到列表的末尾。经过第一轮遍历后，最大的元素会被放置在列表的最后一个位置。 重复：对除了最后一个元素之外的所有元素，重复以上步骤。每一轮遍历都会将当前未排序部分的最大元素放到其最终位置。 终止：当某一轮遍历中没有发生任何交换时，说明列表已经完全排序，可以提前终止算法。  2. 图解示例让我们用一个简单的例子 [5, 1, 4, 2,...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式"><img class="cover" src="/img/24.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-16</div><div class="info-item-2">CPP学习笔记—lambda表达式</div></div><div class="info-2"><div class="info-item-1">Lambda 表达式是 C++11 引入的一项革命性特性，它极大地改变了 C++ 的编程风格，尤其是在与标准模板库（STL）配合使用时。它允许我们在代码中需要一个函数的地方，直接定义一个匿名的、临时的函数对象。  1. 什么是 Lambda 表达式？简单来说，Lambda 表达式就是一个可调用的代码单元，可以把它理解为一个匿名的内联函数。与普通函数不同，它可以在函数内部定义，并且可以“捕获”其所在作用域中的变量。 2. 为什么需要 Lambda 表达式？在 C++11 之前，如果想向一个算法（如 std::sort）传递一个简单的、一次性的比较逻辑，通常需要：  定义一个全局函数或静态成员函数：这会污染命名空间，并且逻辑与使用它的地方相隔甚远。 定义一个函数对象（Functor）：需要编写一个完整的类，重载 operator()。这非常繁琐。  Lambda 的优势：  代码局部性：将逻辑直接写在使用它的地方，代码更紧凑，可读性更高。 简洁性：避免了编写独立的函数或函数对象类的样板代码。 状态捕获：可以方便地访问和使用其定义作用域内的变量，这是普通函数难以做到的。   3....</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%8C%87%E9%92%88/" title="CPP学习笔记—指针"><img class="cover" src="/img/21.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—指针</div></div><div class="info-2"><div class="info-item-1">一、指针到底是什么？—— 内存地址的“房卡”想象一下计算机的内存是一家长长的酒店，里面有无数的房间，每个房间都有一个独一无二的门牌号（内存地址）。  普通变量：就像一个房间，里面存放着具体的东西（值）。 1int age = 25; // 在一个叫 `age` 的房间里，放了数字 25。  指针：它本身也是一个变量，但它里面存放的不是普通的东西，而是一张房卡。这张房卡上写着另一个房间的门牌号。   所以，指针是一个存储了另一个变量内存地址的变量。通过这张“房卡”，我们就能找到并操作那个特定的“房间”。  二、两大核心操作符：&amp; (取地址) 和 * (解引用)要玩转指针，必须掌握这两个“魔法”操作符。 1. &amp; (取地址符) —— “制作房卡”&amp; 符号的作用是获取一个变量的内存地址。可以把它读作“…的地址”。 12345int age = 25;       // 一个存放 25 的房间 `age`int* p_age = &amp;age;  // 创建一张叫 `p_age` 的房卡，                    // 上面记录 `age`...</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93%EF%BC%88STL%EF%BC%89%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" title="CPP学习笔记—标准模板库（STL）中的容器"><img class="cover" src="/img/22.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—标准模板库（STL）中的容器</div></div><div class="info-2"><div class="info-item-1">一、什么是容器？为什么它如此重要？简单来说，C++ 容器是用来存储和管理一组对象的类模板。它们就像是工具箱里不同种类的收纳盒：有的适合快速取放（像数组），有的适合保持物品有序（像分类文件柜），还有的适合快速查找（像带索引的卡片盒）。 使用 STL 容器的好处是巨大的：  代码更简洁：你无需从零开始实现链表、哈希表等复杂数据结构。 性能更优越：STL 容器经过了高度优化，性能通常比手写的要好。 代码更安全：它们处理了内存管理的细节，减少了内存泄漏和越界访问的风险。 互操作性强：所有容器都遵循一套统一的接口（如 begin(), end(), size()），可以与 STL 的迭代器和算法无缝协作，威力倍增。   二、容器的分类与概览C++ 的容器主要分为四大类，分别是序列容器、关联容器、无序关联容器和容器适配器。    类别 容器 特点    序列容器 vector, deque, list, array 元素按线性顺序排列，可通过位置访问。   关联容器 map, set, multimap, multiset 元素根据键值自动排序，查找速度快 (O(log...</div></div></div></a><a class="pagination-related" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img class="cover" src="/img/37.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-19</div><div class="info-item-2">CPP学习笔记——unordered_map</div></div><div class="info-2"><div class="info-item-1"> 1. unordered_map 是什么？std::unordered_map 是 C++ 标准模板库（STL）中的一个关联容器，它存储了由“键（Key）”和“值（Value）”组成的元素对（std::pair&lt;const Key, Value&gt;）。它的核心特点是：  无序性：元素在容器内的存储顺序是无序的，遍历 unordered_map 时，得到的元素顺序与插入顺序无关，并且在不同编译环境下可能不同。 基于哈希表：其内部实现是一个哈希表（Hash Table）。 高效查询：由于使用了哈希表，它提供了非常快的平均时间复杂度的操作： 插入、删除、查找：平均 O(1) 最坏情况：O(N)，其中 N 是容器中元素的数量（当发生严重的哈希冲突时）。    核心概念：哈希表为了理解 unordered_map，需要了解哈希表的工作原理：  哈希函数 (Hash Function)：当插入一个键值对时，unordered_map 会使用一个哈希函数将“键”转换成一个整数，这个整数被称为哈希值（Hash Code）。 桶 (Bucket)：unordered_map...</div></div></div></a><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/" title="CPP学习笔记—多态"><img class="cover" src="/img/31.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-27</div><div class="info-item-2">CPP学习笔记—多态</div></div><div class="info-2"><div class="info-item-1">什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。 在 C++ 中，这个“遥控器”就是基类指针或引用，而“电视机”和“空调”就是派生类对象。 C++ 中的多态分类C++ 中的多态主要分为两类：  静态多态（编译时多态）：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。 动态多态（运行时多态）：在程序运行期间才能确定调用哪个函数。这是我们通常所说的...</div></div></div></a><a class="pagination-related" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img class="cover" src="/img/34.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-29</div><div class="info-item-2">CPP学习笔记—智能指针</div></div><div class="info-2"><div class="info-item-1">1. 为什么需要智能指针？在 C&#x2F;C++ 中，内存管理是一个核心但又极易出错的话题。传统的内存管理依赖于程序员手动使用 new 和 delete (或 malloc 和 free) 来申请和释放内存。这导致了几个经典的问题：  内存泄漏 (Memory Leaks)：忘记调用 delete。当一个动态分配的对象不再被使用，但其内存没有被释放时，这块内存就无法被再次使用，造成了内存泄漏。长时间运行的程序中，内存泄漏会耗尽系统资源，导致程序崩溃。 悬挂指针 (Dangling Pointers)：一个指针指向的内存已经被释放，但指针本身没有被置为 nullptr。如果之后不小心通过这个悬挂指针访问或修改内存，会导致未定义行为（Undefined Behavior），通常表现为程序崩溃或数据损坏。 重复释放 (Double Free)：对同一块内存调用两次或多次 delete。这也是一种严重的未定义行为，通常会导致程序崩溃。 异常安全问题：在 new 和 delete 之间如果发生异常，delete 语句可能永远不会被执行，从而导致内存泄漏。  12345678void...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E6%96%B0%E7%9A%84%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%EF%BC%9F"><span class="toc-text">为什么需要新的类型转换？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-static-cast"><span class="toc-text">1. static_cast</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95"><span class="toc-text">语法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E5%90%88"><span class="toc-text">使用场合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="toc-text">代码示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-dynamic-cast"><span class="toc-text">2. dynamic_cast</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95-1"><span class="toc-text">语法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B3%E9%94%AE%E8%A6%81%E6%B1%82"><span class="toc-text">关键要求</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E5%90%88-1"><span class="toc-text">使用场合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B-1"><span class="toc-text">代码示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-const-cast"><span class="toc-text">3. const_cast</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95-2"><span class="toc-text">语法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E5%90%88-2"><span class="toc-text">使用场合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B-2"><span class="toc-text">代码示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-reinterpret-cast"><span class="toc-text">4. reinterpret_cast</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AF%AD%E6%B3%95-3"><span class="toc-text">语法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E5%9C%BA%E5%90%88-3"><span class="toc-text">使用场合</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B-3"><span class="toc-text">代码示例</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8A%E8%A1%8C%E8%BD%AC%E6%8D%A2-Upcasting"><span class="toc-text">上行转换 (Upcasting)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%8A%E8%A1%8C%E8%BD%AC%E6%8D%A2%EF%BC%9F"><span class="toc-text">1. 什么是上行转换？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E5%AE%89%E5%85%A8%E7%9A%84%EF%BC%9F"><span class="toc-text">2. 为什么是安全的？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF%E5%9C%A8%E5%93%AA%E9%87%8C%EF%BC%9F"><span class="toc-text">3. 应用场景在哪里？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E8%A1%8C%E8%BD%AC%E6%8D%A2-Downcasting"><span class="toc-text">下行转换 (Downcasting)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%8B%E8%A1%8C%E8%BD%AC%E6%8D%A2%EF%BC%9F"><span class="toc-text">1. 什么是下行转换？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E6%98%AF%E4%B8%8D%E5%AE%89%E5%85%A8%E7%9A%84%EF%BC%9F"><span class="toc-text">2. 为什么是不安全的？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF%E5%9C%A8%E5%93%AA%E9%87%8C%EF%BC%9F-1"><span class="toc-text">3. 应用场景在哪里？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E5%AF%B9%E6%AF%94"><span class="toc-text">总结与对比</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img src="/img/37.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记——unordered_map"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map">CPP学习笔记——unordered_map</a><time datetime="2025-09-19T08:09:17.000Z" title="发表于 2025-09-19 16:09:17">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="算法模板"/></a><div class="content"><a class="title" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板">算法模板</a><time datetime="2025-09-15T01:13:48.000Z" title="发表于 2025-09-15 09:13:48">2025-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组"><img src="/img/35.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="数据结构与算法—树状数组"/></a><div class="content"><a class="title" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组">数据结构与算法—树状数组</a><time datetime="2025-09-06T02:08:01.000Z" title="发表于 2025-09-06 10:08:01">2025-09-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img src="/img/34.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—智能指针"/></a><div class="content"><a class="title" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针">CPP学习笔记—智能指针</a><time datetime="2025-08-29T01:58:51.000Z" title="发表于 2025-08-29 09:58:51">2025-08-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数"><img src="/img/33.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—特殊成员函数"/></a><div class="content"><a class="title" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数">CPP学习笔记—特殊成员函数</a><time datetime="2025-08-28T06:55:22.000Z" title="发表于 2025-08-28 14:55:22">2025-08-28</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CPP学习笔记—多态 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPP学习笔记—多态">
+<meta property="og:url" content="https://lx-cel.github.io/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/31.jpg">
+<meta property="article:published_time" content="2025-08-27T06:39:48.000Z">
+<meta property="article:modified_time" content="2025-08-26T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/31.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CPP学习笔记—多态',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/31.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">CPP学习笔记—多态</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CPP学习笔记—多态</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-08-27T06:39:48.000Z" title="发表于 2025-08-27 14:39:48">2025-08-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-26T16:00:00.000Z" title="更新于 2025-08-27 00:00:00">2025-08-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/cpp/">cpp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="什么是多态？"><a href="#什么是多态？" class="headerlink" title="什么是多态？"></a>什么是多态？</h2><p><strong>多态</strong>，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是<strong>封装</strong>和<strong>继承</strong>）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。</p>
+<p>一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。</p>
+<p>在 C++ 中，这个“遥控器”就是<strong>基类指针或引用</strong>，而“电视机”和“空调”就是<strong>派生类对象</strong>。</p>
+<h2 id="C-中的多态分类"><a href="#C-中的多态分类" class="headerlink" title="C++ 中的多态分类"></a>C++ 中的多态分类</h2><p>C++ 中的多态主要分为两类：</p>
+<ol>
+<li><strong>静态多态（编译时多态）</strong>：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。</li>
+<li><strong>动态多态（运行时多态）</strong>：在程序运行期间才能确定调用哪个函数。这是我们通常所说的 OOP 中的多态，它提供了极高的灵活性和可扩展性。</li>
+</ol>
+<hr>
+<h3 id="一、-静态多态-Static-Polymorphism"><a href="#一、-静态多态-Static-Polymorphism" class="headerlink" title="一、 静态多态 (Static Polymorphism)"></a>一、 静态多态 (Static Polymorphism)</h3><p>静态多态主要通过<strong>函数重载</strong>和<strong>模板</strong>来实现。</p>
+<h4 id="1-函数重载-Function-Overloading"><a href="#1-函数重载-Function-Overloading" class="headerlink" title="1. 函数重载 (Function Overloading)"></a>1. 函数重载 (Function Overloading)</h4><p>允许在同一个作用域内定义多个同名函数，但它们的参数列表（参数类型、参数个数或参数顺序）必须不同。编译器在编译时，会根据你传入的实参类型来决定调用哪个具体的函数版本。</p>
+<p><strong>示例：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(<span class="type">int</span> i)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Printing an integer: &quot;</span> &lt;&lt; i &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(<span class="type">double</span> d)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Printing a double: &quot;</span> &lt;&lt; d &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">(<span class="type">const</span> std::string&amp; s)</span> </span>&#123;</span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Printing a string: &quot;</span> &lt;&lt; s &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="number">10</span>);        <span class="comment">// 编译器在编译时就知道要调用 print(int)</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="number">3.14</span>);      <span class="comment">// 编译器在编译时就知道要调用 print(double)</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;hello&quot;</span>);   <span class="comment">// 编译器在编译时就知道要调用 print(const std::string&amp;)</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-模板-Templates"><a href="#2-模板-Templates" class="headerlink" title="2. 模板 (Templates)"></a>2. 模板 (Templates)</h4><p>模板允许我们编写与类型无关的代码，也称为泛型编程。编译器会根据模板参数的实际类型，在编译时生成相应类型的函数或类。</p>
+<p><strong>示例：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 函数模板</span></span><br><span class="line"><span class="function"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span></span><br><span class="line"><span class="function">T <span class="title">add</span><span class="params">(T a, T b)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a + b;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 编译器根据 int 生成一个 add(int, int) 版本</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Int sum: &quot;</span> &lt;&lt; <span class="built_in">add</span>(<span class="number">5</span>, <span class="number">10</span>) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 编译器根据 double 生成一个 add(double, double) 版本</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;Double sum: &quot;</span> &lt;&lt; <span class="built_in">add</span>(<span class="number">3.5</span>, <span class="number">7.2</span>) &lt;&lt; std::endl;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// std::string 也重载了 + 操作符，所以也可以用</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;String concat: &quot;</span> &lt;&lt; <span class="built_in">add</span>(std::<span class="built_in">string</span>(<span class="string">&quot;hello &quot;</span>), std::<span class="built_in">string</span>(<span class="string">&quot;world&quot;</span>)) &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>静态多态的特点：</strong></p>
+<ul>
+<li><strong>决策时机</strong>：编译时。</li>
+<li><strong>绑定方式</strong>：静态绑定（Static Binding）或早绑定（Early Binding）。</li>
+<li><strong>效率</strong>：高，因为没有运行时的额外开销。</li>
+<li><strong>灵活性</strong>：相对较低，所有可能性都必须在编译时确定。</li>
+</ul>
+<hr>
+<h3 id="二、-动态多态-Dynamic-Polymorphism"><a href="#二、-动态多态-Dynamic-Polymorphism" class="headerlink" title="二、 动态多态 (Dynamic Polymorphism)"></a>二、 动态多态 (Dynamic Polymorphism)</h3><p>这是 C++ 多态的核心。它依赖于<strong>继承</strong>、<strong>虚函数 (Virtual Functions)</strong> 和<strong>基类指针&#x2F;引用</strong>。</p>
+<h4 id="实现动态多态的三个条件"><a href="#实现动态多态的三个条件" class="headerlink" title="实现动态多态的三个条件"></a>实现动态多态的三个条件</h4><ol>
+<li><strong>继承关系</strong>：必须存在一个基类和至少一个派生类。</li>
+<li><strong>虚函数</strong>：基类中必须有虚函数（使用 <code>virtual</code> 关键字声明），并且派生类需要重写（Override）这个函数。</li>
+<li><strong>基类指针或引用</strong>：必须通过指向派生类对象的基类指针或引用来调用虚函数。</li>
+</ol>
+<h4 id="示例代码"><a href="#示例代码" class="headerlink" title="示例代码"></a>示例代码</h4><p>让我们通过一个经典的 <code>Animal</code> 例子来理解。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 1. 基类 Animal</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Animal</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 2. 声明虚函数 makeSound</span></span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Some generic animal sound...&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 关键！当基类指针可能被用来删除派生类对象时，析构函数必须是虚函数</span></span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Animal</span>() &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Animal destructor called.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 派生类 Dog</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Dog</span> : <span class="keyword">public</span> Animal &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 重写（Override）基类的虚函数</span></span><br><span class="line">    <span class="comment">// &#x27;override&#x27; 关键字是 C++11 引入的，它不是必须的，但强烈推荐使用</span></span><br><span class="line">    <span class="comment">// 它可以让编译器检查你是否真的重写了基类的虚函数</span></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Woof! Woof!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ~<span class="built_in">Dog</span>() &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Dog destructor called.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 派生类 Cat</span></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Cat</span> : <span class="keyword">public</span> Animal &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">makeSound</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Meow! Meow!&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ~<span class="built_in">Cat</span>() &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Cat destructor called.&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">performSound</span><span class="params">(<span class="type">const</span> Animal&amp; animal)</span> </span>&#123;</span><br><span class="line">    animal.<span class="built_in">makeSound</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Dog myDog;</span><br><span class="line">    Cat myCat;</span><br><span class="line">    Animal myAnimal;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 通过基类引用调用</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;--- Calling via reference ---&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="built_in">performSound</span>(myDog);    <span class="comment">// 运行时，系统发现 animal 引用的是一个 Dog 对象，调用 Dog::makeSound()</span></span><br><span class="line">    <span class="built_in">performSound</span>(myCat);    <span class="comment">// 运行时，系统发现 animal 引用的是一个 Cat 对象，调用 Cat::makeSound()</span></span><br><span class="line">    <span class="built_in">performSound</span>(myAnimal); <span class="comment">// 运行时，系统发现 animal 引用的是一个 Animal 对象，调用 Animal::makeSound()</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;\n--- Calling via pointer ---&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="comment">// 3. 通过基类指针调用</span></span><br><span class="line">    Animal* animalPtr = <span class="keyword">new</span> <span class="built_in">Dog</span>(); <span class="comment">// 基类指针指向派生类对象</span></span><br><span class="line">    animalPtr-&gt;<span class="built_in">makeSound</span>();        <span class="comment">// 运行时，系统发现 animalPtr 指向的是一个 Dog 对象，调用 Dog::makeSound()</span></span><br><span class="line">    <span class="keyword">delete</span> animalPtr;              <span class="comment">// 因为析构函数是虚函数，会先调用 Dog 的析构，再调用 Animal 的析构</span></span><br><span class="line"></span><br><span class="line">    std::cout &lt;&lt; std::endl;</span><br><span class="line"></span><br><span class="line">    animalPtr = <span class="keyword">new</span> <span class="built_in">Cat</span>();</span><br><span class="line">    animalPtr-&gt;<span class="built_in">makeSound</span>();        <span class="comment">// 运行时，系统发现 animalPtr 指向的是一个 Cat 对象，调用 Cat::makeSound()</span></span><br><span class="line">    <span class="keyword">delete</span> animalPtr;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>main</code> 函数中，<code>animalPtr</code> 的类型是 <code>Animal*</code>，但它实际指向的对象的类型在运行时是可变的（<code>Dog</code> 或 <code>Cat</code>）。当你调用 <code>animalPtr-&gt;makeSound()</code> 时，程序并不会调用 <code>Animal::makeSound()</code>，而是会根据 <code>animalPtr</code> 当前实际指向的对象类型，去调用该类型对应的 <code>makeSound()</code> 版本。这个过程就叫做<strong>动态绑定 (Dynamic Binding)</strong> 或<strong>晚绑定 (Late Binding)</strong>。</p>
+<h3 id="动态多态的底层实现原理：虚函数表-v-table"><a href="#动态多态的底层实现原理：虚函数表-v-table" class="headerlink" title="动态多态的底层实现原理：虚函数表 (v-table)"></a>动态多态的底层实现原理：虚函数表 (v-table)</h3><p>C++ 编译器是如何实现动态绑定的呢？答案是<strong>虚函数表（Virtual Function Table, 简称 v-table）<strong>和</strong>虚函数指针（Virtual Function Pointer, 简称 v-ptr）</strong>。</p>
+<ol>
+<li><p><strong>虚函数表 (v-table)</strong>：</p>
+<ul>
+<li>当一个类中包含至少一个虚函数时，编译器会为这个<strong>类</strong>创建一个静态的数组，这个数组就是虚函数表（v-table）。</li>
+<li>v-table 中存放的是该类所有虚函数的地址。</li>
+<li>如果派生类重写了基类的虚函数，那么在派生类的 v-table 中，相应的位置会被替换为派生类重写的那个函数的地址。如果派生类没有重写，那么它将继承基类 v-table 中的函数地址。</li>
+<li><strong>每个拥有虚函数的类只有一张 v-table</strong>。</li>
+</ul>
+</li>
+<li><p><strong>虚函数指针 (v-ptr)</strong>：</p>
+<ul>
+<li>当一个类的对象被创建时，如果这个类有虚函数（或继承了虚函数），编译器会在这个<strong>对象</strong>的内存布局的起始位置（通常是这样，但具体位置由编译器决定）偷偷地插入一个指针。</li>
+<li>这个指针就是虚函数指针（v-ptr），它指向该对象所属类的 v-table。</li>
+<li><strong>每个对象实例里面都包含一个 v-ptr</strong>。</li>
+</ul>
+</li>
+</ol>
+<h4 id="调用过程剖析"><a href="#调用过程剖析" class="headerlink" title="调用过程剖析"></a>调用过程剖析</h4><p>让我们以上面的 <code>animalPtr-&gt;makeSound()</code> 为例，看看运行时发生了什么：</p>
+<ol>
+<li><p><strong>创建对象</strong>：<code>animalPtr = new Dog();</code></p>
+<ul>
+<li>在堆上分配 <code>Dog</code> 对象的内存。</li>
+<li>编译器在 <code>Dog</code> 对象的内存中放入一个 v-ptr。</li>
+<li>这个 v-ptr 指向 <code>Dog</code> 类的 v-table。<code>Dog</code> 的 v-table 中包含了 <code>Dog::makeSound</code> 的地址。</li>
+</ul>
+</li>
+<li><p><strong>调用虚函数</strong>：<code>animalPtr-&gt;makeSound();</code></p>
+<ul>
+<li>程序通过 <code>animalPtr</code> 访问它所指向的对象（那个 <code>Dog</code> 对象）。</li>
+<li>通过对象内存中的 v-ptr 找到 <code>Dog</code> 类的 v-table。</li>
+<li>在 v-table 中查找 <code>makeSound</code> 函数的地址（虚函数在 v-table 中的偏移量是固定的，在编译时就确定了）。</li>
+<li>根据找到的地址，调用 <code>Dog::makeSound()</code> 函数。</li>
+</ul>
+</li>
+</ol>
+<p>整个过程可以简化为：<code>对象地址 -&gt; v-ptr -&gt; v-table -&gt; 虚函数地址 -&gt; 调用函数</code>。</p>
+<p>这个通过指针间接查找函数地址的过程，虽然带来了一点点性能开销（一次指针跳转和一次数组索引），但它实现了在运行时根据对象的实际类型来调用正确函数的能力，这就是动态多态的精髓。</p>
+<h3 id="为什么析构函数需要是虚函数？"><a href="#为什么析构函数需要是虚函数？" class="headerlink" title="为什么析构函数需要是虚函数？"></a>为什么析构函数需要是虚函数？</h3><p>这是一个非常重要的知识点。在上面的例子中，<code>Animal</code> 的析构函数被声明为 <code>virtual</code>。</p>
+<p><strong>原因</strong>：考虑 <code>delete animalPtr;</code> 这行代码。<br><code>animalPtr</code> 的静态类型是 <code>Animal*</code>。如果析构函数不是虚函数，编译器会进行静态绑定，只会调用 <code>Animal</code> 的析构函数 <code>~Animal()</code>。这会导致 <code>animalPtr</code> 指向的 <code>Dog</code> 对象部分没有被正确析构（<code>~Dog()</code> 不会被调用），从而造成<strong>内存泄漏</strong>或<strong>资源泄漏</strong>。</p>
+<p>当析构函数是虚函数时，<code>delete</code> 操作也会通过 v-table 进行动态绑定。系统会发现 <code>animalPtr</code> 实际指向 <code>Dog</code> 对象，于是：</p>
+<ol>
+<li>调用 <code>Dog</code> 的析构函数 <code>~Dog()</code>。</li>
+<li><code>Dog</code> 的析构函数执行完毕后，会自动调用其基类 <code>Animal</code> 的析构函数 <code>~Animal()</code>。</li>
+</ol>
+<p>这样就保证了从派生类到基类的完整析构链，避免了内存泄漏。</p>
+<p><strong>黄金法则</strong>：<strong>如果一个类可能被用作基类，并且你可能会通过基类指针删除派生类的对象，那么它的析构函数必须是虚函数。</strong></p>
+<h3 id="纯虚函数与抽象类"><a href="#纯虚函数与抽象类" class="headerlink" title="纯虚函数与抽象类"></a>纯虚函数与抽象类</h3><ul>
+<li><strong>纯虚函数 (Pure Virtual Function)</strong>：一个没有实现的虚函数，其声明方式是在函数末尾加上 <code>= 0</code>。<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Shape</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">void</span> <span class="title">draw</span><span class="params">()</span> <span class="type">const</span> </span>= <span class="number">0</span>; <span class="comment">// 纯虚函数</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+<li><strong>抽象类 (Abstract Class)</strong>：包含至少一个纯虚函数的类。<ul>
+<li>抽象类<strong>不能被实例化</strong>（不能创建对象）。</li>
+<li>它主要用作接口，强制所有派生类必须提供纯虚函数的具体实现。如果派生类没有实现所有纯虚函数，那么这个派生类也仍然是抽象类。</li>
+</ul>
+</li>
+</ul>
+<p><strong>示例：</strong></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Shape</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">virtual</span> <span class="type">double</span> <span class="title">getArea</span><span class="params">()</span> <span class="type">const</span> </span>= <span class="number">0</span>; <span class="comment">// 纯虚函数，定义接口</span></span><br><span class="line">    <span class="keyword">virtual</span> ~<span class="built_in">Shape</span>() &#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Circle</span> : <span class="keyword">public</span> Shape &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">double</span> radius;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">Circle</span>(<span class="type">double</span> r) : <span class="built_in">radius</span>(r) &#123;&#125;</span><br><span class="line">    <span class="comment">// 必须实现 getArea()</span></span><br><span class="line">    <span class="function"><span class="type">double</span> <span class="title">getArea</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">override</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">3.14159</span> * radius * radius;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Shape* s = new Shape(); // 错误！不能实例化抽象类</span></span><br><span class="line">Shape* c = <span class="keyword">new</span> <span class="built_in">Circle</span>(<span class="number">10.0</span>); <span class="comment">// 正确</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><table>
+<thead>
+<tr>
+<th align="left">特性</th>
+<th align="left">静态多态 (编译时)</th>
+<th align="left">动态多态 (运行时)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>实现方式</strong></td>
+<td align="left">函数重载、模板</td>
+<td align="left">继承、虚函数、基类指针&#x2F;引用</td>
+</tr>
+<tr>
+<td align="left"><strong>绑定时机</strong></td>
+<td align="left">编译时（静态绑定&#x2F;早绑定）</td>
+<td align="left">运行时（动态绑定&#x2F;晚绑定）</td>
+</tr>
+<tr>
+<td align="left"><strong>底层机制</strong></td>
+<td align="left">编译器根据参数类型决定调用</td>
+<td align="left">虚函数表 (v-table) 和虚函数指针 (v-ptr)</td>
+</tr>
+<tr>
+<td align="left"><strong>性能</strong></td>
+<td align="left">速度快，无运行时开销</td>
+<td align="left">稍慢，有一次间接寻址的开销</td>
+</tr>
+<tr>
+<td align="left"><strong>灵活性</strong></td>
+<td align="left">较低，编译时已确定</td>
+<td align="left">极高，允许在运行时处理未知类型的对象</td>
+</tr>
+<tr>
+<td align="left"><strong>典型应用</strong></td>
+<td align="left">泛型编程（如STL）、数值计算</td>
+<td align="left">基于接口的编程、插件系统、UI框架等</td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/">https://lx-cel.github.io/2025/08/27/CPP学习笔记—多态/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/cpp/">cpp</a></div><div class="post-share"><div class="social-share" data-image="/img/31.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="CPP学习笔记—深拷贝与浅拷贝"><img class="cover" src="/img/32.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CPP学习笔记—深拷贝与浅拷贝</div></div><div class="info-2"><div class="info-item-1">C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。  1. 问题的根源：指针和动态内存要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 int, double）或者不持有动态资源的对象（如 std::string，它自己内部处理好了深拷贝），那么我们通常不需要关心这个问题。 问题出现在当一个类的成员变量是指针，并且这个指针指向了在堆（Heap）上动态分配的内存时。 来看一个简单的例子，一个自定义的字符串包装类： 123456789101112131415161718class MyString &#123;private:    char* _data;    size_t _len;public:    MyString(const char* s = &quot;&quot;) &#123;        _len = strlen(s);        _data = new char[_len + 1]; //...</div></div></div></a><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%9B%9B%E7%A7%8D%E5%BC%BA%E5%88%B6%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2/" title="CPP学习笔记—四种强制类型转换"><img class="cover" src="/img/30.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CPP学习笔记—四种强制类型转换</div></div><div class="info-2"><div class="info-item-1">C++中的四种强制类型转换：static_cast、dynamic_cast、const_cast 和 reinterpret_cast。 为什么需要新的类型转换？在C++之前，C语言使用一种通用的强制类型转换语法，例如 (new_type)expression 或 new_type(expression)。这种C风格的转换方式存在几个问题：  过于粗暴：它可以在任何类型之间进行转换，无论是相关的还是不相关的，这使得它非常不安全。 意图不明：从语法上无法清晰地看出程序员想要做什么样的转换（例如，是移除const、进行继承体系中的转换，还是进行底层的位模式重新解释）。 难以搜索：在代码库中搜索 ( 符号来定位所有的类型转换是非常困难的，不利于代码审查和维护。  为了解决这些问题，C++引入了四个功能更明确、更安全的命名转换操作符。它们让代码的意图更加清晰，并允许编译器进行更严格的检查。  1. static_caststatic_cast...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式"><img class="cover" src="/img/24.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-16</div><div class="info-item-2">CPP学习笔记—lambda表达式</div></div><div class="info-2"><div class="info-item-1">Lambda 表达式是 C++11 引入的一项革命性特性，它极大地改变了 C++ 的编程风格，尤其是在与标准模板库（STL）配合使用时。它允许我们在代码中需要一个函数的地方，直接定义一个匿名的、临时的函数对象。  1. 什么是 Lambda 表达式？简单来说，Lambda 表达式就是一个可调用的代码单元，可以把它理解为一个匿名的内联函数。与普通函数不同，它可以在函数内部定义，并且可以“捕获”其所在作用域中的变量。 2. 为什么需要 Lambda 表达式？在 C++11 之前，如果想向一个算法（如 std::sort）传递一个简单的、一次性的比较逻辑，通常需要：  定义一个全局函数或静态成员函数：这会污染命名空间，并且逻辑与使用它的地方相隔甚远。 定义一个函数对象（Functor）：需要编写一个完整的类，重载 operator()。这非常繁琐。  Lambda 的优势：  代码局部性：将逻辑直接写在使用它的地方，代码更紧凑，可读性更高。 简洁性：避免了编写独立的函数或函数对象类的样板代码。 状态捕获：可以方便地访问和使用其定义作用域内的变量，这是普通函数难以做到的。   3....</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%8C%87%E9%92%88/" title="CPP学习笔记—指针"><img class="cover" src="/img/21.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—指针</div></div><div class="info-2"><div class="info-item-1">一、指针到底是什么？—— 内存地址的“房卡”想象一下计算机的内存是一家长长的酒店，里面有无数的房间，每个房间都有一个独一无二的门牌号（内存地址）。  普通变量：就像一个房间，里面存放着具体的东西（值）。 1int age = 25; // 在一个叫 `age` 的房间里，放了数字 25。  指针：它本身也是一个变量，但它里面存放的不是普通的东西，而是一张房卡。这张房卡上写着另一个房间的门牌号。   所以，指针是一个存储了另一个变量内存地址的变量。通过这张“房卡”，我们就能找到并操作那个特定的“房间”。  二、两大核心操作符：&amp; (取地址) 和 * (解引用)要玩转指针，必须掌握这两个“魔法”操作符。 1. &amp; (取地址符) —— “制作房卡”&amp; 符号的作用是获取一个变量的内存地址。可以把它读作“…的地址”。 12345int age = 25;       // 一个存放 25 的房间 `age`int* p_age = &amp;age;  // 创建一张叫 `p_age` 的房卡，                    // 上面记录 `age`...</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93%EF%BC%88STL%EF%BC%89%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" title="CPP学习笔记—标准模板库（STL）中的容器"><img class="cover" src="/img/22.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—标准模板库（STL）中的容器</div></div><div class="info-2"><div class="info-item-1">一、什么是容器？为什么它如此重要？简单来说，C++ 容器是用来存储和管理一组对象的类模板。它们就像是工具箱里不同种类的收纳盒：有的适合快速取放（像数组），有的适合保持物品有序（像分类文件柜），还有的适合快速查找（像带索引的卡片盒）。 使用 STL 容器的好处是巨大的：  代码更简洁：你无需从零开始实现链表、哈希表等复杂数据结构。 性能更优越：STL 容器经过了高度优化，性能通常比手写的要好。 代码更安全：它们处理了内存管理的细节，减少了内存泄漏和越界访问的风险。 互操作性强：所有容器都遵循一套统一的接口（如 begin(), end(), size()），可以与 STL 的迭代器和算法无缝协作，威力倍增。   二、容器的分类与概览C++ 的容器主要分为四大类，分别是序列容器、关联容器、无序关联容器和容器适配器。    类别 容器 特点    序列容器 vector, deque, list, array 元素按线性顺序排列，可通过位置访问。   关联容器 map, set, multimap, multiset 元素根据键值自动排序，查找速度快 (O(log...</div></div></div></a><a class="pagination-related" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img class="cover" src="/img/37.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-19</div><div class="info-item-2">CPP学习笔记——unordered_map</div></div><div class="info-2"><div class="info-item-1"> 1. unordered_map 是什么？std::unordered_map 是 C++ 标准模板库（STL）中的一个关联容器，它存储了由“键（Key）”和“值（Value）”组成的元素对（std::pair&lt;const Key, Value&gt;）。它的核心特点是：  无序性：元素在容器内的存储顺序是无序的，遍历 unordered_map 时，得到的元素顺序与插入顺序无关，并且在不同编译环境下可能不同。 基于哈希表：其内部实现是一个哈希表（Hash Table）。 高效查询：由于使用了哈希表，它提供了非常快的平均时间复杂度的操作： 插入、删除、查找：平均 O(1) 最坏情况：O(N)，其中 N 是容器中元素的数量（当发生严重的哈希冲突时）。    核心概念：哈希表为了理解 unordered_map，需要了解哈希表的工作原理：  哈希函数 (Hash Function)：当插入一个键值对时，unordered_map 会使用一个哈希函数将“键”转换成一个整数，这个整数被称为哈希值（Hash Code）。 桶 (Bucket)：unordered_map...</div></div></div></a><a class="pagination-related" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img class="cover" src="/img/34.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-29</div><div class="info-item-2">CPP学习笔记—智能指针</div></div><div class="info-2"><div class="info-item-1">1. 为什么需要智能指针？在 C&#x2F;C++ 中，内存管理是一个核心但又极易出错的话题。传统的内存管理依赖于程序员手动使用 new 和 delete (或 malloc 和 free) 来申请和释放内存。这导致了几个经典的问题：  内存泄漏 (Memory Leaks)：忘记调用 delete。当一个动态分配的对象不再被使用，但其内存没有被释放时，这块内存就无法被再次使用，造成了内存泄漏。长时间运行的程序中，内存泄漏会耗尽系统资源，导致程序崩溃。 悬挂指针 (Dangling Pointers)：一个指针指向的内存已经被释放，但指针本身没有被置为 nullptr。如果之后不小心通过这个悬挂指针访问或修改内存，会导致未定义行为（Undefined Behavior），通常表现为程序崩溃或数据损坏。 重复释放 (Double Free)：对同一块内存调用两次或多次 delete。这也是一种严重的未定义行为，通常会导致程序崩溃。 异常安全问题：在 new 和 delete 之间如果发生异常，delete 语句可能永远不会被执行，从而导致内存泄漏。  12345678void...</div></div></div></a><a class="pagination-related" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="CPP学习笔记—深拷贝与浅拷贝"><img class="cover" src="/img/32.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-28</div><div class="info-item-2">CPP学习笔记—深拷贝与浅拷贝</div></div><div class="info-2"><div class="info-item-1">C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。  1. 问题的根源：指针和动态内存要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 int, double）或者不持有动态资源的对象（如 std::string，它自己内部处理好了深拷贝），那么我们通常不需要关心这个问题。 问题出现在当一个类的成员变量是指针，并且这个指针指向了在堆（Heap）上动态分配的内存时。 来看一个简单的例子，一个自定义的字符串包装类： 123456789101112131415161718class MyString &#123;private:    char* _data;    size_t _len;public:    MyString(const char* s = &quot;&quot;) &#123;        _len = strlen(s);        _data = new char[_len + 1]; //...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E5%A4%9A%E6%80%81%EF%BC%9F"><span class="toc-text">什么是多态？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%88%86%E7%B1%BB"><span class="toc-text">C++ 中的多态分类</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81-%E9%9D%99%E6%80%81%E5%A4%9A%E6%80%81-Static-Polymorphism"><span class="toc-text">一、 静态多态 (Static Polymorphism)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%87%BD%E6%95%B0%E9%87%8D%E8%BD%BD-Function-Overloading"><span class="toc-text">1. 函数重载 (Function Overloading)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%A8%A1%E6%9D%BF-Templates"><span class="toc-text">2. 模板 (Templates)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81-%E5%8A%A8%E6%80%81%E5%A4%9A%E6%80%81-Dynamic-Polymorphism"><span class="toc-text">二、 动态多态 (Dynamic Polymorphism)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E5%A4%9A%E6%80%81%E7%9A%84%E4%B8%89%E4%B8%AA%E6%9D%A1%E4%BB%B6"><span class="toc-text">实现动态多态的三个条件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B%E4%BB%A3%E7%A0%81"><span class="toc-text">示例代码</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%A4%9A%E6%80%81%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86%EF%BC%9A%E8%99%9A%E5%87%BD%E6%95%B0%E8%A1%A8-v-table"><span class="toc-text">动态多态的底层实现原理：虚函数表 (v-table)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B0%83%E7%94%A8%E8%BF%87%E7%A8%8B%E5%89%96%E6%9E%90"><span class="toc-text">调用过程剖析</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0%E9%9C%80%E8%A6%81%E6%98%AF%E8%99%9A%E5%87%BD%E6%95%B0%EF%BC%9F"><span class="toc-text">为什么析构函数需要是虚函数？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BA%AF%E8%99%9A%E5%87%BD%E6%95%B0%E4%B8%8E%E6%8A%BD%E8%B1%A1%E7%B1%BB"><span class="toc-text">纯虚函数与抽象类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img src="/img/37.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记——unordered_map"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map">CPP学习笔记——unordered_map</a><time datetime="2025-09-19T08:09:17.000Z" title="发表于 2025-09-19 16:09:17">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="算法模板"/></a><div class="content"><a class="title" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板">算法模板</a><time datetime="2025-09-15T01:13:48.000Z" title="发表于 2025-09-15 09:13:48">2025-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组"><img src="/img/35.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="数据结构与算法—树状数组"/></a><div class="content"><a class="title" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组">数据结构与算法—树状数组</a><time datetime="2025-09-06T02:08:01.000Z" title="发表于 2025-09-06 10:08:01">2025-09-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img src="/img/34.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—智能指针"/></a><div class="content"><a class="title" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针">CPP学习笔记—智能指针</a><time datetime="2025-08-29T01:58:51.000Z" title="发表于 2025-08-29 09:58:51">2025-08-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数"><img src="/img/33.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—特殊成员函数"/></a><div class="content"><a class="title" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数">CPP学习笔记—特殊成员函数</a><time datetime="2025-08-28T06:55:22.000Z" title="发表于 2025-08-28 14:55:22">2025-08-28</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

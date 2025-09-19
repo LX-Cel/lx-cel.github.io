@@ -1,0 +1,398 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CPP学习笔记—深拷贝与浅拷贝 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。  1. 问题的根源：指针和动态内存要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 int, double）或者不持有动态资源的对象（如 std::string，它自己内部处理好了深拷贝），那么我们通">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPP学习笔记—深拷贝与浅拷贝">
+<meta property="og:url" content="https://lx-cel.github.io/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。  1. 问题的根源：指针和动态内存要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 int, double）或者不持有动态资源的对象（如 std::string，它自己内部处理好了深拷贝），那么我们通">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/32.jpg">
+<meta property="article:published_time" content="2025-08-28T06:42:42.000Z">
+<meta property="article:modified_time" content="2025-08-27T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/32.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CPP学习笔记—深拷贝与浅拷贝',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/32.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">CPP学习笔记—深拷贝与浅拷贝</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CPP学习笔记—深拷贝与浅拷贝</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-08-28T06:42:42.000Z" title="发表于 2025-08-28 14:42:42">2025-08-28</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-27T16:00:00.000Z" title="更新于 2025-08-28 00:00:00">2025-08-28</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/cpp/">cpp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。</p>
+<hr>
+<h3 id="1-问题的根源：指针和动态内存"><a href="#1-问题的根源：指针和动态内存" class="headerlink" title="1. 问题的根源：指针和动态内存"></a>1. 问题的根源：指针和动态内存</h3><p>要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 <code>int</code>, <code>double</code>）或者不持有动态资源的对象（如 <code>std::string</code>，它自己内部处理好了深拷贝），那么我们通常不需要关心这个问题。</p>
+<p><strong>问题出现在当一个类的成员变量是指针，并且这个指针指向了在堆（Heap）上动态分配的内存时。</strong></p>
+<p>来看一个简单的例子，一个自定义的字符串包装类：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyString</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">char</span>* _data;</span><br><span class="line">    <span class="type">size_t</span> _len;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">MyString</span>(<span class="type">const</span> <span class="type">char</span>* s = <span class="string">&quot;&quot;</span>) &#123;</span><br><span class="line">        _len = <span class="built_in">strlen</span>(s);</span><br><span class="line">        _data = <span class="keyword">new</span> <span class="type">char</span>[_len + <span class="number">1</span>]; <span class="comment">// 在堆上分配内存</span></span><br><span class="line">        <span class="built_in">strcpy</span>(_data, s);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">MyString</span>() &#123;</span><br><span class="line">        <span class="keyword">delete</span>[] _data; <span class="comment">// 在析构时释放内存</span></span><br><span class="line">        _data = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ... 其他成员函数 ...</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这个 <code>MyString</code> 类自己管理了一块动态内存（<code>_data</code>）。当我们复制这个类的对象时，问题就来了。</p>
+<hr>
+<h3 id="2-浅拷贝-Shallow-Copy-：简单的成员复制"><a href="#2-浅拷贝-Shallow-Copy-：简单的成员复制" class="headerlink" title="2. 浅拷贝 (Shallow Copy)：简单的成员复制"></a>2. 浅拷贝 (Shallow Copy)：简单的成员复制</h3><h4 id="什么是浅拷贝？"><a href="#什么是浅拷贝？" class="headerlink" title="什么是浅拷贝？"></a>什么是浅拷贝？</h4><p>浅拷贝，也称为“成员逐一复制”或“位拷贝”，是<strong>仅仅复制对象的所有成员变量的值</strong>。</p>
+<ul>
+<li>对于基本数据类型，复制的是值本身。</li>
+<li>对于指针类型，复制的是 <strong>指针的地址值</strong>，而不是指针所指向的内存内容。</li>
+</ul>
+<h4 id="编译器何时会生成浅拷贝？"><a href="#编译器何时会生成浅拷贝？" class="headerlink" title="编译器何时会生成浅拷贝？"></a>编译器何时会生成浅拷贝？</h4><p>当你没有自定义拷贝构造函数和拷贝赋值运算符时，编译器会自动为你生成它们。而这些自动生成的版本执行的就是浅拷贝。</p>
+<h4 id="浅拷贝带来的致命问题"><a href="#浅拷贝带来的致命问题" class="headerlink" title="浅拷贝带来的致命问题"></a>浅拷贝带来的致命问题</h4><p>让我们看看使用默认的浅拷贝会发生什么：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// (接上文的 MyString 类定义)</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">cause_problem</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">MyString <span class="title">str1</span><span class="params">(<span class="string">&quot;hello&quot;</span>)</span></span>;</span><br><span class="line">    MyString str2 = str1; <span class="comment">// 调用了编译器生成的拷贝构造函数 -&gt; 浅拷贝</span></span><br><span class="line">&#125; <span class="comment">// 函数结束，str1 和 str2 的析构函数被调用</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>发生了什么？</strong></p>
+<ol>
+<li><p><code>MyString str1(&quot;hello&quot;);</code></p>
+<ul>
+<li><code>str1._data</code> 指向堆上的一块内存，内容为 “hello\0”。</li>
+<li><code>str1._len</code> 为 5。</li>
+</ul>
+</li>
+<li><p><code>MyString str2 = str1;</code> (浅拷贝)</p>
+<ul>
+<li><code>str2._len</code> 被赋值为 <code>str1._len</code> (值为 5)。</li>
+<li><code>str2._data</code> 被赋值为 <code>str1._data</code> (同一个内存地址！)。</li>
+</ul>
+</li>
+</ol>
+<p>现在，<code>str1</code> 和 <code>str2</code> 内部的 <code>_data</code> 指针指向了 <strong>同一块</strong> 堆内存。</p>
+<p><strong>问题一：悬挂指针 (Dangling Pointer)</strong></p>
+<p>如果 <code>str2</code> 在某个时刻被修改，<code>str1</code> 也会被“意外”地修改，因为它们共享数据。更严重的是，如果其中一个对象被销毁…</p>
+<p><strong>问题二：重复释放 (Double Free)</strong></p>
+<p>当 <code>cause_problem</code> 函数结束时：</p>
+<ol>
+<li><code>str2</code> 的析构函数被调用。它执行 <code>delete[] _data;</code>，成功释放了内存。</li>
+<li><code>str1</code> 的析构函数被调用。它执行 <code>delete[] _data;</code>，试图 <strong>再次释放同一块已经被释放的内存</strong>。</li>
+</ol>
+<p><strong>这会导致程序崩溃！</strong> 这就是所谓的“重复释放”错误，是 C++ 中非常严重的内存错误。</p>
+<hr>
+<h3 id="3-深拷贝-Deep-Copy-：复制指针指向的内容"><a href="#3-深拷贝-Deep-Copy-：复制指针指向的内容" class="headerlink" title="3. 深拷贝 (Deep Copy)：复制指针指向的内容"></a>3. 深拷贝 (Deep Copy)：复制指针指向的内容</h3><h4 id="什么是深拷贝？"><a href="#什么是深拷贝？" class="headerlink" title="什么是深拷贝？"></a>什么是深拷贝？</h4><p>深拷贝是在进行对象复制时，如果遇到指针类型的成员变量，它<strong>不会只复制指针的地址，而是会重新分配一块新的内存空间，然后将原始指针所指向的内容复制到这块新内存中</strong>。</p>
+<p>这样，两个对象就各自拥有了独立的内存资源，互不影响。</p>
+<h4 id="如何实现深拷贝？"><a href="#如何实现深拷贝？" class="headerlink" title="如何实现深拷贝？"></a>如何实现深拷贝？</h4><p>要实现深拷贝，你必须<strong>手动</strong>为你的类提供：</p>
+<ol>
+<li><strong>拷贝构造函数 (Copy Constructor)</strong></li>
+<li><strong>拷贝赋值运算符 (Copy Assignment Operator)</strong></li>
+</ol>
+<hr>
+<h3 id="4-C-中的实现：拷贝构造函数与拷贝赋值运算符"><a href="#4-C-中的实现：拷贝构造函数与拷贝赋值运算符" class="headerlink" title="4. C++ 中的实现：拷贝构造函数与拷贝赋值运算符"></a>4. C++ 中的实现：拷贝构造函数与拷贝赋值运算符</h3><p>让我们为 <code>MyString</code> 类添加深拷贝的实现。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyString</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">char</span>* _data;</span><br><span class="line">    <span class="type">size_t</span> _len;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 默认构造函数</span></span><br><span class="line">    <span class="built_in">MyString</span>(<span class="type">const</span> <span class="type">char</span>* s = <span class="string">&quot;&quot;</span>) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Constructor called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        _len = <span class="built_in">strlen</span>(s);</span><br><span class="line">        _data = <span class="keyword">new</span> <span class="type">char</span>[_len + <span class="number">1</span>];</span><br><span class="line">        <span class="built_in">strcpy</span>(_data, s);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 析构函数</span></span><br><span class="line">    ~<span class="built_in">MyString</span>() &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Destructor called for &quot;</span> &lt;&lt; (_data ? _data : <span class="string">&quot;null&quot;</span>) &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">delete</span>[] _data;</span><br><span class="line">        _data = <span class="literal">nullptr</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. 拷贝构造函数 (实现深拷贝)</span></span><br><span class="line">    <span class="built_in">MyString</span>(<span class="type">const</span> MyString&amp; other) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Copy Constructor called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        _len = other._len;</span><br><span class="line">        _data = <span class="keyword">new</span> <span class="type">char</span>[_len + <span class="number">1</span>]; <span class="comment">// 分配新的内存</span></span><br><span class="line">        <span class="built_in">strcpy</span>(_data, other._data); <span class="comment">// 拷贝内容</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 拷贝赋值运算符 (实现深拷贝)</span></span><br><span class="line">    MyString&amp; <span class="keyword">operator</span>=(<span class="type">const</span> MyString&amp; other) &#123;</span><br><span class="line">        std::cout &lt;&lt; <span class="string">&quot;Copy Assignment Operator called&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 关键步骤1：检查自赋值</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span> == &amp;other) &#123;</span><br><span class="line">            <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 关键步骤2：释放当前对象已有的资源</span></span><br><span class="line">        <span class="keyword">delete</span>[] _data;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 关键步骤3：分配新资源并拷贝内容</span></span><br><span class="line">        _len = other._len;</span><br><span class="line">        _data = <span class="keyword">new</span> <span class="type">char</span>[_len + <span class="number">1</span>];</span><br><span class="line">        <span class="built_in">strcpy</span>(_data, other._data);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 关键步骤4：返回*this以支持链式赋值 (a = b = c)</span></span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">print</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (_data) &#123;</span><br><span class="line">            std::cout &lt;&lt; _data &lt;&lt; std::endl;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="function">MyString <span class="title">str1</span><span class="params">(<span class="string">&quot;hello&quot;</span>)</span></span>; <span class="comment">// Constructor</span></span><br><span class="line">    </span><br><span class="line">    MyString str2 = str1; <span class="comment">// 调用拷贝构造函数</span></span><br><span class="line">    <span class="comment">// 等价于 MyString str2(str1);</span></span><br><span class="line"></span><br><span class="line">    MyString str3; <span class="comment">// Constructor</span></span><br><span class="line">    str3 = str1;   <span class="comment">// 调用拷贝赋值运算符</span></span><br><span class="line">    </span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;--- Exiting main ---&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>; <span class="comment">// str3, str2, str1 的析构函数依次被调用</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>输出：</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Constructor called</span><br><span class="line">Copy Constructor called</span><br><span class="line">Constructor called</span><br><span class="line">Copy Assignment Operator called</span><br><span class="line">--- Exiting main ---</span><br><span class="line">Destructor called for hello</span><br><span class="line">Destructor called for hello</span><br><span class="line">Destructor called for hello</span><br></pre></td></tr></table></figure>
+<p>现在，每个对象都有自己独立的内存，析构时各自释放自己的内存，程序运行正常，没有任何内存错误。</p>
+<hr>
+<h3 id="5-“三-五-零之法则”-The-Rule-of-Three-Five-Zero"><a href="#5-“三-五-零之法则”-The-Rule-of-Three-Five-Zero" class="headerlink" title="5. “三&#x2F;五&#x2F;零之法则” (The Rule of Three&#x2F;Five&#x2F;Zero)"></a>5. “三&#x2F;五&#x2F;零之法则” (The Rule of Three&#x2F;Five&#x2F;Zero)</h3><p>这是一个关于何时需要手写特殊成员函数（析构、拷贝、移动）的指导方针。</p>
+<h4 id="三之法则-Rule-of-Three-经典-C"><a href="#三之法则-Rule-of-Three-经典-C" class="headerlink" title="三之法则 (Rule of Three) - 经典 C++"></a>三之法则 (Rule of Three) - 经典 C++</h4><p><strong>如果你需要显式地声明析构函数、拷贝构造函数、或拷贝赋值运算符中的任何一个，那么你很可能需要把这三个都声明。</strong></p>
+<ul>
+<li><strong>原因</strong>：手动管理资源（如 <code>new</code>&#x2F;<code>delete</code>）通常是同时需要这三者的根本原因。<ul>
+<li>需要析构函数来 <code>delete</code> 资源。</li>
+<li>需要拷贝构造函数和拷贝赋值运算符来实现深拷贝，以避免浅拷贝带来的问题。</li>
+</ul>
+</li>
+</ul>
+<p>我们的 <code>MyString</code> 例子完美地诠释了三之法则。</p>
+<h4 id="五之法则-Rule-of-Five-C-11"><a href="#五之法则-Rule-of-Five-C-11" class="headerlink" title="五之法则 (Rule of Five) - C++11"></a>五之法则 (Rule of Five) - C++11</h4><p>随着 C++11 引入了<strong>移动语义 (Move Semantics)</strong>，这个法则扩展了。</p>
+<p><strong>如果你需要手动实现析构、拷贝构造、拷贝赋值、移动构造、或移动赋值中的任何一个，那么你可能需要实现所有五个。</strong></p>
+<ul>
+<li><strong>移动构造函数</strong> <code>MyString(MyString&amp;&amp; other)</code></li>
+<li><strong>移动赋值运算符</strong> <code>MyString&amp; operator=(MyString&amp;&amp; other)</code></li>
+</ul>
+<p>移动操作用于从临时对象（右值）“窃取”资源，而不是昂贵的拷贝，极大地提高了性能。</p>
+<h4 id="零之法则-Rule-of-Zero-现代-C-最佳实践"><a href="#零之法则-Rule-of-Zero-现代-C-最佳实践" class="headerlink" title="零之法则 (Rule of Zero) - 现代 C++ 最佳实践"></a>零之法则 (Rule of Zero) - 现代 C++ 最佳实践</h4><p><strong>一个类应该专注于一项任务。如果这个任务是业务逻辑，那么它就不应该操心资源管理。</strong></p>
+<p><strong>核心思想</strong>：<strong>不要自己手动管理资源！</strong> 使用 C++ 标准库提供的 RAII (Resource Acquisition Is Initialization) 容器和智能指针。</p>
+<ul>
+<li>用 <code>std::string</code> 代替 <code>char*</code>。</li>
+<li>用 <code>std::vector&lt;T&gt;</code> 代替 <code>T*</code> 动态数组。</li>
+<li>用 <code>std::unique_ptr&lt;T&gt;</code> 或 <code>std::shared_ptr&lt;T&gt;</code> 来管理单个动态对象的生命周期。</li>
+</ul>
+<p>如果你遵循零之法则，你的类可能看起来像这样：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;memory&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MyModernClass</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::string _name; <span class="comment">// std::string 内部实现了深拷贝</span></span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; _items; <span class="comment">// std::vector 内部实现了深拷贝</span></span><br><span class="line">    std::unique_ptr&lt;SomeResource&gt; _resource; <span class="comment">// unique_ptr 管理资源，但不可拷贝</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="comment">// 不需要手动写析构、拷贝构造、拷贝赋值、移动构造、移动赋值！</span></span><br><span class="line">    <span class="comment">// 编译器自动生成的版本会正确地调用每个成员的对应函数。</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>当拷贝 <code>MyModernClass</code> 的对象时，编译器生成的拷贝构造函数会自动调用 <code>std::string</code> 和 <code>std::vector</code> 的拷贝构造函数，它们会执行正确的深拷贝。你一行代码都不用多写，这就是零之法则。</p>
+<hr>
+<h3 id="6-总结对比表"><a href="#6-总结对比表" class="headerlink" title="6. 总结对比表"></a>6. 总结对比表</h3><table>
+<thead>
+<tr>
+<th align="left">特性</th>
+<th align="left">浅拷贝 (Shallow Copy)</th>
+<th align="left">深拷贝 (Deep Copy)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>定义</strong></td>
+<td align="left">只复制成员变量的值，如果是指针，则复制地址。</td>
+<td align="left">复制成员变量的值，如果是指针，则为指针所指内容分配新内存并复制。</td>
+</tr>
+<tr>
+<td align="left"><strong>实现方式</strong></td>
+<td align="left">编译器默认生成。</td>
+<td align="left">需要用户自己实现拷贝构造函数和拷贝赋值运算符。</td>
+</tr>
+<tr>
+<td align="left"><strong>资源管理</strong></td>
+<td align="left">多个对象共享同一份外部资源。</td>
+<td align="left">每个对象拥有自己独立的外部资源副本。</td>
+</tr>
+<tr>
+<td align="left"><strong>优点</strong></td>
+<td align="left">速度快，开销小。</td>
+<td align="left">安全，对象间互不影响，避免内存错误。</td>
+</tr>
+<tr>
+<td align="left"><strong>缺点</strong></td>
+<td align="left">极易导致悬挂指针和重复释放等内存错误，非常危险。</td>
+<td align="left">实现复杂，有额外的内存分配和数据复制开销，性能较低。</td>
+</tr>
+<tr>
+<td align="left"><strong>适用场景</strong></td>
+<td align="left">仅当类中没有指针成员或不涉及动态资源管理时才安全。</td>
+<td align="left"><strong>只要类中包含指向动态分配资源的指针，就必须使用深拷贝。</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>现代实践</strong></td>
+<td align="left">尽量避免需要手动区分的场景，使用 RAII 类（<code>std::string</code>, <code>std::vector</code>, 智能指针）来自动处理，遵循“零之法则”。</td>
+<td align="left"></td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/">https://lx-cel.github.io/2025/08/28/CPP学习笔记—深拷贝与浅拷贝/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/cpp/">cpp</a></div><div class="post-share"><div class="social-share" data-image="/img/32.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数"><img class="cover" src="/img/33.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CPP学习笔记—特殊成员函数</div></div><div class="info-2"><div class="info-item-1">1. 引言：对象生命周期与 RAIIC++ 中，对象有明确的生命周期：它被创建，然后在使用结束后被销毁。构造函数、拷贝构造函数、拷贝赋值运算符、移动构造函数、移动赋值运算符和析构函数这六个函数（通常被称为特殊成员函数）就是用来管理这个生命周期的。它们控制着对象的：  创建 (Construction) 销毁 (Destruction) 拷贝 (Copying) 移动 (Moving)  它们是实现 C++ 核心设计哲学 RAII (Resource Acquisition Is Initialization) 的基石。RAII 意味着在对象的构造函数中获取资源（如内存、文件句柄、锁），并在其析构函数中释放资源，从而将资源的生命周期与对象的生命周期绑定在一起，避免资源泄漏。 2. 核心示例：一个简单的 Buffer 类我们将使用一个简单的 Buffer 类来贯穿整个讲解。这个类在堆上分配了一块整数数组，因此它需要手动管理内存资源。 1234567891011121314151617181920#include &lt;iostream&gt;#include...</div></div></div></a><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/" title="CPP学习笔记—多态"><img class="cover" src="/img/31.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CPP学习笔记—多态</div></div><div class="info-2"><div class="info-item-1">什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。 在 C++ 中，这个“遥控器”就是基类指针或引用，而“电视机”和“空调”就是派生类对象。 C++ 中的多态分类C++ 中的多态主要分为两类：  静态多态（编译时多态）：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。 动态多态（运行时多态）：在程序运行期间才能确定调用哪个函数。这是我们通常所说的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式"><img class="cover" src="/img/24.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-16</div><div class="info-item-2">CPP学习笔记—lambda表达式</div></div><div class="info-2"><div class="info-item-1">Lambda 表达式是 C++11 引入的一项革命性特性，它极大地改变了 C++ 的编程风格，尤其是在与标准模板库（STL）配合使用时。它允许我们在代码中需要一个函数的地方，直接定义一个匿名的、临时的函数对象。  1. 什么是 Lambda 表达式？简单来说，Lambda 表达式就是一个可调用的代码单元，可以把它理解为一个匿名的内联函数。与普通函数不同，它可以在函数内部定义，并且可以“捕获”其所在作用域中的变量。 2. 为什么需要 Lambda 表达式？在 C++11 之前，如果想向一个算法（如 std::sort）传递一个简单的、一次性的比较逻辑，通常需要：  定义一个全局函数或静态成员函数：这会污染命名空间，并且逻辑与使用它的地方相隔甚远。 定义一个函数对象（Functor）：需要编写一个完整的类，重载 operator()。这非常繁琐。  Lambda 的优势：  代码局部性：将逻辑直接写在使用它的地方，代码更紧凑，可读性更高。 简洁性：避免了编写独立的函数或函数对象类的样板代码。 状态捕获：可以方便地访问和使用其定义作用域内的变量，这是普通函数难以做到的。   3....</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%8C%87%E9%92%88/" title="CPP学习笔记—指针"><img class="cover" src="/img/21.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—指针</div></div><div class="info-2"><div class="info-item-1">一、指针到底是什么？—— 内存地址的“房卡”想象一下计算机的内存是一家长长的酒店，里面有无数的房间，每个房间都有一个独一无二的门牌号（内存地址）。  普通变量：就像一个房间，里面存放着具体的东西（值）。 1int age = 25; // 在一个叫 `age` 的房间里，放了数字 25。  指针：它本身也是一个变量，但它里面存放的不是普通的东西，而是一张房卡。这张房卡上写着另一个房间的门牌号。   所以，指针是一个存储了另一个变量内存地址的变量。通过这张“房卡”，我们就能找到并操作那个特定的“房间”。  二、两大核心操作符：&amp; (取地址) 和 * (解引用)要玩转指针，必须掌握这两个“魔法”操作符。 1. &amp; (取地址符) —— “制作房卡”&amp; 符号的作用是获取一个变量的内存地址。可以把它读作“…的地址”。 12345int age = 25;       // 一个存放 25 的房间 `age`int* p_age = &amp;age;  // 创建一张叫 `p_age` 的房卡，                    // 上面记录 `age`...</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93%EF%BC%88STL%EF%BC%89%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" title="CPP学习笔记—标准模板库（STL）中的容器"><img class="cover" src="/img/22.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—标准模板库（STL）中的容器</div></div><div class="info-2"><div class="info-item-1">一、什么是容器？为什么它如此重要？简单来说，C++ 容器是用来存储和管理一组对象的类模板。它们就像是工具箱里不同种类的收纳盒：有的适合快速取放（像数组），有的适合保持物品有序（像分类文件柜），还有的适合快速查找（像带索引的卡片盒）。 使用 STL 容器的好处是巨大的：  代码更简洁：你无需从零开始实现链表、哈希表等复杂数据结构。 性能更优越：STL 容器经过了高度优化，性能通常比手写的要好。 代码更安全：它们处理了内存管理的细节，减少了内存泄漏和越界访问的风险。 互操作性强：所有容器都遵循一套统一的接口（如 begin(), end(), size()），可以与 STL 的迭代器和算法无缝协作，威力倍增。   二、容器的分类与概览C++ 的容器主要分为四大类，分别是序列容器、关联容器、无序关联容器和容器适配器。    类别 容器 特点    序列容器 vector, deque, list, array 元素按线性顺序排列，可通过位置访问。   关联容器 map, set, multimap, multiset 元素根据键值自动排序，查找速度快 (O(log...</div></div></div></a><a class="pagination-related" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img class="cover" src="/img/37.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-09-19</div><div class="info-item-2">CPP学习笔记——unordered_map</div></div><div class="info-2"><div class="info-item-1"> 1. unordered_map 是什么？std::unordered_map 是 C++ 标准模板库（STL）中的一个关联容器，它存储了由“键（Key）”和“值（Value）”组成的元素对（std::pair&lt;const Key, Value&gt;）。它的核心特点是：  无序性：元素在容器内的存储顺序是无序的，遍历 unordered_map 时，得到的元素顺序与插入顺序无关，并且在不同编译环境下可能不同。 基于哈希表：其内部实现是一个哈希表（Hash Table）。 高效查询：由于使用了哈希表，它提供了非常快的平均时间复杂度的操作： 插入、删除、查找：平均 O(1) 最坏情况：O(N)，其中 N 是容器中元素的数量（当发生严重的哈希冲突时）。    核心概念：哈希表为了理解 unordered_map，需要了解哈希表的工作原理：  哈希函数 (Hash Function)：当插入一个键值对时，unordered_map 会使用一个哈希函数将“键”转换成一个整数，这个整数被称为哈希值（Hash Code）。 桶 (Bucket)：unordered_map...</div></div></div></a><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/" title="CPP学习笔记—多态"><img class="cover" src="/img/31.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-27</div><div class="info-item-2">CPP学习笔记—多态</div></div><div class="info-2"><div class="info-item-1">什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。 在 C++ 中，这个“遥控器”就是基类指针或引用，而“电视机”和“空调”就是派生类对象。 C++ 中的多态分类C++ 中的多态主要分为两类：  静态多态（编译时多态）：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。 动态多态（运行时多态）：在程序运行期间才能确定调用哪个函数。这是我们通常所说的...</div></div></div></a><a class="pagination-related" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img class="cover" src="/img/34.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-29</div><div class="info-item-2">CPP学习笔记—智能指针</div></div><div class="info-2"><div class="info-item-1">1. 为什么需要智能指针？在 C&#x2F;C++ 中，内存管理是一个核心但又极易出错的话题。传统的内存管理依赖于程序员手动使用 new 和 delete (或 malloc 和 free) 来申请和释放内存。这导致了几个经典的问题：  内存泄漏 (Memory Leaks)：忘记调用 delete。当一个动态分配的对象不再被使用，但其内存没有被释放时，这块内存就无法被再次使用，造成了内存泄漏。长时间运行的程序中，内存泄漏会耗尽系统资源，导致程序崩溃。 悬挂指针 (Dangling Pointers)：一个指针指向的内存已经被释放，但指针本身没有被置为 nullptr。如果之后不小心通过这个悬挂指针访问或修改内存，会导致未定义行为（Undefined Behavior），通常表现为程序崩溃或数据损坏。 重复释放 (Double Free)：对同一块内存调用两次或多次 delete。这也是一种严重的未定义行为，通常会导致程序崩溃。 异常安全问题：在 new 和 delete 之间如果发生异常，delete 语句可能永远不会被执行，从而导致内存泄漏。  12345678void...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E9%97%AE%E9%A2%98%E7%9A%84%E6%A0%B9%E6%BA%90%EF%BC%9A%E6%8C%87%E9%92%88%E5%92%8C%E5%8A%A8%E6%80%81%E5%86%85%E5%AD%98"><span class="toc-text">1. 问题的根源：指针和动态内存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%B5%85%E6%8B%B7%E8%B4%9D-Shallow-Copy-%EF%BC%9A%E7%AE%80%E5%8D%95%E7%9A%84%E6%88%90%E5%91%98%E5%A4%8D%E5%88%B6"><span class="toc-text">2. 浅拷贝 (Shallow Copy)：简单的成员复制</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B5%85%E6%8B%B7%E8%B4%9D%EF%BC%9F"><span class="toc-text">什么是浅拷贝？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E5%99%A8%E4%BD%95%E6%97%B6%E4%BC%9A%E7%94%9F%E6%88%90%E6%B5%85%E6%8B%B7%E8%B4%9D%EF%BC%9F"><span class="toc-text">编译器何时会生成浅拷贝？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%85%E6%8B%B7%E8%B4%9D%E5%B8%A6%E6%9D%A5%E7%9A%84%E8%87%B4%E5%91%BD%E9%97%AE%E9%A2%98"><span class="toc-text">浅拷贝带来的致命问题</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%B7%B1%E6%8B%B7%E8%B4%9D-Deep-Copy-%EF%BC%9A%E5%A4%8D%E5%88%B6%E6%8C%87%E9%92%88%E6%8C%87%E5%90%91%E7%9A%84%E5%86%85%E5%AE%B9"><span class="toc-text">3. 深拷贝 (Deep Copy)：复制指针指向的内容</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B7%B1%E6%8B%B7%E8%B4%9D%EF%BC%9F"><span class="toc-text">什么是深拷贝？</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E6%B7%B1%E6%8B%B7%E8%B4%9D%EF%BC%9F"><span class="toc-text">如何实现深拷贝？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-C-%E4%B8%AD%E7%9A%84%E5%AE%9E%E7%8E%B0%EF%BC%9A%E6%8B%B7%E8%B4%9D%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E4%B8%8E%E6%8B%B7%E8%B4%9D%E8%B5%8B%E5%80%BC%E8%BF%90%E7%AE%97%E7%AC%A6"><span class="toc-text">4. C++ 中的实现：拷贝构造函数与拷贝赋值运算符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E2%80%9C%E4%B8%89-%E4%BA%94-%E9%9B%B6%E4%B9%8B%E6%B3%95%E5%88%99%E2%80%9D-The-Rule-of-Three-Five-Zero"><span class="toc-text">5. “三&#x2F;五&#x2F;零之法则” (The Rule of Three&#x2F;Five&#x2F;Zero)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%89%E4%B9%8B%E6%B3%95%E5%88%99-Rule-of-Three-%E7%BB%8F%E5%85%B8-C"><span class="toc-text">三之法则 (Rule of Three) - 经典 C++</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BA%94%E4%B9%8B%E6%B3%95%E5%88%99-Rule-of-Five-C-11"><span class="toc-text">五之法则 (Rule of Five) - C++11</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%9B%B6%E4%B9%8B%E6%B3%95%E5%88%99-Rule-of-Zero-%E7%8E%B0%E4%BB%A3-C-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="toc-text">零之法则 (Rule of Zero) - 现代 C++ 最佳实践</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E6%80%BB%E7%BB%93%E5%AF%B9%E6%AF%94%E8%A1%A8"><span class="toc-text">6. 总结对比表</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img src="/img/37.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记——unordered_map"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map">CPP学习笔记——unordered_map</a><time datetime="2025-09-19T08:09:17.000Z" title="发表于 2025-09-19 16:09:17">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="算法模板"/></a><div class="content"><a class="title" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板">算法模板</a><time datetime="2025-09-15T01:13:48.000Z" title="发表于 2025-09-15 09:13:48">2025-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组"><img src="/img/35.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="数据结构与算法—树状数组"/></a><div class="content"><a class="title" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组">数据结构与算法—树状数组</a><time datetime="2025-09-06T02:08:01.000Z" title="发表于 2025-09-06 10:08:01">2025-09-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img src="/img/34.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—智能指针"/></a><div class="content"><a class="title" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针">CPP学习笔记—智能指针</a><time datetime="2025-08-29T01:58:51.000Z" title="发表于 2025-08-29 09:58:51">2025-08-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数"><img src="/img/33.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—特殊成员函数"/></a><div class="content"><a class="title" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数">CPP学习笔记—特殊成员函数</a><time datetime="2025-08-28T06:55:22.000Z" title="发表于 2025-08-28 14:55:22">2025-08-28</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>

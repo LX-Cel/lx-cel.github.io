@@ -1,0 +1,904 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>通信方式对比—UART/SPI/IIC | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="一、UARTUART（Universal Asynchronous Receiver&#x2F;Transmitter，通用异步收发器）是一种非常基础且广泛使用的串行通信协议。它不是像SPI或I²C那样的“总线”，而通常是一种点对点的通信方式。几乎所有的微控制器和计算机都包含UART硬件，它也是我们最常接触到的调试接口（例如通过USB转串口模块在电脑上查看单片机的打印信息）。  1. UART的核">
+<meta property="og:type" content="article">
+<meta property="og:title" content="通信方式对比—UART&#x2F;SPI&#x2F;IIC">
+<meta property="og:url" content="https://lx-cel.github.io/2025/08/21/%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F%E5%AF%B9%E6%AF%94%E2%80%94UART-SPI-IIC/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="一、UARTUART（Universal Asynchronous Receiver&#x2F;Transmitter，通用异步收发器）是一种非常基础且广泛使用的串行通信协议。它不是像SPI或I²C那样的“总线”，而通常是一种点对点的通信方式。几乎所有的微控制器和计算机都包含UART硬件，它也是我们最常接触到的调试接口（例如通过USB转串口模块在电脑上查看单片机的打印信息）。  1. UART的核">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/28.jpg">
+<meta property="article:published_time" content="2025-08-21T08:19:37.000Z">
+<meta property="article:modified_time" content="2025-08-20T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="嵌入式">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/28.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/08/21/%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F%E5%AF%B9%E6%AF%94%E2%80%94UART-SPI-IIC/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '通信方式对比—UART/SPI/IIC',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/28.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">通信方式对比—UART/SPI/IIC</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">通信方式对比—UART/SPI/IIC</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-08-21T08:19:37.000Z" title="发表于 2025-08-21 16:19:37">2025-08-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-08-20T16:00:00.000Z" title="更新于 2025-08-21 00:00:00">2025-08-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%B5%8C%E5%85%A5%E5%BC%8F/">嵌入式</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h2 id="一、UART"><a href="#一、UART" class="headerlink" title="一、UART"></a>一、UART</h2><p>UART（Universal Asynchronous Receiver&#x2F;Transmitter，通用异步收发器）是一种非常基础且广泛使用的串行通信协议。它不是像SPI或I²C那样的“总线”，而通常是一种点对点的通信方式。几乎所有的微控制器和计算机都包含UART硬件，它也是我们最常接触到的调试接口（例如通过USB转串口模块在电脑上查看单片机的打印信息）。</p>
+<hr>
+<h3 id="1-UART的核心概念"><a href="#1-UART的核心概念" class="headerlink" title="1. UART的核心概念"></a>1. UART的核心概念</h3><ul>
+<li><strong>通用（Universal）</strong>: 意味着它的通信参数（如速度、数据位、校验位等）是可配置的，可以与各种不同的设备进行通信。</li>
+<li><strong>异步（Asynchronous）</strong>: 这是UART最核心的特点。与SPI和I²C不同，UART通信的双方<strong>没有共享的时钟线</strong>。发送方和接收方必须事先约定好相同的通信速率（波特率），接收方依靠数据信号本身的变化（起始位）来开始同步并按约定的速率接收数据。</li>
+<li><strong>收发器（Receiver&#x2F;Transmitter）</strong>: UART硬件模块通常包含一个独立的接收器和一个独立的发送器，因此可以同时进行数据的接收和发送，实现 <strong>全双工（Full-Duplex）</strong> 通信。</li>
+</ul>
+<hr>
+<h3 id="2-UART的硬件接口"><a href="#2-UART的硬件接口" class="headerlink" title="2. UART的硬件接口"></a>2. UART的硬件接口</h3><p><img src="/img_1/03.png" alt="UART连接示意图"></p>
+<p>UART通信最少只需要两根线：</p>
+<table>
+<thead>
+<tr>
+<th align="left">引脚名称</th>
+<th align="left">功能描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>TX (Transmit)</strong></td>
+<td align="left"><strong>发送数据线</strong>。发送设备的数据从该引脚输出。</td>
+</tr>
+<tr>
+<td align="left"><strong>RX (Receive)</strong></td>
+<td align="left"><strong>接收数据线</strong>。接收设备的数据从该引脚输入。</td>
+</tr>
+</tbody></table>
+<p><strong>连接方式</strong>:<br>为了实现双向通信，两台设备的连接方式是<strong>交叉连接</strong>：</p>
+<ul>
+<li>设备A的 <code>TX</code> 连接到 设备B的 <code>RX</code></li>
+<li>设备A的 <code>RX</code> 连接到 设备B的 <code>TX</code></li>
+<li>通常还需要一根 <strong>地线（GND）</strong> 来提供共同的参考电平，保证信号的正确识别。所以，<strong>最基本的UART通信是三线制（TX, RX, GND）</strong>。</li>
+</ul>
+<hr>
+<h3 id="3-UART的数据帧格式（The-Protocol）"><a href="#3-UART的数据帧格式（The-Protocol）" class="headerlink" title="3. UART的数据帧格式（The Protocol）"></a>3. UART的数据帧格式（The Protocol）</h3><p>由于没有时钟线，UART通过一种标准的数据包结构（称为“帧”）来确保数据的正确解析。一个UART数据帧通常包含以下几个部分：</p>
+<p><img src="/img_1/04.png" alt="UART的常用数据帧格式（无校验位）"></p>
+<ol>
+<li><strong>空闲状态（Idle State）</strong>: 在没有数据传输时，TX线保持在高电平。</li>
+<li><strong>起始位（Start Bit）</strong>:<ul>
+<li>通信的开始信号。</li>
+<li>发送方将TX线从高电平拉低，并保持一个时钟周期的时间。</li>
+<li>这个<strong>下降沿</strong>告诉接收方：“注意，数据要来了！”。接收方检测到这个下降沿后，会启动自己的内部时钟，准备在后续的特定时间点采样数据位。</li>
+<li>起始位<strong>固定为1位</strong>，且<strong>电平为低（逻辑0）</strong>。</li>
+</ul>
+</li>
+<li><strong>数据位（Data Bits）</strong>:<ul>
+<li>这是真正要传输的有效数据。</li>
+<li>数据位的长度是可配置的，通常为5、6、7、8位，最常见的是<strong>8位</strong>（一个字节）。</li>
+<li>数据传输的顺序是<strong>最低有效位（LSB）在前，最高有效位（MSB）在后</strong>。例如，要发送字符’C’（ASCII码为<code>0x41</code>，二进制为<code>0100 0001</code>），发送的比特流顺序是 <code>1 0 0 0 0 0 1 0</code>。</li>
+</ul>
+</li>
+</ol>
+<p><img src="/img_1/05.png" alt="发送大写字母“A”"></p>
+<ol start="4">
+<li><strong>校验位（Parity Bit） - 可选</strong>:<ul>
+<li>一种简单的错误检测机制。</li>
+<li>它的值取决于数据位中“1”的数量。</li>
+<li><strong>无校验（None Parity）</strong>: 最常用，不使用校验位。</li>
+<li><strong>偶校验（Even Parity）</strong>: 如果数据位中“1”的个数是奇数，则校验位置为1；如果是偶数，则校验位置为0。目标是使数据位+校验位中“1”的总数为偶数。</li>
+<li><strong>奇校验（Odd Parity）</strong>: 与偶校验相反，目标是使数据位+校验位中“1”的总数为奇数。</li>
+<li>校验位只能检测出奇数个位的错误，无法检测出偶数个位的错误，也无法纠正错误，因此是一种较弱的校验方式。</li>
+</ul>
+</li>
+<li><strong>停止位（Stop Bit(s)）</strong>:<ul>
+<li>标志着一个数据帧的结束。</li>
+<li>发送方将TX线拉高，并保持至少一个时钟周期的时间。</li>
+<li>停止位的长度可以是1位、1.5位或2位，最常用的是<strong>1位</strong>。</li>
+<li>停止位确保了无论最后一个数据位是0还是1，总线在帧结束后都会回到高电平的空闲状态，为下一个起始位（下降沿）做准备。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="4-UART的同步机制和波特率"><a href="#4-UART的同步机制和波特率" class="headerlink" title="4. UART的同步机制和波特率"></a>4. UART的同步机制和波特率</h3><ul>
+<li><strong>波特率（Baud Rate）</strong>: 这是理解异步通信的关键。波特率表示每秒传输的**码元（符号）**数量。在UART中，一个码元就是一位（也就是一个高低电平，例如上面最常用的一帧数据帧是10位，也就是10个高低电平），所以波特率等同于比特率（bits per second, bps）。</li>
+<li><strong>同步原理</strong>:<ol>
+<li><strong>约定</strong>: 通信双方必须预先配置成<strong>完全相同</strong>的波特率（以及数据位、校验位、停止位配置）。常见的波特率有9600, 19200, 38400, 57600, 115200等。</li>
+<li><strong>触发</strong>: 接收方持续监测RX线。当检测到从高到低的跳变（起始位）时，它启动一个内部定时器。</li>
+<li><strong>采样</strong>: 接收方并不会在电平变化时立即采样，而是在每个位的<strong>中间时刻</strong>进行采样。它会等待起始位开始后的1.5个位周期时间（即第一个数据位的中心），采样D0。然后每隔1个位周期时间，依次采样D1, D2… 直到所有数据位和校验位都被采样。</li>
+<li><strong>容错</strong>: 在位的中心采样可以最大程度地容忍发送方和接收方之间微小的时钟频率差异。只要在采样完整个帧的过程中，累积的误差不超过半个位周期，通信就能成功。</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h3 id="5-物理层标准：不仅仅是0和1"><a href="#5-物理层标准：不仅仅是0和1" class="headerlink" title="5. 物理层标准：不仅仅是0和1"></a>5. 物理层标准：不仅仅是0和1</h3><p>UART定义了协议层（数据帧格式），但没有严格规定物理层的电压标准。这导致了多种物理接口的存在：</p>
+<ul>
+<li><strong>TTL&#x2F;CMOS电平</strong>:<ul>
+<li>这是微控制器（MCU）内部和板级通信最常用的电平。</li>
+<li>逻辑’1’ ≈ VCC (例如 3.3V 或 5V)</li>
+<li>逻辑’0’ ≈ GND (0V)</li>
+<li>抗干扰能力差，传输距离短（通常在1米以内）。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/img_1/06.png" alt="TTL电平"></p>
+<ul>
+<li><strong>RS-232</strong>:<ul>
+<li>一种经典的串口标准，常见于旧式电脑的COM口和工业设备。</li>
+<li>它使用<strong>负逻辑</strong>和更高的电压来增强抗干扰能力和传输距离（可达15米）。</li>
+<li>逻辑’1’ (Mark) &#x3D; -3V 到 -15V</li>
+<li>逻辑’0’ (Space) &#x3D; +3V 到 +15V</li>
+<li>MCU的TTL电平UART要与RS-232设备通信，<strong>必须</strong>使用<strong>电平转换芯片</strong>（如 MAX232）。直接连接会损坏设备！</li>
+</ul>
+</li>
+</ul>
+<p><img src="/img_1/07.png" alt="RS232电平"></p>
+<ul>
+<li><strong>RS-485 &#x2F; RS-422</strong>:<ul>
+<li>采用<strong>差分信号</strong>传输，抗共模干扰能力极强。</li>
+<li>使用两根线（A和B）的电压差来表示逻辑。例如，V(A) &gt; V(B) 表示’1’，V(B) &gt; V(A) 表示’0’。</li>
+<li><strong>RS-422</strong> 支持一点对多点（一个主发送，多个从接收）。</li>
+<li><strong>RS-485</strong> 在RS-422基础上改进，支持多点对多点（总线上任何设备都可以成为主发送方），是真正的多机通信总线。</li>
+<li>传输距离非常远（可达1200米），速率也很高。同样需要电平转换芯片（如 MAX485）。</li>
+</ul>
+</li>
+</ul>
+<p><img src="/img_1/08.png" alt="RS485的差分信号"><br><img src="/img_1/09.png" alt="三种接口对比"></p>
+<hr>
+<h3 id="6-UART的优缺点"><a href="#6-UART的优缺点" class="headerlink" title="6. UART的优缺点"></a>6. UART的优缺点</h3><h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ol>
+<li><strong>实现简单</strong>: 只需要两根线（不计地线），硬件和软件实现都非常简单。</li>
+<li><strong>广泛支持</strong>: 几乎所有微控制器和处理器都内置了UART硬件。</li>
+<li><strong>协议灵活</strong>: 通信参数可调，适应性强。</li>
+<li><strong>无需时钟线</strong>: 节省了一个引脚，简化了布线。</li>
+<li><strong>全双工通信</strong>: 可以同时收发数据。</li>
+</ol>
+<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4><ol>
+<li><strong>异步限制速度</strong>: 由于依赖内部时钟同步，波特率不能无限高，否则时钟误差累积会导致采样错误。</li>
+<li><strong>协议开销</strong>: 每个字节都需要额外的起始位和停止位，降低了有效数据传输率。例如，传输8位数据至少需要10位（1起始+8数据+1停止），开销为20%。</li>
+<li><strong>点对点通信</strong>: 标准UART不支持多设备总线（没有地址机制）。（注：RS-485物理层可以实现多点，但需要在应用层软件实现寻址和仲裁）。</li>
+<li><strong>无硬件应答</strong>: 发送方不知道接收方是否成功接收了数据。可靠性需要上层协议来保证。</li>
+<li><strong>错误检测能力弱</strong>: 奇偶校验只能检测部分错误，无法纠错。</li>
+</ol>
+<hr>
+<h3 id="7-小结"><a href="#7-小结" class="headerlink" title="7. 小结"></a>7. 小结</h3><ul>
+<li><p><strong>UART (Universal Asynchronous Receiver&#x2F;Transmitter - 通用异步收发器):</strong> 这是一个<strong>通信协议和硬件实现</strong>。它定义了数据是如何被打包成帧（起始位、数据位、奇偶校验位、停止位）进行异步传输的。UART 工作在逻辑电平（TTL&#x2F;CMOS），例如 0V 代表逻辑’0’，3.3V&#x2F;5V 代表逻辑’1’。它本身不定义电压、电流或连接器标准，主要用于芯片与芯片之间（板级）的通信。</p>
+</li>
+<li><p><strong>RS232 和 RS485 (Recommended Standard):</strong> 这两者是<strong>物理层电气标准</strong>。它们不关心数据帧的格式（那是 UART 的工作），而是定义了如何用<strong>电压信号</strong>来表示逻辑’0’和’1’，以及相关的电气特性（如电压、阻抗、线缆长度、速率等）。它们是用来将 UART 的逻辑信号转换为能够进行更长距离、更稳定传输的电信号。</p>
+</li>
+</ul>
+<p><strong>简单比喻：</strong></p>
+<ul>
+<li><strong>UART</strong> 就像是你要说的<strong>语言和语法</strong>（例如，一句话要有主谓宾）。</li>
+<li><strong>RS232</strong> 和 <strong>RS485</strong> 就像是你说话的<strong>方式</strong>：是通过电话大声说（RS232），还是通过对讲机系统让多个人听到（RS485）。</li>
+</ul>
+<p>它们经常协同工作：一个微控制器（MCU）的 <strong>UART</strong> 硬件生成数据帧，然后通过一个 <strong>RS232</strong> 或 <strong>RS485</strong> 收发器（Transceiver IC）转换成相应的电平信号，再通过线缆发送出去。</p>
+<hr>
+<h3 id="UART-vs-RS232-vs-RS485-详细对比表"><a href="#UART-vs-RS232-vs-RS485-详细对比表" class="headerlink" title="UART vs. RS232 vs. RS485 详细对比表"></a><strong>UART vs. RS232 vs. RS485 详细对比表</strong></h3><table>
+<thead>
+<tr>
+<th align="left">特性 &#x2F; 类别</th>
+<th align="left">UART (逻辑层)</th>
+<th align="left">RS232 (物理层)</th>
+<th align="left">RS485 (物理层)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>基本定义</strong></td>
+<td align="left"><strong>通信协议</strong>和硬件模块，定义数据帧格式</td>
+<td align="left"><strong>物理层电气标准</strong>，定义信号电压和引脚</td>
+<td align="left"><strong>物理层电气标准</strong>，定义差分信号和总线</td>
+</tr>
+<tr>
+<td align="left"><strong>信号电平</strong></td>
+<td align="left"><strong>逻辑电平 (TTL&#x2F;CMOS)</strong><br>• 逻辑 ‘0’: ~0V<br>• 逻辑 ‘1’: ~3.3V 或 5V</td>
+<td align="left"><strong>单端、高电压、反逻辑</strong><br>• 逻辑 ‘0’ (Mark): +3V 到 +15V<br>• 逻辑 ‘1’ (Space): -3V 到 -15V</td>
+<td align="left"><strong>差分信号</strong><br>• 逻辑 ‘1’: A-B &gt; +200mV<br>• 逻辑 ‘0’: A-B &lt; -200mV</td>
+</tr>
+<tr>
+<td align="left"><strong>通信模式</strong></td>
+<td align="left"><strong>点对点 (Point-to-Point)</strong><br>一个设备直接连接另一个设备</td>
+<td align="left"><strong>点对点 (Point-to-Point)</strong><br>一个驱动器 (Driver) 连接一个接收器 (Receiver)</td>
+<td align="left"><strong>多点 (Multi-Drop &#x2F; Multi-Point)</strong><br>多个设备可以挂在同一总线上</td>
+</tr>
+<tr>
+<td align="left"><strong>双工模式</strong></td>
+<td align="left"><strong>全双工 (Full-Duplex)</strong><br>独立的 TX 和 RX 线，可同时收发</td>
+<td align="left"><strong>全双工 (Full-Duplex)</strong><br>独立的 TXD 和 RXD 线</td>
+<td align="left"><strong>半双工 (Half-Duplex)</strong> (2线制，最常见)<br><strong>全双工 (Full-Duplex)</strong> (4线制)</td>
+</tr>
+<tr>
+<td align="left"><strong>所需线缆数</strong> (最小)</td>
+<td align="left"><strong>2根 + GND</strong><br>(TX, RX, GND)</td>
+<td align="left"><strong>3根</strong><br>(TXD, RXD, GND)</td>
+<td align="left"><strong>2根</strong> (半双工: A, B)<br><strong>4根</strong> (全双工: TX_A&#x2F;B, RX_A&#x2F;B)</td>
+</tr>
+<tr>
+<td align="left"><strong>通信距离</strong></td>
+<td align="left"><strong>非常短</strong><br>通常在同一块PCB上，最多数米</td>
+<td align="left"><strong>较短</strong><br>标准为 15米 (50英尺) 左右</td>
+<td align="left"><strong>非常长</strong><br>标准可达 <strong>1200米 (4000英尺)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>通信速率</strong></td>
+<td align="left">很高（板级），可达数 Mbps</td>
+<td align="left"><strong>较低</strong><br>标准为 20 kbps，实际常用 115200 bps</td>
+<td align="left"><strong>很高</strong><br>可达 10 Mbps 或更高 (速率与距离成反比)</td>
+</tr>
+<tr>
+<td align="left"><strong>抗噪能力</strong></td>
+<td align="left"><strong>差</strong><br>逻辑电平很容易受干扰</td>
+<td align="left"><strong>一般</strong><br>比 TTL 好，但单端信号仍易受共模噪声影响</td>
+<td align="left"><strong>极好</strong><br>差分信号能有效抵消共模噪声</td>
+</tr>
+<tr>
+<td align="left"><strong>总线上的设备数</strong></td>
+<td align="left"><strong>2个</strong> (1 对 1)</td>
+<td align="left"><strong>2个</strong> (1个驱动器, 1个接收器)</td>
+<td align="left"><strong>最多 32 个“单位负载”</strong><br>(现代收发器可支持128或256个节点)</td>
+</tr>
+<tr>
+<td align="left"><strong>接地要求</strong></td>
+<td align="left"><strong>必须共地</strong><br>信号以地为参考</td>
+<td align="left"><strong>必须共地</strong><br>信号以地为参考</td>
+<td align="left"><strong>需要信号地线</strong><br>以保证设备间的共模电压在允许范围内</td>
+</tr>
+<tr>
+<td align="left"><strong>典型应用</strong></td>
+<td align="left">• 芯片间通信<br>• 蓝牙模块<br>• GPS模块</td>
+<td align="left">• PC COM 端口<br>• 工业仪表 (旧)<br>• 调试接口</td>
+<td align="left">• <strong>工业自动化 (Modbus)</strong><br>• DMX512 舞台灯光<br>• 楼宇自控</td>
+</tr>
+<tr>
+<td align="left"><strong>优点</strong></td>
+<td align="left">• 硬件集成在MCU中<br>• 协议简单，易于实现</td>
+<td align="left">• 简单，广泛支持<br>• 比TTL电平稳定</td>
+<td align="left">• <strong>长距离传输</strong><br>• <strong>强大的抗干扰能力</strong><br>• <strong>支持多节点组网</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>缺点</strong></td>
+<td align="left">• 距离短，抗噪差<br>• 不适合板外连接</td>
+<td align="left">• 距离短，速度慢<br>• 抗噪能力一般<br>• <strong>不支持多点通信</strong></td>
+<td align="left">• 需要外部收发器芯片<br>• 半双工需要控制收发方向<br>• 布线需要考虑阻抗匹配和终端电阻</td>
+</tr>
+</tbody></table>
+<hr>
+<ul>
+<li><p><strong>当你需要在同一块电路板上的两个芯片之间通信时</strong>：<br>直接使用 <strong>UART</strong> 接口连接它们的 TX 和 RX 引脚。这是最简单、最直接的方式。</p>
+</li>
+<li><p><strong>当你的设备需要连接到一台旧式电脑的 COM 口，或者与一个只支持 RS232 的设备进行短距离（15米内）通信时</strong>：<br>在你的 MCU 的 UART 接口后面增加一个 <strong>RS232 收发器芯片</strong>（如 MAX232），它会将 UART 的 0&#x2F;5V 逻辑电平转换为 RS232 的 +&#x2F;- 12V 电平。</p>
+</li>
+<li><p><strong>当你需要构建一个通信网络，连接多个设备（超过2个），或者通信距离很远（几十到上千米），尤其是在有电磁干扰的工业环境中时</strong>：<br>在你的 MCU 的 UART 接口后面增加一个 <strong>RS485 收发器芯片</strong>（如 MAX485）。所有设备都并联到 A&#x2F;B 两条总线上，构成一个强大的多点通信网络。这是工业领域最常用的串行通信方式。</p>
+</li>
+</ul>
+<h2 id="二、IIC"><a href="#二、IIC" class="headerlink" title="二、IIC"></a>二、IIC</h2><p>IIC（Inter-Integrated Circuit）总线，它也被广泛地称为 I2C。这是一种非常流行、简单而强大的串行通信协议。</p>
+<hr>
+<h3 id="1-IIC-是什么？-核心概念"><a href="#1-IIC-是什么？-核心概念" class="headerlink" title="1. IIC 是什么？- 核心概念"></a><strong>1. IIC 是什么？- 核心概念</strong></h3><p><strong>IIC (Inter-Integrated Circuit)</strong>，通常写作 <strong>I2C</strong>，是由飞利浦公司（现在的恩智浦 NXP）在20世纪80年代初设计的一种<strong>同步、多主控、多从机、半双工</strong>的串行通信总线。</p>
+<ul>
+<li><strong>同步 (Synchronous):</strong> 通信双方（主设备和从设备）共享一根时钟线（SCL）。数据的发送和接收都由这个时钟信号来协调，确保了数据传输的可靠性。</li>
+<li><strong>多主控 (Multi-Master):</strong> 总线上可以有多个设备发起通信（充当主设备）。协议内建了“仲裁”机制，以解决多个主设备同时尝试控制总线的冲突。</li>
+<li><strong>多从机 (Multi-Slave):</strong> 总线上可以挂载多个接收和响应命令的设备（从设备）。每个从设备都有一个唯一的地址，主设备通过这个地址来指定与哪个设备通信。理论上，7位地址模式下可以连接127个设备（地址0000000为广播地址）。</li>
+<li><strong>半双工 (Half-Duplex):</strong> 数据可以在两个方向上传输（主到从，从到主），但不能在同一时刻进行。数据线（SDA）是双向的。</li>
+<li><strong>串行 (Serial):</strong> 数据是一位一位地在单根数据线上进行传输。</li>
+<li><strong>总线 (Bus):</strong> 意味着多个设备可以连接到同一组线上。</li>
+</ul>
+<p>最核心的特点是，它<strong>仅用两根线（SDA 和 SCL）</strong> 就可以实现设备间的复杂通信，极大地简化了电路板的布线和硬件设计。</p>
+<h3 id="2-历史与背景"><a href="#2-历史与背景" class="headerlink" title="2. 历史与背景"></a><strong>2. 历史与背景</strong></h3><p>I2C 最初是为了简化电视机内部各个芯片之间的通信而设计的。在那个时代，芯片间通信通常需要大量的并行数据线，导致布线复杂、成本高昂。I2C 的出现，使得如微控制器（MCU）、EEPROM、实时时钟（RTC）、数模&#x2F;模数转换器（ADC&#x2F;DAC）等芯片可以非常方便地连接在一起，大大降低了系统设计的复杂度。</p>
+<h3 id="3-物理层"><a href="#3-物理层" class="headerlink" title="3. 物理层"></a><strong>3. 物理层</strong></h3><p>I2C 总线在物理上由两根信号线和地线（GND）组成：</p>
+<p><img src="/img_1/10.png" alt="IIC接线"></p>
+<ul>
+<li><p><strong>SCL (Serial Clock) - 串行时钟线:</strong></p>
+<ul>
+<li>由<strong>主设备</strong>产生和控制。</li>
+<li>为数据传输提供同步时钟信号。SDA线上的数据在SCL为高电平时必须保持稳定，在SCL为低电平时才允许改变。</li>
+</ul>
+</li>
+<li><p><strong>SDA (Serial Data) - 串行数据线:</strong></p>
+<ul>
+<li>双向数据线，用于传输数据。</li>
+<li>无论是主设备还是从设备，都可以通过这条线发送或接收数据。</li>
+</ul>
+</li>
+</ul>
+<h4 id="开漏（Open-Drain）输出与上拉电阻"><a href="#开漏（Open-Drain）输出与上拉电阻" class="headerlink" title="开漏（Open-Drain）输出与上拉电阻"></a><strong>开漏（Open-Drain）输出与上拉电阻</strong></h4><p>这是 I2C 能够实现多设备共享总线的关键技术。</p>
+<ul>
+<li><strong>开漏输出:</strong> I2C 设备连接到 SCL 和 SDA 线的引脚都是开漏（或开集电极）结构。这意味着设备只能将总线<strong>拉低至低电平（GND）</strong>，但不能主动输出高电平。当设备想发送高电平时，它会“释放”总线，使其处于高阻态。</li>
+<li><strong>上拉电阻 (Pull-up Resistors):</strong> 为了在总线被释放时能够恢复到高电平状态，SCL 和 SDA 线上必须各连接一个上拉电阻到电源（VCC）。当总线上所有设备都释放总线时，这两个电阻会将线路电压拉到高电平。</li>
+</ul>
+<p><strong>这个设计带来了两个巨大的好处：</strong></p>
+<ol>
+<li><strong>避免冲突：</strong> 如果两个设备同时尝试控制总线，一个拉低，一个释放（想输出高电平），总线最终表现为低电平，不会因为高低电平直接短路而损坏设备。</li>
+<li><strong>实现“线与”逻辑 (Wired-AND):</strong> 只有当所有设备都释放总线时，总线才为高电平。只要有任何一个设备将总线拉低，总线就为低电平。这个特性是多主控仲裁机制的基础。</li>
+</ol>
+<h3 id="4-IIC-协议详解-通信的规则"><a href="#4-IIC-协议详解-通信的规则" class="headerlink" title="4. IIC 协议详解 - 通信的规则"></a><strong>4. IIC 协议详解 - 通信的规则</strong></h3><p>I2C 通信就像一场有严格规则的对话。</p>
+<h4 id="起始（START）与停止（STOP）条件"><a href="#起始（START）与停止（STOP）条件" class="headerlink" title="起始（START）与停止（STOP）条件"></a><strong>起始（START）与停止（STOP）条件</strong></h4><p>通信的开始和结束由两种特殊信号定义，它们不属于数据传输的一部分。</p>
+<p><img src="/img_1/12.png" alt="起始信号和停止信号"></p>
+<ul>
+<li><strong>起始条件 (START):</strong> 在 <strong>SCL 保持高电平</strong>期间，<strong>SDA 从高电平跳变为低电平</strong>。这标志着一次通信的开始，所有从设备都开始监听总线，准备接收地址。</li>
+<li><strong>停止条件 (STOP):</strong> 在 <strong>SCL 保持高电平</strong>期间，<strong>SDA 从低电平跳变为高电平</strong>。这标志着一次通信的结束，总线被释放。</li>
+</ul>
+<h4 id="设备寻址（Addressing）"><a href="#设备寻址（Addressing）" class="headerlink" title="设备寻址（Addressing）"></a><strong>设备寻址（Addressing）</strong></h4><ul>
+<li>START 条件之后，主设备发送的第一个字节是<strong>地址帧</strong>。</li>
+<li>它由 <strong>7位从设备地址</strong> 和 <strong>1位读&#x2F;写控制位</strong> 组成。<ul>
+<li><strong>读&#x2F;写位 (R&#x2F;W):</strong><ul>
+<li><code>0</code> 表示<strong>写</strong>操作（主设备要向从设备发送数据）。</li>
+<li><code>1</code> 表示<strong>读</strong>操作（主设备要从从设备请求数据）。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>总线上所有的从设备都会接收这个地址帧，并与自己的地址进行比较。如果匹配，该从设备就被选中，准备后续的通信。</li>
+</ul>
+<h4 id="数据传输与应答（ACK-NACK）"><a href="#数据传输与应答（ACK-NACK）" class="headerlink" title="数据传输与应答（ACK&#x2F;NACK）"></a><strong>数据传输与应答（ACK&#x2F;NACK）</strong></h4><p><img src="/img_1/11.png" alt="在SCL为高电平期间，SDA上的数据始终为低电平，则表示逻辑0，始终为高电平则表示逻辑1"></p>
+<ul>
+<li><strong>数据有效性:</strong> 在 <strong>SCL 为高电平</strong>期间，SDA 上的数据必须保持稳定。数据的改变只能在 <strong>SCL 为低电平</strong>期间发生。</li>
+<li><strong>数据传输:</strong> 数据以字节（8位）为单位进行传输，高位（MSB）在前。SCL 每产生一个脉冲，SDA 上就传输一位数据。</li>
+<li><strong>应答 (Acknowledge, ACK):</strong> 每当主设备或从设备成功发送完一个字节（8位）的数据后，接收方必须在<strong>第9个时钟脉冲</strong>期间回复一个应答信号。<ul>
+<li><strong>ACK (应答):</strong> 接收方将 <strong>SDA 拉低</strong>，表示“我已成功接收到数据，请继续”。</li>
+<li><strong>NACK (非应答, Not Acknowledge):</strong> 接收方<strong>保持 SDA 为高电平</strong>，表示“我未接收到数据”或“我正忙”或“读操作结束”。<ul>
+<li>在主设备读取数据时，主设备会在读取最后一个字节后发送一个 NACK，以告知从设备数据读取结束。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="一个完整的通信时序"><a href="#一个完整的通信时序" class="headerlink" title="一个完整的通信时序"></a><strong>一个完整的通信时序</strong></h4><p><strong>A. 主设备向从设备写数据 (Master Write)</strong></p>
+<p><img src="/img_1/13.png" alt="一个标准的写数据帧"></p>
+<ol>
+<li><strong>START:</strong> 主设备发送起始条件。</li>
+<li><strong>Address Frame:</strong> 主设备发送 7位从机地址 + 写位(<code>0</code>)。</li>
+<li><strong>ACK:</strong> 匹配的从设备回复一个 ACK。</li>
+<li><strong>Data Frame 1:</strong> 主设备发送第一个数据字节。</li>
+<li><strong>ACK:</strong> 从设备回复一个 ACK。</li>
+<li><strong>Data Frame 2:</strong> 主设备发送第二个数据字节。</li>
+<li><strong>ACK:</strong> 从设备回复一个 ACK。</li>
+<li>… (可以继续发送更多数据) …</li>
+<li><strong>STOP:</strong> 主设备发送停止条件，结束通信。</li>
+</ol>
+<p><strong>B. 主设备从从设备读数据 (Master Read)</strong></p>
+<p><img src="/img_1/14.png" alt="一个标准的读数据帧"></p>
+<ol>
+<li><strong>START:</strong> 主设备发送起始条件。</li>
+<li><strong>Address Frame:</strong> 主设备发送 7位从机地址 + 读位(<code>1</code>)。</li>
+<li><strong>ACK:</strong> 匹配的从设备回复一个 ACK。</li>
+<li><strong>Data from Slave:</strong> 从设备发送第一个数据字节。</li>
+<li><strong>ACK from Master:</strong> 主设备回复一个 ACK，表示还想继续读。</li>
+<li><strong>Data from Slave:</strong> 从设备发送第二个数据字节。</li>
+<li><strong>ACK from Master:</strong> 主设备回复一个 ACK。</li>
+<li>… (主设备继续接收，每次都回 ACK) …</li>
+<li><strong>Data from Slave:</strong> 从设备发送最后一个数据字节。</li>
+<li><strong>NACK from Master:</strong> 主设备回复一个 NACK，告知从设备“我读完了，不要再发了”。</li>
+<li><strong>STOP:</strong> 主设备发送停止条件，结束通信。</li>
+</ol>
+<h3 id="5-高级特性"><a href="#5-高级特性" class="headerlink" title="5. 高级特性"></a><strong>5. 高级特性</strong></h3><h4 id="时钟拉伸（Clock-Stretching）"><a href="#时钟拉伸（Clock-Stretching）" class="headerlink" title="时钟拉伸（Clock Stretching）"></a><strong>时钟拉伸（Clock Stretching）</strong></h4><p>有时，从设备可能需要一些时间来处理接收到的数据或准备要发送的数据（例如，从EEPROM内部读取数据）。在这种情况下，从设备可以在接收完一个字节后，在回复ACK之前，将 <strong>SCL 线强行拉低</strong>。主设备会检测到 SCL 被拉低，并暂停发送下一个时钟脉冲，进入等待状态，直到从设备释放 SCL 线。这个机制给予了慢速从设备与快速主设备同步的能力。</p>
+<h4 id="多主控（Multi-Master）与仲裁（Arbitration）"><a href="#多主控（Multi-Master）与仲裁（Arbitration）" class="headerlink" title="多主控（Multi-Master）与仲裁（Arbitration）"></a><strong>多主控（Multi-Master）与仲裁（Arbitration）</strong></h4><p>当两个或多个主设备同时尝试在总线上发起通信时，就会发生冲突。I2C 的仲裁机制可以优雅地解决这个问题：</p>
+<ol>
+<li>所有主设备在发送数据时都会同时监测 SDA 线。</li>
+<li>由于“线与”逻辑，如果一个主设备想发送高电平（释放SDA）而另一个主设备发送低电平（拉低SDA），SDA线将最终呈现低电平。</li>
+<li>想发送高电平的主设备会检测到 SDA 的实际电平与自己想发送的电平不符，它就知道自己“输掉”了仲裁，会立刻停止驱动总线，并转为从机模式等待总线空闲。</li>
+<li>而发送低电平的主设备没有检测到冲突，它会继续它的通信。</li>
+</ol>
+<p>这个过程是<strong>非破坏性</strong>的，数据不会丢失，赢得仲裁的主设备可以无缝地完成它的通信。</p>
+<h3 id="6-IIC-的速度模式"><a href="#6-IIC-的速度模式" class="headerlink" title="6. IIC 的速度模式"></a><strong>6. IIC 的速度模式</strong></h3><p>I2C 支持多种速度，以适应不同应用的需求：</p>
+<ul>
+<li><strong>Standard-mode (Sm):</strong> 100 kbit&#x2F;s</li>
+<li><strong>Fast-mode (Fm):</strong> 400 kbit&#x2F;s</li>
+<li><strong>Fast-mode Plus (Fm+):</strong> 1 Mbit&#x2F;s</li>
+<li><strong>High-speed mode (Hs-mode):</strong> 3.4 Mbit&#x2F;s</li>
+<li><strong>Ultra Fast-mode (UFm):</strong> 5 Mbit&#x2F;s (这是单向的，更像是推送协议)</li>
+</ul>
+<p>最常用的是 Standard-mode 和 Fast-mode。</p>
+<h3 id="7-IIC-的优缺点"><a href="#7-IIC-的优缺点" class="headerlink" title="7. IIC 的优缺点"></a><strong>7. IIC 的优缺点</strong></h3><h4 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a><strong>优点</strong></h4><ul>
+<li><strong>接线少：</strong> 只需要两根信号线，大大简化了PCB布局和连接器设计。</li>
+<li><strong>灵活性高：</strong> 很容易在总线上增加或移除设备，扩展性好。</li>
+<li><strong>成本低：</strong> 硬件实现简单，许多MCU都内置了I2C控制器。</li>
+<li><strong>有确认机制：</strong> ACK&#x2F;NACK 机制确保了数据传输的可靠性。</li>
+<li><strong>支持多主控：</strong> 允许多个设备发起通信。</li>
+</ul>
+<h4 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a><strong>缺点</strong></h4><ul>
+<li><strong>速度受限：</strong> 相对于 SPI、USB 等协议，I2C 的速度较慢。</li>
+<li><strong>物理距离短：</strong> 总线电容会随着线缆长度和设备数量的增加而增大，这会限制通信速度和距离，通常只适用于板级或设备内部通信。</li>
+<li><strong>地址空间有限：</strong> 7位地址最多支持127个设备，虽然有10位地址扩展，但不如SPI那样通过片选线可以支持几乎无限的设备。</li>
+<li><strong>协议相对复杂：</strong> 相比 UART，I2C 的协议状态（START&#x2F;STOP&#x2F;ACK&#x2F;NACK&#x2F;Addressing）更多，软件实现更复杂一些。</li>
+</ul>
+<h3 id="8-典型应用场景"><a href="#8-典型应用场景" class="headerlink" title="8. 典型应用场景"></a><strong>8. 典型应用场景</strong></h3><p>I2C 无处不在，特别是在嵌入式系统中：</p>
+<ul>
+<li><strong>传感器：</strong> 读取温度、湿度、压力、加速度、陀螺仪等传感器数据。</li>
+<li><strong>存储器：</strong> 读写 EEPROM、FRAM 等非易失性存储器，用于保存配置信息。</li>
+<li><strong>实时时钟 (RTC)：</strong> 设置和读取时间。</li>
+<li><strong>显示驱动：</strong> 控制OLED或LCD小屏幕。</li>
+<li><strong>I&#x2F;O 扩展器：</strong> 用一个I2C接口扩展出更多的GPIO口。</li>
+<li><strong>电源管理芯片 (PMIC)：</strong> 配置和监控电池充电、电压调节等。</li>
+<li><strong>音频编解码器 (Audio Codecs)：</strong> 设置音量、均衡器等参数。</li>
+</ul>
+<h2 id="三、SPI"><a href="#三、SPI" class="headerlink" title="三、SPI"></a>三、SPI</h2><h3 id="1-核心概念"><a href="#1-核心概念" class="headerlink" title="1. 核心概念"></a><strong>1. 核心概念</strong></h3><p><strong>SPI (Serial Peripheral Interface)</strong>，是由摩托罗拉（Motorola）公司在20世纪80年代中期开发的一种<strong>同步、全双工、主从式</strong>的串行通信总线。</p>
+<ul>
+<li><strong>同步 (Synchronous):</strong> 和 I2C 类似，通信双方共享一根时钟线（SCLK），所有的数据传输都由这个时钟信号进行同步。</li>
+<li><strong>全双工 (Full-Duplex):</strong> 数据可以同时在两个方向上传输。主设备向从设备发送数据的同时，从设备也可以向主设备发送数据。这是通过两根独立的数据线（MOSI 和 MISO）实现的。</li>
+<li><strong>主从式 (Master-Slave):</strong> SPI 网络中有一个<strong>主设备 (Master)</strong> 和一个或多个<strong>从设备 (Slave)</strong>。<ul>
+<li><strong>主设备:</strong> 负责发起通信、生成时钟信号、并通过片选线选择与之通信的从设备。</li>
+<li><strong>从设备:</strong> 只能被动地响应主设备的请求，使用主设备提供的时钟信号进行数据收发。</li>
+</ul>
+</li>
+<li><strong>总线 (Bus):</strong> 多个从设备可以共享 SCLK、MOSI 和 MISO 这三条线，但每个从设备都需要一根独立的片选线。</li>
+</ul>
+<h3 id="2-历史与背景-1"><a href="#2-历史与背景-1" class="headerlink" title="2. 历史与背景"></a><strong>2. 历史与背景</strong></h3><p>SPI 的设计初衷是为了在微控制器和各种外围设备（如闪存、传感器、ADC等）之间提供一种简单、高速的点对点通信方式。与 I2C 的多主控复杂性不同，SPI 的协议非常简单，几乎没有协议开销（如地址、ACK&#x2F;NACK位），这使得它能够以非常高的速度传输数据。</p>
+<h3 id="3-物理层-四线制的标准"><a href="#3-物理层-四线制的标准" class="headerlink" title="3. 物理层 - 四线制的标准"></a><strong>3. 物理层 - 四线制的标准</strong></h3><p>标准的 SPI 通信需要四根信号线：</p>
+<p><img src="/img_1/15.png" alt="SPI接线"></p>
+<ul>
+<li><p><strong>SCLK (Serial Clock) - 串行时钟:</strong></p>
+<ul>
+<li>由<strong>主设备</strong>产生和控制。</li>
+<li>为数据传输提供同步脉冲。数据的每一位都在时钟的一个特定边沿被发送和采样。</li>
+</ul>
+</li>
+<li><p><strong>MOSI (Master Out, Slave In) - 主出从入:</strong></p>
+<ul>
+<li>数据从<strong>主设备</strong>流向<strong>从设备</strong>的通道。</li>
+<li>也常被称为 <code>SDO</code> (Serial Data Out)、<code>DO</code> (Data Out) 在主设备端，或 <code>SDI</code> (Serial Data In)、<code>DI</code> (Data In) 在从设备端。</li>
+</ul>
+</li>
+<li><p><strong>MISO (Master In, Slave Out) - 主入从出:</strong></p>
+<ul>
+<li>数据从<strong>从设备</strong>流向<strong>主设备</strong>的通道。</li>
+<li>也常被称为 <code>SDI</code> (Serial Data In)、<code>DI</code> (Data In) 在主设备端，或 <code>SDO</code> (Serial Data Out)、<code>DO</code> (Data Out) 在从设备端。</li>
+</ul>
+</li>
+<li><p><strong>CS &#x2F; SS (Chip Select &#x2F; Slave Select) - 片选:</strong></p>
+<ul>
+<li>由<strong>主设备</strong>控制，用于选择要通信的从设备。</li>
+<li>通常是<strong>低电平有效</strong>。当主设备想与某个从设备通信时，会将其对应的 CS 线拉低。</li>
+<li>总线上有多少个从设备，主设备就需要提供多少根独立的 CS 线（在标准模式下）。当某个从设备的 CS 线为高电平时，它会忽略 SCLK 信号并保持 MISO 线为高阻态，以免干扰总线。</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-SPI-协议详解-通信的规则"><a href="#4-SPI-协议详解-通信的规则" class="headerlink" title="4. SPI 协议详解 - 通信的规则"></a><strong>4. SPI 协议详解 - 通信的规则</strong></h3><h4 id="主从架构-Master-Slave-Architecture"><a href="#主从架构-Master-Slave-Architecture" class="headerlink" title="主从架构 (Master-Slave Architecture)"></a><strong>主从架构 (Master-Slave Architecture)</strong></h4><p>通信永远由主设备发起。主设备是整个总线的“指挥官”，决定了通信的速率和时序。</p>
+<h4 id="数据传输机制-环形移位寄存器"><a href="#数据传输机制-环形移位寄存器" class="headerlink" title="数据传输机制 - 环形移位寄存器"></a><strong>数据传输机制 - 环形移位寄存器</strong></h4><p>理解 SPI 数据传输最直观的方式是，想象主设备和从设备内部各有一个<strong>移位寄存器 (Shift Register)</strong>。</p>
+<ol>
+<li>当通信开始时（CS被拉低，部分设备也可能是拉高），这两个寄存器可以看作是头尾相连，形成一个环形。</li>
+<li>主设备在 SCLK 的驱动下，将自己寄存器中的数据一位一位地通过 <strong>MOSI</strong> 线“推”入从设备的寄存器。</li>
+<li><strong>同时</strong>，从设备寄存器中的数据也一位一位地通过 <strong>MISO</strong> 线“推”入主设备的寄存器。</li>
+<li>经过8个（或16个，取决于数据长度）时钟周期后，主设备和从设备就完成了数据的<strong>交换</strong>。主设备的原始数据到了从设备，从设备的原始数据到了主设备。</li>
+</ol>
+<p>这个“交换”过程就是 SPI 全双工的本质。即使你只想写数据，你也必须完成整个交换过程，只是你会忽略从 MISO 线上收到的数据。同理，如果你只想读数据，你也必须通过 MOSI 发送一些“虚拟”数据（通常是全0或全1）来产生时钟，以“换回”你想要的数据。</p>
+<h4 id="一个完整的通信时序-1"><a href="#一个完整的通信时序-1" class="headerlink" title="一个完整的通信时序"></a><strong>一个完整的通信时序</strong></h4><ol>
+<li><strong>片选：</strong> 主设备将目标从设备的 CS 线从高电平拉至<strong>低电平</strong>。</li>
+<li><strong>时钟生成：</strong> 主设备开始在 SCLK 线上产生时钟脉冲。</li>
+<li><strong>数据交换：</strong> 在每个时钟周期，主设备在 MOSI 线上发送一位数据，同时在 MISO 线上接收一位数据。数据传输通常是高位（MSB）在前。</li>
+<li><strong>通信结束：</strong> 当预定数量的数据（例如一个或多个字节）交换完毕后，主设备停止 SCLK 时钟。</li>
+<li><strong>释放片选：</strong> 主设备将 CS 线重新拉回<strong>高电平</strong>，结束本次通信。从设备此时不再监听总线。</li>
+</ol>
+<h3 id="5-核心配置：CPOL-与-CPHA-SPI-的四种模式"><a href="#5-核心配置：CPOL-与-CPHA-SPI-的四种模式" class="headerlink" title="5. 核心配置：CPOL 与 CPHA - SPI 的四种模式"></a><strong>5. 核心配置：CPOL 与 CPHA - SPI 的四种模式</strong></h3><p>SPI 的灵活性在于主从设备必须在<strong>时钟极性 (CPOL)</strong> 和<strong>时钟相位 (CPHA)</strong> 上达成一致。</p>
+<ul>
+<li><p><strong>CPOL (Clock Polarity) - 时钟极性:</strong></p>
+<ul>
+<li>定义了 SCLK 在空闲状态（即 CS 为高电平时）的电平。</li>
+<li><strong>CPOL &#x3D; 0:</strong> 空闲时 SCLK 为<strong>低电平</strong>。第一个时钟边沿是上升沿。</li>
+<li><strong>CPOL &#x3D; 1:</strong> 空闲时 SCLK 为<strong>高电平</strong>。第一个时钟边沿是下降沿。</li>
+</ul>
+</li>
+<li><p><strong>CPHA (Clock Phase) - 时钟相位:</strong></p>
+<ul>
+<li>定义了数据是在时钟的哪个边沿被<strong>采样</strong>（读取）。</li>
+<li><strong>CPHA &#x3D; 0:</strong> 数据在时钟周期的<strong>第一个边沿</strong>被采样。</li>
+<li><strong>CPHA &#x3D; 1:</strong> 数据在时钟周期的<strong>第二个边沿</strong>被采样。</li>
+</ul>
+</li>
+</ul>
+<h4 id="四种工作模式总结"><a href="#四种工作模式总结" class="headerlink" title="四种工作模式总结"></a><strong>四种工作模式总结</strong></h4><p>这两种配置组合起来，构成了 SPI 的四种标准工作模式：</p>
+<p><img src="/img_1/16.png" alt="以Mode 0进行时钟采集"></p>
+<table>
+<thead>
+<tr>
+<th align="left">模式</th>
+<th align="left">CPOL</th>
+<th align="left">CPHA</th>
+<th align="left">描述 (数据在哪个边沿被采样)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Mode 0</strong></td>
+<td align="left">0</td>
+<td align="left">0</td>
+<td align="left">空闲时钟为低，在<strong>第一个边沿 (上升沿)</strong> 采样</td>
+</tr>
+<tr>
+<td align="left"><strong>Mode 1</strong></td>
+<td align="left">0</td>
+<td align="left">1</td>
+<td align="left">空闲时钟为低，在<strong>第二个边沿 (下降沿)</strong> 采样</td>
+</tr>
+<tr>
+<td align="left"><strong>Mode 2</strong></td>
+<td align="left">1</td>
+<td align="left">0</td>
+<td align="left">空闲时钟为高，在<strong>第一个边沿 (下降沿)</strong> 采样</td>
+</tr>
+<tr>
+<td align="left"><strong>Mode 3</strong></td>
+<td align="left">1</td>
+<td align="left">1</td>
+<td align="left">空闲时钟为高，在<strong>第二个边沿 (上升沿)</strong> 采样</td>
+</tr>
+</tbody></table>
+<p><strong>Mode 0 是最常用、最普遍的模式。</strong> 在进行通信前，主设备必须配置成与目标从设备所支持的模式相匹配。</p>
+<h3 id="6-多从设备配置-Multi-Slave-Configurations"><a href="#6-多从设备配置-Multi-Slave-Configurations" class="headerlink" title="6. 多从设备配置 (Multi-Slave Configurations)"></a><strong>6. 多从设备配置 (Multi-Slave Configurations)</strong></h3><h4 id="独立片选模式-Independent-Slave-Select"><a href="#独立片选模式-Independent-Slave-Select" class="headerlink" title="独立片选模式 (Independent Slave Select)"></a><strong>独立片选模式 (Independent Slave Select)</strong></h4><p>这是最常见的方式。主设备为每一个从设备都分配一个独立的 CS 引脚。SCLK、MOSI、MISO 线由所有设备共享。</p>
+<ul>
+<li><strong>优点:</strong> 逻辑简单直接，可以与任何一个从设备进行高速通信，互不干扰。</li>
+<li><strong>缺点:</strong> 当从设备数量增多时，会消耗主设备大量的 GPIO 引脚。</li>
+</ul>
+<h4 id="菊花链模式-Daisy-Chain"><a href="#菊花链模式-Daisy-Chain" class="headerlink" title="菊花链模式 (Daisy-Chain)"></a><strong>菊花链模式 (Daisy-Chain)</strong></h4><p>这是一种节省引脚的方式。所有从设备的 CS 线可以并联到一根线上。</p>
+<ul>
+<li><strong>连接方式:</strong> 主设备的 MOSI 连接到第一个从设备的 MOSI，第一个从设备的 MISO 连接到第二个从设备的 MOSI，以此类推。最后一个从设备的 MISO 连接回主设备的 MISO。</li>
+<li><strong>工作方式:</strong> 数据像贪吃蛇一样，从主设备发出，穿过每一个从设备，最后回到主设备。如果每个设备的数据长度是8位，要与3个设备通信，主设备就需要连续发送24个时钟脉冲，将数据“推”遍整个链条。</li>
+<li><strong>优点:</strong> 无论有多少从设备，都只需要一根 CS 线。</li>
+<li><strong>缺点:</strong><ul>
+<li>通信速度受限于链条中最慢的设备。</li>
+<li>如果链条中任何一个设备出现故障，整个链条都会失效。</li>
+<li>软件实现更复杂，更新一个设备的数据需要重写整个链条。</li>
+</ul>
+</li>
+</ul>
+<h3 id="7-SPI-的优缺点"><a href="#7-SPI-的优缺点" class="headerlink" title="7. SPI 的优缺点"></a><strong>7. SPI 的优缺点</strong></h3><h4 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a><strong>优点</strong></h4><ul>
+<li><strong>速度快:</strong> 协议简单，没有额外开销，时钟频率可以达到几十甚至上百 MHz。</li>
+<li><strong>全双工通信:</strong> 可以同时收发数据，效率高。</li>
+<li><strong>协议简单:</strong> 硬件实现（移位寄存器）和软件控制都非常简单。</li>
+<li><strong>数据长度灵活:</strong> 不像 I2C 强制为8位，SPI 可以传输任意长度的数据帧。</li>
+</ul>
+<h4 id="缺点-2"><a href="#缺点-2" class="headerlink" title="缺点"></a><strong>缺点</strong></h4><ul>
+<li><strong>占用引脚多:</strong> 每个从设备都需要一个额外的 CS 引脚。</li>
+<li><strong>没有应答机制:</strong> 主设备无法知道从设备是否成功接收到数据（没有 ACK&#x2F;NACK），通信的可靠性依赖于硬件的稳定性。</li>
+<li><strong>没有流控:</strong> 从设备无法像 I2C 那样通过时钟拉伸来告知主设备“请等一下”。</li>
+<li><strong>只能单主控:</strong> 协议本身不支持多主控，总线上只能有一个主设备。</li>
+<li><strong>通信距离短:</strong> 高速信号容易受干扰，通常只用于板级通信。</li>
+</ul>
+<h3 id="8-典型应用场景-1"><a href="#8-典型应用场景-1" class="headerlink" title="8. 典型应用场景"></a><strong>8. 典型应用场景</strong></h3><p>由于其高速特性，SPI 被广泛用于需要大量数据吞吐的场合：</p>
+<ul>
+<li><strong>存储器:</strong> SD卡、MMC卡、串行Flash（Nor&#x2F;NAND Flash）、FRAM。</li>
+<li><strong>显示设备:</strong> LCD、OLED 显示屏的驱动。</li>
+<li><strong>数据转换器:</strong> 高速 ADC (模数转换器) 和 DAC (数模转换器)。</li>
+<li><strong>传感器:</strong> 特别是需要高采样率的传感器，如陀螺仪、加速度计、图像传感器。</li>
+<li><strong>通信模块:</strong> 以太网控制器 (如 W5500)、无线模块 (如 nRF24L01)。</li>
+</ul>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><h3 id="UART-vs-IIC-I2C-vs-SPI-综合对比表"><a href="#UART-vs-IIC-I2C-vs-SPI-综合对比表" class="headerlink" title="UART vs. IIC (I2C) vs. SPI 综合对比表"></a><strong>UART vs. IIC (I2C) vs. SPI 综合对比表</strong></h3><table>
+<thead>
+<tr>
+<th align="left">特性 &#x2F; 维度</th>
+<th align="left">SPI (Serial Peripheral Interface)</th>
+<th align="left">IIC &#x2F; I2C (Inter-Integrated Circuit)</th>
+<th align="left">UART (Universal Asynchronous Receiver&#x2F;Transmitter)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>核心思想</strong></td>
+<td align="left"><strong>高速数据流</strong>，主从同步，全双工数据交换</td>
+<td align="left"><strong>多点总线控制</strong>，主从同步，半双工命令&#x2F;响应</td>
+<td align="left"><strong>点对点异步</strong>，简单可靠的字符流传输</td>
+</tr>
+<tr>
+<td align="left"><strong>通信方式</strong></td>
+<td align="left"><strong>同步 (Synchronous)</strong></td>
+<td align="left"><strong>同步 (Synchronous)</strong></td>
+<td align="left"><strong>异步 (Asynchronous)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>数据传输</strong></td>
+<td align="left"><strong>全双工 (Full-Duplex)</strong><br>数据可同时收发</td>
+<td align="left"><strong>半双工 (Half-Duplex)</strong><br>数据只能单向传输</td>
+<td align="left"><strong>全双工 (Full-Duplex)</strong><br>独立的收发线</td>
+</tr>
+<tr>
+<td align="left"><strong>时钟信号</strong></td>
+<td align="left"><strong>有 (SCLK)</strong><br>由主设备产生</td>
+<td align="left"><strong>有 (SCL)</strong><br>由主设备产生，从设备可“拉伸”</td>
+<td align="left"><strong>无 (No Clock Line)</strong><br>双方约定波特率，通过起始&#x2F;停止位同步</td>
+</tr>
+<tr>
+<td align="left"><strong>标准线数</strong></td>
+<td align="left"><strong>4根</strong><br>(SCLK, MOSI, MISO, CS)</td>
+<td align="left"><strong>2根</strong><br>(SDA, SCL)</td>
+<td align="left"><strong>2根</strong><br>(TX, RX)</td>
+</tr>
+<tr>
+<td align="left"><strong>连接拓扑</strong></td>
+<td align="left"><strong>单主，多从</strong><br>(标准模式下)</td>
+<td align="left"><strong>多主，多从</strong><br>(协议支持仲裁)</td>
+<td align="left"><strong>点对点 (Point-to-Point)</strong></td>
+</tr>
+<tr>
+<td align="left"><strong>设备选择</strong></td>
+<td align="left"><strong>硬件片选线 (CS&#x2F;SS)</strong><br>每个从设备需要一根独立的CS线</td>
+<td align="left"><strong>软件地址 (7位&#x2F;10位)</strong><br>通过总线发送地址来选择设备</td>
+<td align="left"><strong>物理直连</strong><br>TX连RX，RX连TX，无选择机制</td>
+</tr>
+<tr>
+<td align="left"><strong>总线设备数</strong></td>
+<td align="left"><strong>受限于主设备GPIO数量</strong><br>(每个从设备消耗一个引脚)</td>
+<td align="left"><strong>理论上多达127个</strong> (7位地址)<br>受总线电容限制</td>
+<td align="left"><strong>2个</strong> (1对1)</td>
+</tr>
+<tr>
+<td align="left"><strong>通信速度</strong></td>
+<td align="left"><strong>非常快</strong><br>通常可达几十甚至上百 MHz</td>
+<td align="left"><strong>中低速</strong><br>标准100kHz, 快速400kHz, 高速模式可达几MHz</td>
+<td align="left"><strong>相对较慢</strong><br>常用9600~115200 bps, 最高可达几Mbps</td>
+</tr>
+<tr>
+<td align="left"><strong>数据可靠性</strong></td>
+<td align="left"><strong>较低</strong><br>无内置的应答(ACK)或流控机制</td>
+<td align="left"><strong>较高</strong><br>有应答机制 (ACK&#x2F;NACK)，从机可时钟拉伸(流控)</td>
+<td align="left"><strong>一般</strong><br>有奇偶校验位(Parity)可选，但无应答机制</td>
+</tr>
+<tr>
+<td align="left"><strong>协议复杂度</strong></td>
+<td align="left"><strong>硬件简单</strong><br>本质是移位寄存器，软件实现简单</td>
+<td align="left"><strong>中等复杂</strong><br>需处理START&#x2F;STOP, 地址, ACK&#x2F;NACK, 仲裁等</td>
+<td align="left"><strong>非常简单</strong><br>配置好参数(波特率等)后即可收发数据</td>
+</tr>
+<tr>
+<td align="left"><strong>硬件实现</strong></td>
+<td align="left">通常由MCU内置的SPI外设实现</td>
+<td align="left">通常由MCU内置的I2C外设实现</td>
+<td align="left">通常由MCU内置的UART&#x2F;USART外设实现</td>
+</tr>
+<tr>
+<td align="left"><strong>功耗</strong></td>
+<td align="left"><strong>较高</strong><br>通常使用推挽输出(Push-Pull)</td>
+<td align="left"><strong>较低</strong><br>开漏(Open-Drain)结构 + 上拉电阻</td>
+<td align="left"><strong>中等</strong><br>推挽输出(Push-Pull)</td>
+</tr>
+<tr>
+<td align="left"><strong>优点</strong></td>
+<td align="left">• <strong>速度最快</strong><br>• 全双工<br>• 协议简单，硬件开销小</td>
+<td align="left">• <strong>接线最少 (2根)</strong><br>• 支持多主多从<br>• 有确认和流控机制，可靠性好</td>
+<td align="left">• 协议和实现都非常简单<br>• 只需2根线<br>• 广泛应用，支持长距离(配合RS232&#x2F;485)</td>
+</tr>
+<tr>
+<td align="left"><strong>缺点</strong></td>
+<td align="left">• <strong>占用引脚多</strong><br>• 无应答和流控<br>• 只能单主控</td>
+<td align="left">• 速度相对较慢<br>• 总线电容限制距离和设备数<br>• 协议比SPI&#x2F;UART复杂</td>
+<td align="left">• <strong>异步，有同步开销</strong> (起始&#x2F;停止位)<br>• 速度受限<br>• 双方波特率必须精确匹配</td>
+</tr>
+<tr>
+<td align="left"><strong>典型应用</strong></td>
+<td align="left">• <strong>高速数据传输</strong><br>  - SD卡, Flash存储器<br>  - LCD&#x2F;OLED显示屏<br>  - 高速ADC&#x2F;DAC<br>  - 无线模块(nRF24L01)</td>
+<td align="left">• <strong>板级设备管理和控制</strong><br>  - 传感器 (温度, 湿度, 加速度计)<br>  - EEPROM存储器<br>  - 实时时钟(RTC)<br>  - I&#x2F;O扩展器, 电源管理芯片</td>
+<td align="left">• <strong>设备间调试与通信</strong><br>  - PC与MCU的串口调试<br>  - GPS, 蓝牙, GSM&#x2F;GPRS模块<br>  - 配合RS232&#x2F;RS485实现远距离工业控制</td>
+</tr>
+</tbody></table>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>[1] <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1y34y147s5/?spm_id_from=333.1365.top_right_bar_window_custom_collection.content.click&vd_source=58f3263b57ef9a6a30806fa51b07a5c1">超简单的一种通信，2分钟搞懂，串口通讯的工作原理！</a><br>[2] <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1dg4y1H773/?spm_id_from=333.788.top_right_bar_window_custom_collection.content.click&vd_source=58f3263b57ef9a6a30806fa51b07a5c1">4分钟看懂！I2C通讯协议 最简单的总线通讯！</a><br>[3] <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1F54y1M7e7/?spm_id_from=333.1365.top_right_bar_window_custom_collection.content.click&vd_source=58f3263b57ef9a6a30806fa51b07a5c1">深入理解SPI通讯协议，5分钟看懂！</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/08/21/%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F%E5%AF%B9%E6%AF%94%E2%80%94UART-SPI-IIC/">https://lx-cel.github.io/2025/08/21/通信方式对比—UART-SPI-IIC/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%B5%8C%E5%85%A5%E5%BC%8F/">嵌入式</a></div><div class="post-share"><div class="social-share" data-image="/img/28.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/08/22/%E5%9F%BA%E6%9C%AC%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/" title="基本排序算法"><img class="cover" src="/img/29.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">基本排序算法</div></div><div class="info-2"><div class="info-item-1">一、冒泡排序1. 什么是冒泡排序？冒泡排序（Bubble Sort）是一种简单直观的排序算法。它得名于其工作方式，即较小（或较大）的元素会像水中的气泡一样，通过不断交换，慢慢“浮”到数列的顶端。 a. 核心思想它重复地遍历待排序的数列，一次比较两个相邻的元素，如果它们的顺序（如从大到小或从小到大）错误就把它们交换过来。遍历数列的工作会重复地进行，直到没有再需要交换的元素为止，这意味着整个数列已经排序完成。 b. 工作原理 比较相邻元素：从列表的第一个元素开始，比较它和下一个元素。 交换：如果第一个元素比第二个元素大（以升序为例），就交换它们的位置。 向后移动：继续比较下一对相邻的元素（即新的第二个和第三个元素），重复步骤2。 完成一轮：持续这个过程，直到列表的末尾。经过第一轮遍历后，最大的元素会被放置在列表的最后一个位置。 重复：对除了最后一个元素之外的所有元素，重复以上步骤。每一轮遍历都会将当前未排序部分的最大元素放到其最终位置。 终止：当某一轮遍历中没有发生任何交换时，说明列表已经完全排序，可以提前终止算法。  2. 图解示例让我们用一个简单的例子 [5, 1, 4, 2,...</div></div></div></a><a class="pagination-related" href="/2025/08/16/%E6%97%B6%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E4%B8%8E%E7%A9%BA%E9%97%B4%E5%A4%8D%E6%9D%82%E5%BA%A6%E5%88%86%E6%9E%90/" title="时间复杂度与空间复杂度分析"><img class="cover" src="/img/27.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">时间复杂度与空间复杂度分析</div></div><div class="info-2"><div class="info-item-1">在算法竞赛和面试中，根据题目给出的数据量大小来推断所需算法的时间复杂度和空间复杂度，是一项至关重要的核心技能。它能迅速排除掉不切实际的暴力解法，将思考方向聚焦在可行的算法上。  一、核心原理：计算机的运算速度这个推断方法的基石是对现代计算机运算速度的一个估算。在算法竞赛平台（如 LeetCode、Codeforces、牛客网等）上，评测机通常能在 1秒内执行大约 10^7 到 10^8 次计算操作。 为了保险起见，我们通常以 10^8 作为上限参考，但更稳妥的估算是 10^7。这意味着，如果你的算法总计算量超过了这个数量级，就很可能会“超时”（Time Limit Exceeded, TLE）。 基本公式：数据规模 N 带入 时间复杂度表达式 ≈ 总计算量 ≤ 10^8 二、时间复杂度 “速查表” (Cheat Sheet)这张表是解决算法问题的“第一直觉”，强烈建议记在心里。假设题目给出的主要数据规模是 N。    数据规模 N 的范围 可接受的时间复杂度 常见算法示例    N ≤ 10~12 O(N!)、O(N *...</div></div></div></a></nav><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">35</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">6</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81UART"><span class="toc-text">一、UART</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-UART%E7%9A%84%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-text">1. UART的核心概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-UART%E7%9A%84%E7%A1%AC%E4%BB%B6%E6%8E%A5%E5%8F%A3"><span class="toc-text">2. UART的硬件接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-UART%E7%9A%84%E6%95%B0%E6%8D%AE%E5%B8%A7%E6%A0%BC%E5%BC%8F%EF%BC%88The-Protocol%EF%BC%89"><span class="toc-text">3. UART的数据帧格式（The Protocol）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-UART%E7%9A%84%E5%90%8C%E6%AD%A5%E6%9C%BA%E5%88%B6%E5%92%8C%E6%B3%A2%E7%89%B9%E7%8E%87"><span class="toc-text">4. UART的同步机制和波特率</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E7%89%A9%E7%90%86%E5%B1%82%E6%A0%87%E5%87%86%EF%BC%9A%E4%B8%8D%E4%BB%85%E4%BB%85%E6%98%AF0%E5%92%8C1"><span class="toc-text">5. 物理层标准：不仅仅是0和1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-UART%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">6. UART的优缺点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9"><span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E5%B0%8F%E7%BB%93"><span class="toc-text">7. 小结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#UART-vs-RS232-vs-RS485-%E8%AF%A6%E7%BB%86%E5%AF%B9%E6%AF%94%E8%A1%A8"><span class="toc-text">UART vs. RS232 vs. RS485 详细对比表</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81IIC"><span class="toc-text">二、IIC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-IIC-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-text">1. IIC 是什么？- 核心概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%8E%86%E5%8F%B2%E4%B8%8E%E8%83%8C%E6%99%AF"><span class="toc-text">2. 历史与背景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%89%A9%E7%90%86%E5%B1%82"><span class="toc-text">3. 物理层</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BC%80%E6%BC%8F%EF%BC%88Open-Drain%EF%BC%89%E8%BE%93%E5%87%BA%E4%B8%8E%E4%B8%8A%E6%8B%89%E7%94%B5%E9%98%BB"><span class="toc-text">开漏（Open-Drain）输出与上拉电阻</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-IIC-%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3-%E9%80%9A%E4%BF%A1%E7%9A%84%E8%A7%84%E5%88%99"><span class="toc-text">4. IIC 协议详解 - 通信的规则</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B5%B7%E5%A7%8B%EF%BC%88START%EF%BC%89%E4%B8%8E%E5%81%9C%E6%AD%A2%EF%BC%88STOP%EF%BC%89%E6%9D%A1%E4%BB%B6"><span class="toc-text">起始（START）与停止（STOP）条件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AE%BE%E5%A4%87%E5%AF%BB%E5%9D%80%EF%BC%88Addressing%EF%BC%89"><span class="toc-text">设备寻址（Addressing）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E4%B8%8E%E5%BA%94%E7%AD%94%EF%BC%88ACK-NACK%EF%BC%89"><span class="toc-text">数据传输与应答（ACK&#x2F;NACK）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4%E7%9A%84%E9%80%9A%E4%BF%A1%E6%97%B6%E5%BA%8F"><span class="toc-text">一个完整的通信时序</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E9%AB%98%E7%BA%A7%E7%89%B9%E6%80%A7"><span class="toc-text">5. 高级特性</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%97%B6%E9%92%9F%E6%8B%89%E4%BC%B8%EF%BC%88Clock-Stretching%EF%BC%89"><span class="toc-text">时钟拉伸（Clock Stretching）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%9A%E4%B8%BB%E6%8E%A7%EF%BC%88Multi-Master%EF%BC%89%E4%B8%8E%E4%BB%B2%E8%A3%81%EF%BC%88Arbitration%EF%BC%89"><span class="toc-text">多主控（Multi-Master）与仲裁（Arbitration）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-IIC-%E7%9A%84%E9%80%9F%E5%BA%A6%E6%A8%A1%E5%BC%8F"><span class="toc-text">6. IIC 的速度模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-IIC-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">7. IIC 的优缺点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-1"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-1"><span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E5%85%B8%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">8. 典型应用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81SPI"><span class="toc-text">三、SPI</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5"><span class="toc-text">1. 核心概念</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%8E%86%E5%8F%B2%E4%B8%8E%E8%83%8C%E6%99%AF-1"><span class="toc-text">2. 历史与背景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%89%A9%E7%90%86%E5%B1%82-%E5%9B%9B%E7%BA%BF%E5%88%B6%E7%9A%84%E6%A0%87%E5%87%86"><span class="toc-text">3. 物理层 - 四线制的标准</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-SPI-%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3-%E9%80%9A%E4%BF%A1%E7%9A%84%E8%A7%84%E5%88%99"><span class="toc-text">4. SPI 协议详解 - 通信的规则</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BB%E4%BB%8E%E6%9E%B6%E6%9E%84-Master-Slave-Architecture"><span class="toc-text">主从架构 (Master-Slave Architecture)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E8%BE%93%E6%9C%BA%E5%88%B6-%E7%8E%AF%E5%BD%A2%E7%A7%BB%E4%BD%8D%E5%AF%84%E5%AD%98%E5%99%A8"><span class="toc-text">数据传输机制 - 环形移位寄存器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4%E7%9A%84%E9%80%9A%E4%BF%A1%E6%97%B6%E5%BA%8F-1"><span class="toc-text">一个完整的通信时序</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%A0%B8%E5%BF%83%E9%85%8D%E7%BD%AE%EF%BC%9ACPOL-%E4%B8%8E-CPHA-SPI-%E7%9A%84%E5%9B%9B%E7%A7%8D%E6%A8%A1%E5%BC%8F"><span class="toc-text">5. 核心配置：CPOL 与 CPHA - SPI 的四种模式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%9B%E7%A7%8D%E5%B7%A5%E4%BD%9C%E6%A8%A1%E5%BC%8F%E6%80%BB%E7%BB%93"><span class="toc-text">四种工作模式总结</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E5%A4%9A%E4%BB%8E%E8%AE%BE%E5%A4%87%E9%85%8D%E7%BD%AE-Multi-Slave-Configurations"><span class="toc-text">6. 多从设备配置 (Multi-Slave Configurations)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%8B%AC%E7%AB%8B%E7%89%87%E9%80%89%E6%A8%A1%E5%BC%8F-Independent-Slave-Select"><span class="toc-text">独立片选模式 (Independent Slave Select)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%8F%8A%E8%8A%B1%E9%93%BE%E6%A8%A1%E5%BC%8F-Daisy-Chain"><span class="toc-text">菊花链模式 (Daisy-Chain)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-SPI-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="toc-text">7. SPI 的优缺点</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E7%82%B9-2"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9-2"><span class="toc-text">缺点</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E5%85%B8%E5%9E%8B%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF-1"><span class="toc-text">8. 典型应用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-text">四、总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#UART-vs-IIC-I2C-vs-SPI-%E7%BB%BC%E5%90%88%E5%AF%B9%E6%AF%94%E8%A1%A8"><span class="toc-text">UART vs. IIC (I2C) vs. SPI 综合对比表</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-text">参考</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map"><img src="/img/37.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记——unordered_map"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E2%80%94unordered-map/" title="CPP学习笔记——unordered_map">CPP学习笔记——unordered_map</a><time datetime="2025-09-19T08:09:17.000Z" title="发表于 2025-09-19 16:09:17">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="算法模板"/></a><div class="content"><a class="title" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板">算法模板</a><time datetime="2025-09-15T01:13:48.000Z" title="发表于 2025-09-15 09:13:48">2025-09-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组"><img src="/img/35.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="数据结构与算法—树状数组"/></a><div class="content"><a class="title" href="/2025/09/06/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95%E2%80%94%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84/" title="数据结构与算法—树状数组">数据结构与算法—树状数组</a><time datetime="2025-09-06T02:08:01.000Z" title="发表于 2025-09-06 10:08:01">2025-09-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img src="/img/34.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—智能指针"/></a><div class="content"><a class="title" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针">CPP学习笔记—智能指针</a><time datetime="2025-08-29T01:58:51.000Z" title="发表于 2025-08-29 09:58:51">2025-08-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数"><img src="/img/33.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—特殊成员函数"/></a><div class="content"><a class="title" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E7%89%B9%E6%AE%8A%E6%88%90%E5%91%98%E5%87%BD%E6%95%B0/" title="CPP学习笔记—特殊成员函数">CPP学习笔记—特殊成员函数</a><time datetime="2025-08-28T06:55:22.000Z" title="发表于 2025-08-28 14:55:22">2025-08-28</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
