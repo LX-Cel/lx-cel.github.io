@@ -1,0 +1,425 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>CPP学习笔记—初始化方式 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="C++ 的初始化是一个庞大而精细的主题，从 C 语言的简单赋值风格，到 C++11 引入的统一初始化，其发展历程旨在解决二义性、提高类型安全性和代码一致性。 为什么初始化如此重要？在 C++ 中，一个未经初始化的变量（非静态局部变量）拥有一个不确定的值。读取这个值会导致未定义行为 (Undefined Behavior, UB)，这是 C++ 中最危险的陷阱之一，可能导致程序崩溃、数据损坏或看似正">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPP学习笔记—初始化方式">
+<meta property="og:url" content="https://lx-cel.github.io/2025/10/03/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="C++ 的初始化是一个庞大而精细的主题，从 C 语言的简单赋值风格，到 C++11 引入的统一初始化，其发展历程旨在解决二义性、提高类型安全性和代码一致性。 为什么初始化如此重要？在 C++ 中，一个未经初始化的变量（非静态局部变量）拥有一个不确定的值。读取这个值会导致未定义行为 (Undefined Behavior, UB)，这是 C++ 中最危险的陷阱之一，可能导致程序崩溃、数据损坏或看似正">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/39.png">
+<meta property="article:published_time" content="2025-10-03T09:10:34.000Z">
+<meta property="article:modified_time" content="2025-10-02T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="cpp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/39.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2025/10/03/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'CPP学习笔记—初始化方式',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">38</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">7</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/39.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">CPP学习笔记—初始化方式</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">CPP学习笔记—初始化方式</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-10-03T09:10:34.000Z" title="发表于 2025-10-03 17:10:34">2025-10-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-10-02T16:00:00.000Z" title="更新于 2025-10-03 00:00:00">2025-10-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/cpp/">cpp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>C++ 的初始化是一个庞大而精细的主题，从 C 语言的简单赋值风格，到 C++11 引入的统一初始化，其发展历程旨在解决二义性、提高类型安全性和代码一致性。</p>
+<h3 id="为什么初始化如此重要？"><a href="#为什么初始化如此重要？" class="headerlink" title="为什么初始化如此重要？"></a>为什么初始化如此重要？</h3><p>在 C++ 中，一个未经初始化的变量（非静态局部变量）拥有一个<strong>不确定的值</strong>。读取这个值会导致<strong>未定义行为 (Undefined Behavior, UB)</strong>，这是 C++ 中最危险的陷阱之一，可能导致程序崩溃、数据损坏或看似正常运行但结果错误。</p>
+<hr>
+<h3 id="C-初始化方式的演变与分类"><a href="#C-初始化方式的演变与分类" class="headerlink" title="C++ 初始化方式的演变与分类"></a>C++ 初始化方式的演变与分类</h3><p>我们可以大致将初始化方式分为两大类：<strong>C++11 之前</strong>的传统方式和 <strong>C++11 及其之后</strong>引入的统一初始化（大括号初始化）。</p>
+<h3 id="第一部分：C-11-之前的传统初始化方式"><a href="#第一部分：C-11-之前的传统初始化方式" class="headerlink" title="第一部分：C++11 之前的传统初始化方式"></a>第一部分：C++11 之前的传统初始化方式</h3><p>在 C++11 之前，主要有以下几种初始化方式，它们的语法不统一，有时会带来困惑。</p>
+<h4 id="1-默认初始化-Default-Initialization"><a href="#1-默认初始化-Default-Initialization" class="headerlink" title="1. 默认初始化 (Default Initialization)"></a>1. 默认初始化 (Default Initialization)</h4><p>当一个变量在定义时没有提供显式的初始值时，就会发生默认初始化。</p>
+<p><strong>语法</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">T object_name;</span><br></pre></td></tr></table></figure>
+
+<p><strong>行为</strong>：</p>
+<ul>
+<li><strong>对于局部变量（在函数内定义）</strong>：如果 <code>T</code> 是内置类型（如 <code>int</code>, <code>double</code>, <code>char*</code>），其值是<strong>不确定的</strong>（包含垃圾值）。如果 <code>T</code> 是类类型，则会调用其<strong>默认构造函数</strong>。如果类没有默认构造函数，则编译错误。</li>
+<li><strong>对于静态或全局变量</strong>：所有静态存储期的变量（全局变量、<code>static</code> 局部变量、<code>static</code> 类成员）会被<strong>零初始化 (Zero Initialization)</strong>。这意味着内置类型被设为 0，指针被设为 <code>nullptr</code>，类类型会调用其默认构造函数。</li>
+</ul>
+<p><strong>示例</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> x; <span class="comment">// 默认初始化，值不确定！(危险)</span></span><br><span class="line">    std::string s; <span class="comment">// 默认初始化，调用 std::string 的默认构造函数，s 为空字符串 &quot;&quot;</span></span><br><span class="line">    <span class="comment">// std::cout &lt;&lt; x &lt;&lt; std::endl; // 读取 x 的值是未定义行为！</span></span><br><span class="line">    std::cout &lt;&lt; <span class="string">&quot;s is: &#x27;&quot;</span> &lt;&lt; s &lt;&lt; <span class="string">&quot;&#x27;&quot;</span> &lt;&lt; std::endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-拷贝初始化-Copy-Initialization"><a href="#2-拷贝初始化-Copy-Initialization" class="headerlink" title="2. 拷贝初始化 (Copy Initialization)"></a>2. 拷贝初始化 (Copy Initialization)</h4><p>使用等号 <code>=</code> 进行初始化。它的语义是“拷贝”一个值到新创建的对象中。</p>
+<p><strong>语法</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">T object_name = other_value;</span><br></pre></td></tr></table></figure>
+
+<p><strong>行为</strong>：<br>编译器会尝试将 <code>other_value</code> 转换（隐式转换）为 <code>T</code> 类型，然后用于初始化 <code>object_name</code>。这通常会调用拷贝构造函数或移动构造函数。虽然看起来像赋值，但它<strong>是初始化，不是赋值</strong>。</p>
+<p><strong>注意</strong>：</p>
+<ul>
+<li><strong>拷贝省略 (Copy Elision)</strong>：现代编译器通常会优化掉这里的拷贝过程，直接在 <code>object_name</code> 的内存上构造对象，但从语法和类型检查的角度，它仍然需要一个可访问的拷贝&#x2F;移动构造函数。</li>
+<li><strong><code>explicit</code> 关键字</strong>：如果类的构造函数被标记为 <code>explicit</code>，那么它不能用于隐式类型转换，因此不能用于拷贝初始化。</li>
+</ul>
+<p><strong>示例</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">10</span>; <span class="comment">// 拷贝初始化</span></span><br><span class="line">std::string s = <span class="string">&quot;hello&quot;</span>; <span class="comment">// 拷贝初始化，&quot;hello&quot; (const char*) 隐式转换为 std::string</span></span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt; v = &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;; <span class="comment">// C++11 中的拷贝列表初始化</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Widget</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">Widget</span><span class="params">(<span class="type">int</span>)</span> </span>&#123;&#125; <span class="comment">// explicit 构造函数</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">Widget w1 = <span class="number">10</span>; <span class="comment">// 编译错误！因为 Widget(int) 是 explicit 的，不能用于隐式转换</span></span><br><span class="line"><span class="comment">// Widget w1 = &#123;10&#125;; // C++11 中同样编译错误</span></span><br><span class="line"><span class="function">Widget <span class="title">w2</span><span class="params">(<span class="number">10</span>)</span></span>; <span class="comment">// 正确，这是直接初始化</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-直接初始化-Direct-Initialization"><a href="#3-直接初始化-Direct-Initialization" class="headerlink" title="3. 直接初始化 (Direct Initialization)"></a>3. 直接初始化 (Direct Initialization)</h4><p>使用圆括号 <code>()</code> 进行初始化。</p>
+<p><strong>语法</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">T <span class="title">object_name</span><span class="params">(arg1, arg2, ...)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><strong>行为</strong>：<br>直接调用与参数列表 <code>(arg1, arg2, ...)</code> 相匹配的构造函数来初始化 <code>object_name</code>。它允许使用 <code>explicit</code> 构造函数。</p>
+<p><strong>示例</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">x</span><span class="params">(<span class="number">10</span>)</span></span>;</span><br><span class="line"><span class="function">std::string <span class="title">s</span><span class="params">(<span class="string">&quot;hello&quot;</span>)</span></span>;</span><br><span class="line"><span class="function">std::vector&lt;<span class="type">int</span>&gt; <span class="title">v</span><span class="params">(<span class="number">10</span>, <span class="number">5</span>)</span></span>; <span class="comment">// 创建一个包含 10 个值为 5 的元素的 vector</span></span><br><span class="line"></span><br><span class="line"><span class="function">Widget <span class="title">w</span><span class="params">(<span class="number">10</span>)</span></span>; <span class="comment">// 正确，即使构造函数是 explicit 的</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>直接初始化的一个著名陷阱：最令人头疼的解析 (Most Vexing Parse)</strong></p>
+<p>如果一个语法可以被解释为一个函数声明，也可以被解释为一个对象定义，C++ 标准规定编译器<strong>优先将其解释为函数声明</strong>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 程序员的意图：定义一个名为 my_timer 的 Timer 对象，使用默认构造函数初始化</span></span><br><span class="line"><span class="function">Timer <span class="title">my_timer</span><span class="params">()</span></span>; </span><br><span class="line"></span><br><span class="line"><span class="comment">// 编译器的解释：声明一个名为 my_timer 的函数，</span></span><br><span class="line"><span class="comment">// 该函数不接受参数，返回一个 Timer 对象。</span></span><br><span class="line"><span class="comment">// 这不是一个对象定义！</span></span><br></pre></td></tr></table></figure>
+<p>这是一个巨大的坑，也是 C++11 引入统一初始化的重要原因之一。</p>
+<h4 id="4-聚合初始化-Aggregate-Initialization"><a href="#4-聚合初始化-Aggregate-Initialization" class="headerlink" title="4. 聚合初始化 (Aggregate Initialization)"></a>4. 聚合初始化 (Aggregate Initialization)</h4><p>用于初始化聚合类型（没有用户提供的构造函数、没有私有或保护的非静态数据成员、没有基类、没有虚函数的 C 风格 <code>struct</code> 或数组）。</p>
+<p><strong>语法</strong>：<br>使用花括号 <code>&#123;&#125;</code> 提供初始值列表。</p>
+<p><strong>示例</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// C 风格 struct</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Point</span> &#123;</span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">int</span> y;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> arr[<span class="number">3</span>] = &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;; <span class="comment">// 初始化数组</span></span><br><span class="line">Point p = &#123;<span class="number">10</span>, <span class="number">20</span>&#125;;     <span class="comment">// 初始化 struct</span></span><br></pre></td></tr></table></figure>
+<p>这种方式在 C++11 中被极大地扩展了。</p>
+<hr>
+<h3 id="第二部分：C-11-的统一初始化-Uniform-Initialization"><a href="#第二部分：C-11-的统一初始化-Uniform-Initialization" class="headerlink" title="第二部分：C++11 的统一初始化 (Uniform Initialization)"></a>第二部分：C++11 的统一初始化 (Uniform Initialization)</h3><p>C++11 引入了使用花括号 <code>&#123;&#125;</code> 的初始化方式，也称为<strong>列表初始化 (List Initialization)</strong> 或<strong>大括号初始化 (Brace Initialization)</strong>。其目标是提供一种统一、无歧义、更安全的初始化语法。</p>
+<p><strong>语法</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">T object_name &#123;arg1, arg2, ...&#125;;   <span class="comment">// 直接列表初始化</span></span><br><span class="line">T object_name = &#123;arg1, arg2, ...&#125;; <span class="comment">// 拷贝列表初始化</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="统一初始化的三大优势"><a href="#统一初始化的三大优势" class="headerlink" title="统一初始化的三大优势"></a>统一初始化的三大优势</h4><ol>
+<li><p><strong>统一性与无歧义</strong>：<br>它解决了“最令人头疼的解析”问题。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">Timer <span class="title">my_timer</span><span class="params">()</span></span>;  <span class="comment">// 函数声明</span></span><br><span class="line">Timer my_timer&#123;&#125;;  <span class="comment">// 明确的对象定义，调用默认构造函数</span></span><br></pre></td></tr></table></figure>
+<p>它可以用在几乎所有初始化场景，包括变量定义、函数返回值、类成员初始化等，语法非常一致。</p>
+</li>
+<li><p><strong>防止窄化转换 (Narrowing Conversion)</strong>：<br>这是大括号初始化的一个<strong>核心安全特性</strong>。它禁止在初始化时发生可能导致数据丢失的类型转换。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x = <span class="number">3.14</span>;    <span class="comment">// 合法，但有警告。x 的值为 3 (数据丢失)</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">y</span><span class="params">(<span class="number">3.14</span>)</span></span>;     <span class="comment">// 合法，但有警告。y 的值为 3 (数据丢失)</span></span><br><span class="line"><span class="comment">// int z&#123;3.14&#125;;  // 编译错误！大括号初始化禁止从 double 到 int 的窄化转换</span></span><br><span class="line"></span><br><span class="line"><span class="type">char</span> c1 = <span class="number">300</span>;   <span class="comment">// 合法，但行为是实现定义的（溢出）</span></span><br><span class="line"><span class="comment">// char c2&#123;300&#125;; // 编译错误！300 超出 char 的表示范围，是窄化转换</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>对 <code>std::initializer_list</code> 的原生支持</strong>：<br>这是大括号初始化最特殊、也最需要注意的一点。如果一个类有一个接受 <code>std::initializer_list</code> 的构造函数，那么使用大括号初始化时，编译器会<strong>强烈优先</strong>选择这个构造函数。</p>
+<p><strong>示例</strong>：<br><code>std::vector</code> 同时有 <code>vector(size_type count, const T&amp; value)</code> 和 <code>vector(std::initializer_list&lt;T&gt;)</code> 两种构造函数。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">std::vector&lt;<span class="type">int</span>&gt; <span class="title">v1</span><span class="params">(<span class="number">10</span>, <span class="number">20</span>)</span></span>; <span class="comment">// 直接初始化：调用构造函数 vector(size, value)</span></span><br><span class="line">                             <span class="comment">// v1 包含 10 个元素，每个都是 20</span></span><br><span class="line"></span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt; v2&#123;<span class="number">10</span>, <span class="number">20</span>&#125;; <span class="comment">// 列表初始化：优先匹配 initializer_list 构造函数</span></span><br><span class="line">                             <span class="comment">// v2 包含 2 个元素：10 和 20</span></span><br></pre></td></tr></table></figure>
+<p>这个特性非常强大，但也可能与你的直觉相悖，是使用大括号初始化时唯一需要小心的地方。</p>
+</li>
+</ol>
+<h4 id="空大括号-的特殊含义：值初始化"><a href="#空大括号-的特殊含义：值初始化" class="headerlink" title="空大括号 {} 的特殊含义：值初始化"></a>空大括号 <code>&#123;&#125;</code> 的特殊含义：值初始化</h4><p>使用空的大括号 <code>&#123;&#125;</code> 会对对象进行<strong>值初始化 (Value Initialization)</strong>。</p>
+<p><strong>语法</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">T object_name&#123;&#125;;</span><br><span class="line">T* ptr = <span class="keyword">new</span> T&#123;&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>行为</strong>：</p>
+<ul>
+<li>对于内置类型，保证被<strong>零初始化</strong>。</li>
+<li>对于类类型，调用其<strong>默认构造函数</strong>。</li>
+</ul>
+<p>这是一种非常安全和推荐的做法，可以确保所有变量都有一个良好定义的初始状态。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x&#123;&#125;;      <span class="comment">// x 被初始化为 0</span></span><br><span class="line"><span class="type">double</span> d&#123;&#125;;   <span class="comment">// d 被初始化为 0.0</span></span><br><span class="line"><span class="type">int</span>* p&#123;&#125;;     <span class="comment">// p 被初始化为 nullptr</span></span><br><span class="line">std::string s&#123;&#125;; <span class="comment">// s 为空字符串 &quot;&quot;</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="第三部分：特殊的初始化场景"><a href="#第三部分：特殊的初始化场景" class="headerlink" title="第三部分：特殊的初始化场景"></a>第三部分：特殊的初始化场景</h3><h4 id="1-类成员初始化"><a href="#1-类成员初始化" class="headerlink" title="1. 类成员初始化"></a>1. 类成员初始化</h4><h5 id="a-构造函数成员初始化列表-Member-Initializer-List"><a href="#a-构造函数成员初始化列表-Member-Initializer-List" class="headerlink" title="a. 构造函数成员初始化列表 (Member Initializer List)"></a>a. 构造函数成员初始化列表 (Member Initializer List)</h5><p>这是在构造函数体执行<strong>之前</strong>初始化成员变量的唯一正确方式。</p>
+<p><strong>语法</strong>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyClass</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">MyClass</span>(<span class="type">int</span> a, <span class="type">const</span> std::string&amp; b)</span><br><span class="line">        : <span class="built_in">member_a_</span>(a),       <span class="comment">// 直接初始化成员</span></span><br><span class="line">          <span class="built_in">member_b_</span>(b),       <span class="comment">// 拷贝初始化成员</span></span><br><span class="line">          <span class="built_in">const_member_</span>(<span class="number">100</span>), <span class="comment">// 初始化 const 成员</span></span><br><span class="line">          <span class="built_in">ref_member_</span>(a)      <span class="comment">// 初始化引用成员</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 构造函数体，此时所有成员都已初始化完毕</span></span><br><span class="line">        <span class="comment">// 这里执行的是赋值，而不是初始化</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> member_a_;</span><br><span class="line">    std::string member_b_;</span><br><span class="line">    <span class="type">const</span> <span class="type">int</span> const_member_; <span class="comment">// const 成员</span></span><br><span class="line">    <span class="type">int</span>&amp; ref_member_;        <span class="comment">// 引用成员</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><strong>为什么必须使用它？</strong></p>
+<ul>
+<li><strong>效率</strong>：对于类类型成员，使用初始化列表是直接调用构造函数进行初始化。如果在构造函数体内赋值，则会先调用该成员的默认构造函数（默认初始化），然后再调用赋值操作符，多了一步操作。</li>
+<li><strong>正确性</strong>：<code>const</code> 成员和引用成员<strong>必须</strong>在成员初始化列表中进行初始化，因为它们一旦创建就不能被重新赋值。</li>
+</ul>
+<h5 id="b-类内成员初始化-In-class-Member-Initializers-C-11"><a href="#b-类内成员初始化-In-class-Member-Initializers-C-11" class="headerlink" title="b. 类内成员初始化 (In-class Member Initializers) (C++11)"></a>b. 类内成员初始化 (In-class Member Initializers) (C++11)</h5><p>C++11 允许在类定义中直接为非静态成员变量提供默认初始值。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">MyClass</span> &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">int</span> value_ = <span class="number">42</span>; <span class="comment">// C++11 类内初始化</span></span><br><span class="line">    std::string name_ = <span class="string">&quot;default&quot;</span>;</span><br><span class="line">    std::vector&lt;<span class="type">int</span>&gt; data_&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这极大地简化了构造函数。如果构造函数没有在成员初始化列表中为这些成员提供不同的初始值，它们就会使用这个默认值。这使得代码更简洁，并减少了因忘记在多个构造函数中初始化某个成员而导致的错误。</p>
+<hr>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><table>
+<thead>
+<tr>
+<th align="left">初始化方式</th>
+<th align="left">语法</th>
+<th align="left">示例</th>
+<th align="left">优点</th>
+<th align="left">缺点&#x2F;注意事项</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>默认初始化</strong></td>
+<td align="left"><code>T obj;</code></td>
+<td align="left"><code>int x;</code></td>
+<td align="left">简单</td>
+<td align="left">对局部内置类型导致未定义行为。</td>
+</tr>
+<tr>
+<td align="left"><strong>拷贝初始化</strong></td>
+<td align="left"><code>T obj = val;</code></td>
+<td align="left"><code>int x = 5;</code></td>
+<td align="left">语法自然，符合直觉</td>
+<td align="left">不支持 <code>explicit</code> 构造函数；可能存在隐式类型转换问题。</td>
+</tr>
+<tr>
+<td align="left"><strong>直接初始化</strong></td>
+<td align="left"><code>T obj(args);</code></td>
+<td align="left"><code>int x(5);</code></td>
+<td align="left">支持 <code>explicit</code> 构造函数；功能强大</td>
+<td align="left">存在“最令人头疼的解析”问题；语法不统一。</td>
+</tr>
+<tr>
+<td align="left"><strong>列表初始化 (统一初始化)</strong></td>
+<td align="left"><code>T obj&#123;args&#125;;</code> <code>T obj = &#123;args&#125;;</code></td>
+<td align="left"><code>int x&#123;5&#125;;</code> <code>std::vector&lt;int&gt; v&#123;1,2&#125;;</code></td>
+<td align="left"><strong>统一语法</strong>，<strong>无歧义</strong>，<strong>防止窄化转换</strong>，<strong>保证值初始化</strong> (<code>&#123;&#125;</code>)</td>
+<td align="left"><strong>会优先匹配 <code>std::initializer_list</code> 构造函数</strong>，可能不符合直觉。</td>
+</tr>
+<tr>
+<td align="left"><strong>成员初始化列表</strong></td>
+<td align="left"><code>Ctor() : mem(v) &#123;&#125;</code></td>
+<td align="left"><code>MyClass() : x_(10) &#123;&#125;</code></td>
+<td align="left"><strong>高效</strong>，初始化 <code>const</code>&#x2F;引用成员的<strong>唯一方式</strong></td>
+<td align="left">只能在构造函数中使用。</td>
+</tr>
+<tr>
+<td align="left"><strong>类内成员初始化</strong></td>
+<td align="left"><code>class T &#123; int m=5; &#125;;</code></td>
+<td align="left"><code>int value_ = 42;</code></td>
+<td align="left">简化构造函数，提供默认值，避免重复代码</td>
+<td align="left">C++11 及以上版本才支持。</td>
+</tr>
+</tbody></table>
+<h4 id="现代-C-C-11-及以后-的推荐实践："><a href="#现代-C-C-11-及以后-的推荐实践：" class="headerlink" title="现代 C++ (C++11 及以后) 的推荐实践："></a>现代 C++ (C++11 及以后) 的推荐实践：</h4><ol>
+<li><p><strong>首选大括号统一初始化 <code>&#123;&#125;</code></strong>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x&#123;&#125;; <span class="comment">// 保证为 0</span></span><br><span class="line">Widget w&#123;&#125;; <span class="comment">// 调用默认构造函数</span></span><br><span class="line">std::vector&lt;<span class="type">int</span>&gt; v&#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br></pre></td></tr></table></figure>
+<p>它的安全性（防止窄化）和一致性使其成为绝大多数情况下的最佳选择。</p>
+</li>
+<li><p><strong>警惕 <code>std::initializer_list</code> 的“陷阱”</strong>。<br>当你需要调用一个非 <code>initializer_list</code> 的构造函数，而恰好又存在一个 <code>initializer_list</code> 构造函数时，请明确使用圆括号 <code>()</code> 进行直接初始化。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 意图：创建一个包含 10 个 20 的 vector</span></span><br><span class="line"><span class="function">std::vector&lt;<span class="type">int</span>&gt; <span class="title">v</span><span class="params">(<span class="number">10</span>, <span class="number">20</span>)</span></span>; <span class="comment">// 正确，使用 ()</span></span><br><span class="line"><span class="comment">// std::vector&lt;int&gt; v&#123;10, 20&#125;; // 错误，这会创建一个包含 &#123;10, 20&#125; 的 vector</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>总是使用成员初始化列表</strong>来初始化构造函数中的成员，或使用 <strong>C++11 的类内成员初始化</strong>来提供默认值。避免在构造函数体内进行赋值。</p>
+</li>
+<li><p><strong>养成随手初始化的习惯</strong>。绝不留下未初始化的变量。对于不确定初始值的变量，使用值初始化 (<code>&#123;&#125;</code>) 将其清零。</p>
+</li>
+</ol>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2025/10/03/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F/">https://lx-cel.github.io/2025/10/03/CPP学习笔记—初始化方式/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/cpp/">cpp</a></div><div class="post-share"><div class="social-share" data-image="/img/39.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/10/09/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" title="CPP学习笔记—单例模式"><img class="cover" src="/img/40.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">CPP学习笔记—单例模式</div></div><div class="info-2"><div class="info-item-1">1. 什么是单例模式？单例模式是一种创建型设计模式，其核心思想是确保一个类在任何情况下都只有一个实例，并提供一个全局访问点来获取这个唯一的实例。 可以把它想象成一个国家的总统或者一个学校的校长，在整个系统运行期间，这个角色只能有一个人担任。无论你从哪个部门、哪个流程去“找校长”，最终找到的都是同一个人。 为了在 C++ 中实现这一点，通常需要满足三个关键条件：  私有的构造函数：为了防止外部代码通过 new 操作符随意创建类的实例。 一个私有的、静态的、指向本类实例的指针或对象：这是存放那个唯一实例的地方。 一个公有的、静态的、用于获取实例的方法：这是全局唯一的访问点，负责创建并返回那个唯一的实例。   2. 为什么需要单例模式？单例模式主要用于解决那些“全局唯一”且需要被频繁共享访问的资源或服务。常见的应用场景包括：  日志记录器（Logger）：整个应用程序通常只需要一个日志记录器，所有模块都通过它来写入日志文件。 配置管理器（Configuration Manager）：读取和管理应用的配置信息（如数据库连接字符串、API...</div></div></div></a><a class="pagination-related" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94priority-queue/" title="CPP学习笔记—priority_queue"><img class="cover" src="/img/38.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">CPP学习笔记—priority_queue</div></div><div class="info-2"><div class="info-item-1">1. priority_queue 是什么？std::priority_queue 是 C++ 标准模板库（STL）中的一个容器适配器，它提供了一种特殊的队列：优先级队列。 核心概念：优先出队与普通的队列（std::queue）遵循“先进先出”（FIFO）的原则不同，优先级队列中的元素并非根据其进入队列的顺序出队，而是根据其优先级。每次从队列中取出的元素（通过 top() 访问，pop() 移除），都是当前队列中优先级最高的那个。 默认情况下，对于数字，“大”的元素优先级更高；对于其他类型，使用 std::less 作为比较函数，即通过 operator&lt; 来判断优先级。 底层数据结构：堆 (Heap)priority_queue 的高效实现得益于其底层的堆数据结构。通常是最大堆 (Max-Heap)。  堆：一个特殊的完全二叉树，满足“堆属性”：父节点的值总是大于或等于（最大堆）或小于或等于（最小堆）其所有子节点的值。 最大堆 (Max-Heap)：根节点是整个堆中最大的元素。std::priority_queue 默认就是最大堆。 最小堆...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/08/16/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F/" title="CPP学习笔记—lambda表达式"><img class="cover" src="/img/24.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-16</div><div class="info-item-2">CPP学习笔记—lambda表达式</div></div><div class="info-2"><div class="info-item-1">Lambda 表达式是 C++11 引入的一项革命性特性，它极大地改变了 C++ 的编程风格，尤其是在与标准模板库（STL）配合使用时。它允许我们在代码中需要一个函数的地方，直接定义一个匿名的、临时的函数对象。  1. 什么是 Lambda 表达式？简单来说，Lambda 表达式就是一个可调用的代码单元，可以把它理解为一个匿名的内联函数。与普通函数不同，它可以在函数内部定义，并且可以“捕获”其所在作用域中的变量。 2. 为什么需要 Lambda 表达式？在 C++11 之前，如果想向一个算法（如 std::sort）传递一个简单的、一次性的比较逻辑，通常需要：  定义一个全局函数或静态成员函数：这会污染命名空间，并且逻辑与使用它的地方相隔甚远。 定义一个函数对象（Functor）：需要编写一个完整的类，重载 operator()。这非常繁琐。  Lambda 的优势：  代码局部性：将逻辑直接写在使用它的地方，代码更紧凑，可读性更高。 简洁性：避免了编写独立的函数或函数对象类的样板代码。 状态捕获：可以方便地访问和使用其定义作用域内的变量，这是普通函数难以做到的。   3....</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%8C%87%E9%92%88/" title="CPP学习笔记—指针"><img class="cover" src="/img/21.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—指针</div></div><div class="info-2"><div class="info-item-1">一、指针到底是什么？—— 内存地址的“房卡”想象一下计算机的内存是一家长长的酒店，里面有无数的房间，每个房间都有一个独一无二的门牌号（内存地址）。  普通变量：就像一个房间，里面存放着具体的东西（值）。 1int age = 25; // 在一个叫 `age` 的房间里，放了数字 25。  指针：它本身也是一个变量，但它里面存放的不是普通的东西，而是一张房卡。这张房卡上写着另一个房间的门牌号。   所以，指针是一个存储了另一个变量内存地址的变量。通过这张“房卡”，我们就能找到并操作那个特定的“房间”。  二、两大核心操作符：&amp; (取地址) 和 * (解引用)要玩转指针，必须掌握这两个“魔法”操作符。 1. &amp; (取地址符) —— “制作房卡”&amp; 符号的作用是获取一个变量的内存地址。可以把它读作“…的地址”。 12345int age = 25;       // 一个存放 25 的房间 `age`int* p_age = &amp;age;  // 创建一张叫 `p_age` 的房卡，                    // 上面记录 `age`...</div></div></div></a><a class="pagination-related" href="/2025/07/26/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%A0%87%E5%87%86%E6%A8%A1%E6%9D%BF%E5%BA%93%EF%BC%88STL%EF%BC%89%E4%B8%AD%E7%9A%84%E5%AE%B9%E5%99%A8/" title="CPP学习笔记—标准模板库（STL）中的容器"><img class="cover" src="/img/22.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-07-26</div><div class="info-item-2">CPP学习笔记—标准模板库（STL）中的容器</div></div><div class="info-2"><div class="info-item-1">一、什么是容器？为什么它如此重要？简单来说，C++ 容器是用来存储和管理一组对象的类模板。它们就像是工具箱里不同种类的收纳盒：有的适合快速取放（像数组），有的适合保持物品有序（像分类文件柜），还有的适合快速查找（像带索引的卡片盒）。 使用 STL 容器的好处是巨大的：  代码更简洁：你无需从零开始实现链表、哈希表等复杂数据结构。 性能更优越：STL 容器经过了高度优化，性能通常比手写的要好。 代码更安全：它们处理了内存管理的细节，减少了内存泄漏和越界访问的风险。 互操作性强：所有容器都遵循一套统一的接口（如 begin(), end(), size()），可以与 STL 的迭代器和算法无缝协作，威力倍增。   二、容器的分类与概览C++ 的容器主要分为四大类，分别是序列容器、关联容器、无序关联容器和容器适配器。    类别 容器 特点    序列容器 vector, deque, list, array 元素按线性顺序排列，可通过位置访问。   关联容器 map, set, multimap, multiset 元素根据键值自动排序，查找速度快 (O(log...</div></div></div></a><a class="pagination-related" href="/2025/08/27/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%A4%9A%E6%80%81/" title="CPP学习笔记—多态"><img class="cover" src="/img/31.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-27</div><div class="info-item-2">CPP学习笔记—多态</div></div><div class="info-2"><div class="info-item-1">什么是多态？多态，从字面意思上看，是“多种形态”的意思。在 C++ 中，多态是面向对象编程（OOP）的三大核心特性之一（另外两个是封装和继承）。它允许你使用一个统一的接口来处理不同类型的对象，使得程序具有更好的可扩展性和灵活性。 一个通俗的例子是：你有一个通用的“遥控器”（接口），这个遥控器上有个“开&#x2F;关”按钮。当你用这个遥控器对着电视机按“开&#x2F;关”，电视机就会打开或关闭；当你用同一个遥控器对着空调按“开&#x2F;关”，空调就会打开或关闭。遥控器本身并不知道它控制的是电视机还是空调，它只知道发出一个“开&#x2F;关”的指令。具体执行这个指令的是哪个设备，以及这个设备如何执行（电视机是点亮屏幕，空调是启动压缩机），是在运行时才决定的。 在 C++ 中，这个“遥控器”就是基类指针或引用，而“电视机”和“空调”就是派生类对象。 C++ 中的多态分类C++ 中的多态主要分为两类：  静态多态（编译时多态）：在程序编译期间就已经确定了函数调用的地址。它的执行速度快，但灵活性稍差。 动态多态（运行时多态）：在程序运行期间才能确定调用哪个函数。这是我们通常所说的...</div></div></div></a><a class="pagination-related" href="/2025/08/29/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%99%BA%E8%83%BD%E6%8C%87%E9%92%88/" title="CPP学习笔记—智能指针"><img class="cover" src="/img/34.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-29</div><div class="info-item-2">CPP学习笔记—智能指针</div></div><div class="info-2"><div class="info-item-1">1. 为什么需要智能指针？在 C&#x2F;C++ 中，内存管理是一个核心但又极易出错的话题。传统的内存管理依赖于程序员手动使用 new 和 delete (或 malloc 和 free) 来申请和释放内存。这导致了几个经典的问题：  内存泄漏 (Memory Leaks)：忘记调用 delete。当一个动态分配的对象不再被使用，但其内存没有被释放时，这块内存就无法被再次使用，造成了内存泄漏。长时间运行的程序中，内存泄漏会耗尽系统资源，导致程序崩溃。 悬挂指针 (Dangling Pointers)：一个指针指向的内存已经被释放，但指针本身没有被置为 nullptr。如果之后不小心通过这个悬挂指针访问或修改内存，会导致未定义行为（Undefined Behavior），通常表现为程序崩溃或数据损坏。 重复释放 (Double Free)：对同一块内存调用两次或多次 delete。这也是一种严重的未定义行为，通常会导致程序崩溃。 异常安全问题：在 new 和 delete 之间如果发生异常，delete 语句可能永远不会被执行，从而导致内存泄漏。  12345678void...</div></div></div></a><a class="pagination-related" href="/2025/08/28/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B5%85%E6%8B%B7%E8%B4%9D/" title="CPP学习笔记—深拷贝与浅拷贝"><img class="cover" src="/img/32.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-08-28</div><div class="info-item-2">CPP学习笔记—深拷贝与浅拷贝</div></div><div class="info-2"><div class="info-item-1">C++ 中的深拷贝（Deep Copy）和浅拷贝（Shallow Copy）是一个 C++ 实际开发中至关重要的核心概念，因为它直接关系到程序的正确性和内存安全。  1. 问题的根源：指针和动态内存要理解深拷贝和浅拷贝，首先必须明白问题的根源在哪里。如果一个类只包含基本数据类型（如 int, double）或者不持有动态资源的对象（如 std::string，它自己内部处理好了深拷贝），那么我们通常不需要关心这个问题。 问题出现在当一个类的成员变量是指针，并且这个指针指向了在堆（Heap）上动态分配的内存时。 来看一个简单的例子，一个自定义的字符串包装类： 123456789101112131415161718class MyString &#123;private:    char* _data;    size_t _len;public:    MyString(const char* s = &quot;&quot;) &#123;        _len = strlen(s);        _data = new char[_len + 1]; //...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">38</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">7</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%88%9D%E5%A7%8B%E5%8C%96%E5%A6%82%E6%AD%A4%E9%87%8D%E8%A6%81%EF%BC%9F"><span class="toc-text">为什么初始化如此重要？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#C-%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F%E7%9A%84%E6%BC%94%E5%8F%98%E4%B8%8E%E5%88%86%E7%B1%BB"><span class="toc-text">C++ 初始化方式的演变与分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9AC-11-%E4%B9%8B%E5%89%8D%E7%9A%84%E4%BC%A0%E7%BB%9F%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F"><span class="toc-text">第一部分：C++11 之前的传统初始化方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E9%BB%98%E8%AE%A4%E5%88%9D%E5%A7%8B%E5%8C%96-Default-Initialization"><span class="toc-text">1. 默认初始化 (Default Initialization)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%8B%B7%E8%B4%9D%E5%88%9D%E5%A7%8B%E5%8C%96-Copy-Initialization"><span class="toc-text">2. 拷贝初始化 (Copy Initialization)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E7%9B%B4%E6%8E%A5%E5%88%9D%E5%A7%8B%E5%8C%96-Direct-Initialization"><span class="toc-text">3. 直接初始化 (Direct Initialization)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E8%81%9A%E5%90%88%E5%88%9D%E5%A7%8B%E5%8C%96-Aggregate-Initialization"><span class="toc-text">4. 聚合初始化 (Aggregate Initialization)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9AC-11-%E7%9A%84%E7%BB%9F%E4%B8%80%E5%88%9D%E5%A7%8B%E5%8C%96-Uniform-Initialization"><span class="toc-text">第二部分：C++11 的统一初始化 (Uniform Initialization)</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%9F%E4%B8%80%E5%88%9D%E5%A7%8B%E5%8C%96%E7%9A%84%E4%B8%89%E5%A4%A7%E4%BC%98%E5%8A%BF"><span class="toc-text">统一初始化的三大优势</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A9%BA%E5%A4%A7%E6%8B%AC%E5%8F%B7-%E7%9A%84%E7%89%B9%E6%AE%8A%E5%90%AB%E4%B9%89%EF%BC%9A%E5%80%BC%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">空大括号 {} 的特殊含义：值初始化</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E7%89%B9%E6%AE%8A%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96%E5%9C%BA%E6%99%AF"><span class="toc-text">第三部分：特殊的初始化场景</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E7%B1%BB%E6%88%90%E5%91%98%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">1. 类成员初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#a-%E6%9E%84%E9%80%A0%E5%87%BD%E6%95%B0%E6%88%90%E5%91%98%E5%88%9D%E5%A7%8B%E5%8C%96%E5%88%97%E8%A1%A8-Member-Initializer-List"><span class="toc-text">a. 构造函数成员初始化列表 (Member Initializer List)</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#b-%E7%B1%BB%E5%86%85%E6%88%90%E5%91%98%E5%88%9D%E5%A7%8B%E5%8C%96-In-class-Member-Initializers-C-11"><span class="toc-text">b. 类内成员初始化 (In-class Member Initializers) (C++11)</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%8E%B0%E4%BB%A3-C-C-11-%E5%8F%8A%E4%BB%A5%E5%90%8E-%E7%9A%84%E6%8E%A8%E8%8D%90%E5%AE%9E%E8%B7%B5%EF%BC%9A"><span class="toc-text">现代 C++ (C++11 及以后) 的推荐实践：</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2025/10/09/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" title="CPP学习笔记—单例模式"><img src="/img/40.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—单例模式"/></a><div class="content"><a class="title" href="/2025/10/09/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%8D%95%E4%BE%8B%E6%A8%A1%E5%BC%8F/" title="CPP学习笔记—单例模式">CPP学习笔记—单例模式</a><time datetime="2025-10-09T06:02:01.000Z" title="发表于 2025-10-09 14:02:01">2025-10-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/10/03/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F/" title="CPP学习笔记—初始化方式"><img src="/img/39.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—初始化方式"/></a><div class="content"><a class="title" href="/2025/10/03/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94%E5%88%9D%E5%A7%8B%E5%8C%96%E6%96%B9%E5%BC%8F/" title="CPP学习笔记—初始化方式">CPP学习笔记—初始化方式</a><time datetime="2025-10-03T09:10:34.000Z" title="发表于 2025-10-03 17:10:34">2025-10-03</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94priority-queue/" title="CPP学习笔记—priority_queue"><img src="/img/38.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—priority_queue"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94priority-queue/" title="CPP学习笔记—priority_queue">CPP学习笔记—priority_queue</a><time datetime="2025-09-19T08:47:43.000Z" title="发表于 2025-09-19 16:47:43">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94unordered-map/" title="CPP学习笔记—unordered_map"><img src="/img/37.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="CPP学习笔记—unordered_map"/></a><div class="content"><a class="title" href="/2025/09/19/CPP%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%94unordered-map/" title="CPP学习笔记—unordered_map">CPP学习笔记—unordered_map</a><time datetime="2025-09-19T08:09:17.000Z" title="发表于 2025-09-19 16:09:17">2025-09-19</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="算法模板"/></a><div class="content"><a class="title" href="/2025/09/15/%E7%AE%97%E6%B3%95%E6%A8%A1%E6%9D%BF/" title="算法模板">算法模板</a><time datetime="2025-09-15T01:13:48.000Z" title="发表于 2025-09-15 09:13:48">2025-09-15</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2025 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
