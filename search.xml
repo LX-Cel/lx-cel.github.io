@@ -4,6 +4,35 @@
   
     
     <entry>
+      <title>2026年4月14日 AI 每日资讯</title>
+      <link href="/2026/04/14/2026-04-14-ai-daily-news/"/>
+      <url>/2026/04/14/2026-04-14-ai-daily-news/</url>
+      
+        <content type="html"><![CDATA[<h2 id="今日核心动态"><a href="#今日核心动态" class="headerlink" title="今日核心动态"></a>今日核心动态</h2><h3 id="1-OpenAI-GPT-6-今日正式全球发布"><a href="#1-OpenAI-GPT-6-今日正式全球发布" class="headerlink" title="1. OpenAI GPT-6 今日正式全球发布"></a>1. OpenAI GPT-6 今日正式全球发布</h3><p>OpenAI 耗时18个月研发的新一代旗舰模型今日正式上线：</p><ul><li>上下文窗口达到200万Token，可直接输入整本书籍</li><li>参数规模5~6万亿，训练总成本超过20亿美元</li><li>整体性能相比GPT-5.4提升40%以上</li><li>官方定位为「AGI的最后一公里」</li></ul><h3 id="2-DeepSeek-V4-即将在4月下旬发布"><a href="#2-DeepSeek-V4-即将在4月下旬发布" class="headerlink" title="2. DeepSeek V4 即将在4月下旬发布"></a>2. DeepSeek V4 即将在4月下旬发布</h3><p>国内大模型厂商DeepSeek正式官宣新一代旗舰V4版本：</p><ul><li>万亿参数规模，原生支持多模态能力</li><li>全面适配华为昇腾950PR芯片，彻底摆脱对英伟达算力的依赖</li><li>是GPT-6发布前国内厂商最重要的战略卡位产品</li></ul><h3 id="3-Anthropic-未发布新模型性能曝光"><a href="#3-Anthropic-未发布新模型性能曝光" class="headerlink" title="3. Anthropic 未发布新模型性能曝光"></a>3. Anthropic 未发布新模型性能曝光</h3><p>Anthropic 尚未公开发布的旗舰模型Claude Mythos测试数据流出：</p><ul><li>图搜索任务准确率达到80%，是GPT-5.4的4倍</li><li>业内质疑其采用了字节跳动Seed团队提出的循环语言模型架构</li><li>目前Anthropic尚未对此作出官方回应</li></ul><h3 id="4-行业事件"><a href="#4-行业事件" class="headerlink" title="4. 行业事件"></a>4. 行业事件</h3><ul><li>OpenAI CEO Sam Altman 住所4月12日再次遭遇袭击，距离上次袭击仅间隔45小时，两名嫌疑人已被逮捕</li><li>马斯克起诉OpenAI案件将于4月27日开庭，索赔金额790~1340亿美元，同时要求Altman卸任、撤销OpenAI营利化转型</li><li>英特尔正式加入马斯克TeraFab超级芯片项目，目标实现年产1太瓦AI芯片，相当于当前全球AI芯片总产能的50倍</li></ul><hr><p><em>更新时间：2026年4月14日 下午3:35</em></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> AI日报 </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> AI资讯 </tag>
+            
+            <tag> 每日更新 </tag>
+            
+            <tag> 大模型 </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>2026年4月 国内Coding Plan全对比：不用折腾境外服务的AI编程选择指南</title>
       <link href="/2026/04/14/2026-04-14-2026%E5%9B%BD%E5%86%85Coding%20Plan%E9%80%89%E8%B4%AD%E6%8C%87%E5%8D%97/"/>
       <url>/2026/04/14/2026-04-14-2026%E5%9B%BD%E5%86%85Coding%20Plan%E9%80%89%E8%B4%AD%E6%8C%87%E5%8D%97/</url>
