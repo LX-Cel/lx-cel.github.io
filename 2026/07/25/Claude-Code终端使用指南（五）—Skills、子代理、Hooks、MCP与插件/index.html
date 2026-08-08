@@ -1,0 +1,926 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 &#x2F;fix-issue Skill； 创建只读 security-reviewer 子">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件">
+<meta property="og:url" content="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 &#x2F;fix-issue Skill； 创建只读 security-reviewer 子">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/51.png">
+<meta property="article:published_time" content="2026-07-25T01:40:00.000Z">
+<meta property="article:modified_time" content="2026-07-24T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="MCP">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="开发工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/51.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 8.1.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/51.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-07-25T01:40:00.000Z" title="发表于 2026-07-25 09:40:00">2026-07-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-07-24T16:00:00.000Z" title="更新于 2026-07-25 00:00:00">2026-07-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">5.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>18分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。</p>
+<p>本文继续使用虚构的 <code>task-board</code> 项目，完成以下扩展：</p>
+<ol>
+<li>创建 <code>/fix-issue</code> Skill；</li>
+<li>创建只读 <code>security-reviewer</code> 子代理；</li>
+<li>配置编辑后格式化和保护迁移文件的 Hooks；</li>
+<li>连接 Claude Code 官方文档 MCP；</li>
+<li>说明何时使用插件与代码智能插件。</li>
+</ol>
+<hr>
+<h2 id="0-扩展机制选择速查"><a href="#0-扩展机制选择速查" class="headerlink" title="0. 扩展机制选择速查"></a>0. 扩展机制选择速查</h2><table>
+<thead>
+<tr>
+<th>需求</th>
+<th>机制</th>
+<th>加载或执行方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>每次会话都应知道的约定</td>
+<td><code>CLAUDE.md</code></td>
+<td>启动时全文加载</td>
+</tr>
+<tr>
+<td>特定路径的长期规则</td>
+<td><code>.claude/rules/</code></td>
+<td>启动时或读取匹配文件时</td>
+</tr>
+<tr>
+<td>可复用知识或多步流程</td>
+<td>Skill</td>
+<td>描述常驻，正文按需加载</td>
+</tr>
+<tr>
+<td>高输出调查或专门角色</td>
+<td>子代理</td>
+<td>独立上下文，返回摘要</td>
+</tr>
+<tr>
+<td>外部系统的数据和操作</td>
+<td>MCP</td>
+<td>连接服务器后提供工具</td>
+</tr>
+<tr>
+<td>每次匹配事件都必须执行</td>
+<td>Hook</td>
+<td>生命周期事件确定性触发</td>
+</tr>
+<tr>
+<td>语言服务器导航与诊断</td>
+<td>Code intelligence plugin</td>
+<td>安装语言插件后启用 LSP</td>
+</tr>
+<tr>
+<td>跨仓库分发整套能力</td>
+<td>Plugin</td>
+<td>打包 Skill、Agent、Hook、MCP 等</td>
+</tr>
+</tbody></table>
+<p>官方推荐的演进顺序是按实际痛点逐步添加：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">同一约定错两次       → CLAUDE.md</span><br><span class="line">重复输入同一提示     → Skill</span><br><span class="line">反复粘贴外部数据     → MCP</span><br><span class="line">调查污染主上下文     → 子代理</span><br><span class="line">某动作必须每次发生   → Hook</span><br><span class="line">第二个仓库需要同配置 → Plugin</span><br></pre></td></tr></table></figure>
+
+<p>不要一次安装大量扩展。每个 Skill 描述、MCP 工具和插件都可能增加上下文或启动成本。</p>
+<hr>
+<h2 id="1-理解扩展在代理循环中的位置"><a href="#1-理解扩展在代理循环中的位置" class="headerlink" title="1. 理解扩展在代理循环中的位置"></a>1. 理解扩展在代理循环中的位置</h2><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">会话启动</span><br><span class="line">  ├── 加载 CLAUDE.md</span><br><span class="line">  ├── 加载 Rule</span><br><span class="line">  ├── 加载 Skill 描述</span><br><span class="line">  ├── 注册 MCP 工具名称</span><br><span class="line">  ├── 注册子代理定义</span><br><span class="line">  └── 注册 Hooks</span><br><span class="line"></span><br><span class="line">用户提交任务</span><br><span class="line">  ├── Claude 选择 Skill 或子代理</span><br><span class="line">  ├── Claude 选择内置或 MCP 工具</span><br><span class="line">  ├── PreToolUse Hook 可拦截</span><br><span class="line">  ├── 权限与沙箱检查</span><br><span class="line">  ├── 工具执行</span><br><span class="line">  └── PostToolUse Hook 可格式化、检查或返回上下文</span><br></pre></td></tr></table></figure>
+
+<p>各机制不是互斥替代关系。例如：</p>
+<ul>
+<li>MCP 连接数据库，Skill 说明本项目数据模型和只读查询流程；</li>
+<li>Skill 启动子代理完成隔离审查；</li>
+<li>Hook 在文件编辑后运行格式化并把错误反馈给 Claude；</li>
+<li>Plugin 把 Skill、Agent、Hook 和 MCP 配置打包。</li>
+</ul>
+<h2 id="2-Skills"><a href="#2-Skills" class="headerlink" title="2. Skills"></a>2. Skills</h2><h3 id="2-1-Skill-适合什么"><a href="#2-1-Skill-适合什么" class="headerlink" title="2.1 Skill 适合什么"></a>2.1 Skill 适合什么</h3><p>Skill 是包含 YAML Front Matter 和 Markdown 指令的 <code>SKILL.md</code>。它可以是：</p>
+<ul>
+<li>按需参考资料；</li>
+<li>可手动调用的命令；</li>
+<li>Claude 自动匹配的工作流；</li>
+<li>带模板、示例、脚本和参考文件的复合能力。</li>
+</ul>
+<p>自定义命令已并入 Skill 体系。已有 <code>.claude/commands/&lt;name&gt;.md</code> 仍可工作，但新功能优先使用 <code>.claude/skills/&lt;name&gt;/SKILL.md</code>。</p>
+<h3 id="2-2-位置与作用域"><a href="#2-2-位置与作用域" class="headerlink" title="2.2 位置与作用域"></a>2.2 位置与作用域</h3><table>
+<thead>
+<tr>
+<th>作用域</th>
+<th>路径</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>个人</td>
+<td><code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></td>
+</tr>
+<tr>
+<td>项目</td>
+<td><code>.claude/skills/&lt;name&gt;/SKILL.md</code></td>
+</tr>
+<tr>
+<td>企业</td>
+<td>Managed 配置提供</td>
+</tr>
+<tr>
+<td>插件</td>
+<td><code>&lt;plugin&gt;/skills/&lt;name&gt;/SKILL.md</code></td>
+</tr>
+</tbody></table>
+<p>个人 Skill 优先于项目 Skill；插件 Skill 带插件命名空间，避免与普通 Skill 冲突。</p>
+<p>项目 Skill 会从当前目录向仓库根发现，也可以在 monorepo 子目录中按需发现。</p>
+<h3 id="2-3-创建-fix-issue"><a href="#2-3-创建-fix-issue" class="headerlink" title="2.3 创建 /fix-issue"></a>2.3 创建 <code>/fix-issue</code></h3><p>目录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/fix-issue/</span><br><span class="line">└── SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p>内容：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: fix-issue</span><br><span class="line">description: 根据 GitHub Issue 调查、修复并验证 task-board 缺陷</span><br><span class="line">argument-hint: &quot;[issue-number]&quot;</span><br><span class="line">disable-model-invocation: true</span><br><span class="line">allowed-tools:</span><br><span class="line"><span class="bullet">  -</span> Read</span><br><span class="line"><span class="bullet">  -</span> Grep</span><br><span class="line"><span class="bullet">  -</span> Glob</span><br><span class="line"><span class="bullet">  -</span> &quot;Bash(gh issue view <span class="emphasis">*)&quot;</span></span><br><span class="line"><span class="emphasis">  - &quot;Bash(npm test *</span>)&quot;</span><br><span class="line"><span class="bullet">  -</span> &quot;Bash(npm run typecheck)&quot;</span><br><span class="line"><span class="section">  - &quot;Bash(npm run build)&quot;</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line">处理 GitHub Issue：$ARGUMENTS。</span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> 使用 <span class="code">`gh issue view`</span> 获取 Issue 正文和验收条件。</span><br><span class="line"><span class="bullet">2.</span> 只读调查相关调用链和现有测试。</span><br><span class="line"><span class="bullet">3.</span> 若需求有歧义，停止并询问用户。</span><br><span class="line"><span class="bullet">4.</span> 写一个当前失败的测试稳定复现问题。</span><br><span class="line"><span class="bullet">5.</span> 完成最小修复。</span><br><span class="line"><span class="bullet">6.</span> 运行最小相关测试、类型检查和构建。</span><br><span class="line"><span class="bullet">7.</span> 检查差异范围。</span><br><span class="line"><span class="bullet">8.</span> 返回根因、修改文件、验证证据和剩余风险。</span><br><span class="line"></span><br><span class="line">除非用户另行明确授权，不执行提交、Push、创建 Pull Request 或部署。</span><br></pre></td></tr></table></figure>
+
+<p>调用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/fix-issue 128</span><br></pre></td></tr></table></figure>
+
+<p><code>disable-model-invocation: true</code> 表示 Claude 不会自行触发；这对具有副作用或需要用户明确选择的流程更安全，也避免描述常驻上下文。<code>allowed-tools</code> 只在 Skill 当前轮次提供预批准，不应写宽泛云写入或发布权限。</p>
+<h3 id="2-4-Skill-Front-Matter"><a href="#2-4-Skill-Front-Matter" class="headerlink" title="2.4 Skill Front Matter"></a>2.4 Skill Front Matter</h3><p>常用字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>显示名，默认使用目录名</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Claude 判断何时使用的主要依据</td>
+</tr>
+<tr>
+<td><code>when_to_use</code></td>
+<td>补充触发场景</td>
+</tr>
+<tr>
+<td><code>argument-hint</code></td>
+<td>自动完成时显示参数提示</td>
+</tr>
+<tr>
+<td><code>arguments</code></td>
+<td>定义具名位置参数</td>
+</tr>
+<tr>
+<td><code>disable-model-invocation</code></td>
+<td>禁止 Claude 自动触发</td>
+</tr>
+<tr>
+<td><code>user-invocable</code></td>
+<td>是否出现在 <code>/</code> 菜单</td>
+</tr>
+<tr>
+<td><code>allowed-tools</code></td>
+<td>当前轮次预先允许的工具</td>
+</tr>
+<tr>
+<td><code>disallowed-tools</code></td>
+<td>当前轮次移除的工具</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td>当前轮次模型</td>
+</tr>
+<tr>
+<td><code>effort</code></td>
+<td>当前轮次推理强度</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>可设为 <code>fork</code> 在独立上下文运行</td>
+</tr>
+</tbody></table>
+<p>只有 <code>description</code> 被官方标为推荐字段。描述应写清楚“做什么”和“何时使用”，避免多个 Skill 描述高度重叠。</p>
+<h3 id="2-5-参数与动态上下文"><a href="#2-5-参数与动态上下文" class="headerlink" title="2.5 参数与动态上下文"></a>2.5 参数与动态上下文</h3><p>Skill 可以使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ARGUMENTS</span><br></pre></td></tr></table></figure>
+
+<p>也可定义具名参数。动态命令：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 当前差异</span></span><br><span class="line"></span><br><span class="line">!<span class="code">`git diff HEAD`</span></span><br></pre></td></tr></table></figure>
+
+<p>Claude Code 会在 Skill 正文进入上下文前运行命令并替换输出。动态命令会执行本机程序，不要在来源不可信的 Skill 中使用，也不要让它无界读取日志或输出 Secret。</p>
+<h3 id="2-6-支持文件"><a href="#2-6-支持文件" class="headerlink" title="2.6 支持文件"></a>2.6 支持文件</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/release/</span><br><span class="line">├── SKILL.md</span><br><span class="line">├── checklist.md</span><br><span class="line">├── templates/</span><br><span class="line">│   └── release-notes.md</span><br><span class="line">└── scripts/</span><br><span class="line">    └── validate-release.sh</span><br></pre></td></tr></table></figure>
+
+<p><code>SKILL.md</code> 应说明何时读取支持文件。把所有参考内容直接塞入主文件会让 Skill 一旦加载就长期占用大量上下文。</p>
+<h3 id="2-7-测试-Skill"><a href="#2-7-测试-Skill" class="headerlink" title="2.7 测试 Skill"></a>2.7 测试 Skill</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/skills</span><br><span class="line">/fix-issue 128</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<ul>
+<li>是否出现在预期作用域；</li>
+<li>自动触发策略是否正确；</li>
+<li>参数是否传入；</li>
+<li>工具范围是否足够但不过宽；</li>
+<li>是否给出验证证据；</li>
+<li>是否意外执行外部写操作。</li>
+</ul>
+<p>Skill 目录在会话开始时已存在时，正文编辑通常可实时生效；首次新建顶层目录后，必要时重启会话。</p>
+<h2 id="3-自定义子代理"><a href="#3-自定义子代理" class="headerlink" title="3. 自定义子代理"></a>3. 自定义子代理</h2><h3 id="3-1-子代理的价值"><a href="#3-1-子代理的价值" class="headerlink" title="3.1 子代理的价值"></a>3.1 子代理的价值</h3><p>子代理在自己的上下文中执行任务，只把结果返回主会话。适合：</p>
+<ul>
+<li>读取很多文件的调查；</li>
+<li>安全审查；</li>
+<li>测试缺口分析；</li>
+<li>并行独立任务；</li>
+<li>需要专门模型或工具范围的角色；</li>
+<li>不希望中间日志污染主上下文的工作。</li>
+</ul>
+<p>它不适合需要持续获得主会话全部细节、频繁与用户互动的小任务。</p>
+<h3 id="3-2-位置与优先级"><a href="#3-2-位置与优先级" class="headerlink" title="3.2 位置与优先级"></a>3.2 位置与优先级</h3><table>
+<thead>
+<tr>
+<th>来源</th>
+<th>位置或方式</th>
+<th>优先级</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Managed</td>
+<td>组织下发</td>
+<td>最高</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>--agents</code> JSON</td>
+<td>当前会话</td>
+</tr>
+<tr>
+<td>项目</td>
+<td><code>.claude/agents/</code></td>
+<td>项目共享</td>
+</tr>
+<tr>
+<td>用户</td>
+<td><code>~/.claude/agents/</code></td>
+<td>跨项目</td>
+</tr>
+<tr>
+<td>插件</td>
+<td><code>&lt;plugin&gt;/agents/</code></td>
+<td>最低</td>
+</tr>
+</tbody></table>
+<p>项目 Agent 应提交到版本控制并接受团队审查。</p>
+<h3 id="3-3-创建只读安全审查-Agent"><a href="#3-3-创建只读安全审查-Agent" class="headerlink" title="3.3 创建只读安全审查 Agent"></a>3.3 创建只读安全审查 Agent</h3><p><code>.claude/agents/security-reviewer.md</code>：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">name: security-reviewer</span><br><span class="line">description: 审查认证、授权、输入校验、注入、凭据和敏感数据处理；在安全审查或修改认证相关代码后使用</span><br><span class="line">tools: Read, Grep, Glob</span><br><span class="line">model: opus</span><br><span class="line">permissionMode: plan</span><br><span class="line"><span class="section">maxTurns: 12</span></span><br><span class="line"><span class="section">---</span></span><br><span class="line"></span><br><span class="line">你是 task-board 项目的只读安全审查员。</span><br><span class="line"></span><br><span class="line">只报告具有明确触发路径和实际影响的问题。每项必须包含：</span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> 严重度；</span><br><span class="line"><span class="bullet">2.</span> 文件与符号位置；</span><br><span class="line"><span class="bullet">3.</span> 攻击或失败前提；</span><br><span class="line"><span class="bullet">4.</span> 数据流证据；</span><br><span class="line"><span class="bullet">5.</span> 影响；</span><br><span class="line"><span class="bullet">6.</span> 最小修复方向；</span><br><span class="line"><span class="bullet">7.</span> 建议的回归测试。</span><br><span class="line"></span><br><span class="line">不要修改文件，不执行网络请求，不报告纯风格问题。</span><br><span class="line">无法证实时明确标记为待验证假设。</span><br></pre></td></tr></table></figure>
+
+<p>调用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">使用 security-reviewer 审查 Idempotency-Key 实现，</span><br><span class="line">重点检查跨用户键冲突、请求体摘要、日志泄露和重放窗口。</span><br></pre></td></tr></table></figure>
+
+<p>当前版本中 <code>/agents</code> 不再打开创建向导，而是提示用户询问 Claude 或直接编辑 Agent 文件。旧教程中依赖 <code>/agents</code> 向导的步骤已经过时。</p>
+<h3 id="3-4-常用字段"><a href="#3-4-常用字段" class="headerlink" title="3.4 常用字段"></a>3.4 常用字段</h3><table>
+<thead>
+<tr>
+<th>字段</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>name</code></td>
+<td>唯一小写标识</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td>Claude 何时委派</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>可用工具列表</td>
+</tr>
+<tr>
+<td><code>disallowedTools</code></td>
+<td>从继承列表移除工具</td>
+</tr>
+<tr>
+<td><code>model</code></td>
+<td><code>inherit</code>、模型别名或完整 ID</td>
+</tr>
+<tr>
+<td><code>permissionMode</code></td>
+<td>Agent 权限模式</td>
+</tr>
+<tr>
+<td><code>maxTurns</code></td>
+<td>最大代理轮次</td>
+</tr>
+<tr>
+<td><code>skills</code></td>
+<td>启动时完整预载的 Skills</td>
+</tr>
+<tr>
+<td><code>mcpServers</code></td>
+<td>Agent 可用 MCP</td>
+</tr>
+<tr>
+<td><code>hooks</code></td>
+<td>仅该 Agent 的 Hooks</td>
+</tr>
+<tr>
+<td><code>memory</code></td>
+<td>用户、项目或本地持久记忆</td>
+</tr>
+<tr>
+<td><code>background</code></td>
+<td>默认后台执行</td>
+</tr>
+<tr>
+<td><code>isolation</code></td>
+<td><code>worktree</code> 文件隔离</td>
+</tr>
+<tr>
+<td><code>effort</code></td>
+<td>推理强度</td>
+</tr>
+</tbody></table>
+<p>只有 <code>name</code> 和 <code>description</code> 必需。</p>
+<h3 id="3-5-工作树隔离"><a href="#3-5-工作树隔离" class="headerlink" title="3.5 工作树隔离"></a>3.5 工作树隔离</h3><p>允许子代理修改代码时：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">name:</span> <span class="string">refactorer</span></span><br><span class="line"><span class="attr">description:</span> <span class="string">在独立工作树完成机械重构</span></span><br><span class="line"><span class="attr">tools:</span> <span class="string">Read,</span> <span class="string">Grep,</span> <span class="string">Glob,</span> <span class="string">Edit,</span> <span class="string">Bash</span></span><br><span class="line"><span class="attr">isolation:</span> <span class="string">worktree</span></span><br><span class="line"><span class="meta">---</span></span><br></pre></td></tr></table></figure>
+
+<p>主会话应明确如何接收结果：提交、分支或补丁。不要让多个子代理在没有隔离的情况下并行编辑同一文件。</p>
+<h3 id="3-6-前台与后台"><a href="#3-6-前台与后台" class="headerlink" title="3.6 前台与后台"></a>3.6 前台与后台</h3><p>当前版本通常让子代理在后台运行。主会话可继续工作，通过 <code>/tasks</code> 查看后台项。需要结果后才能继续的严格顺序任务，应明确前台或要求主会话等待结果。</p>
+<p>后台子代理的文件变化与主会话检查点并不等价。需要可恢复历史时使用 Git worktree 和提交。</p>
+<h3 id="3-7-子代理的上下文"><a href="#3-7-子代理的上下文" class="headerlink" title="3.7 子代理的上下文"></a>3.7 子代理的上下文</h3><p>自定义子代理一般加载其系统提示、项目 <code>CLAUDE.md</code>、Git 状态和明确预载的 Skills，但不继承主会话完整历史。内置 Explore 与 Plan Agent 还有不同的启动内容。</p>
+<p>委派提示应自包含：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">错误：检查一下刚才那个问题。</span><br><span class="line"></span><br><span class="line">正确：只读检查 src/services/task-service.ts 中 Idempotency-Key 实现。</span><br><span class="line">需求在 SPEC.md 第 3 节；重点验证并发事务和 409 冲突。</span><br><span class="line">返回文件位置、证据和测试缺口。</span><br></pre></td></tr></table></figure>
+
+<h2 id="4-Hooks"><a href="#4-Hooks" class="headerlink" title="4. Hooks"></a>4. Hooks</h2><h3 id="4-1-Hooks-与自然语言指令的区别"><a href="#4-1-Hooks-与自然语言指令的区别" class="headerlink" title="4.1 Hooks 与自然语言指令的区别"></a>4.1 Hooks 与自然语言指令的区别</h3><p>Hook 在生命周期事件发生时确定性触发，可以：</p>
+<ul>
+<li>编辑后格式化；</li>
+<li>工具调用前阻止操作；</li>
+<li>权限提示时给出决策；</li>
+<li>会话结束后归档；</li>
+<li>压缩后重新注入关键上下文；</li>
+<li>记录配置变化；</li>
+<li>通知用户；</li>
+<li>执行测试作为完成门槛。</li>
+</ul>
+<p>“一定要执行”的动作使用 Hook；需要模型判断和灵活应用的流程使用 Skill。</p>
+<h3 id="4-2-配置位置"><a href="#4-2-配置位置" class="headerlink" title="4.2 配置位置"></a>4.2 配置位置</h3><p>Hooks 写在设置文件的 <code>&quot;hooks&quot;</code> 字段，不存在普通项目级独立 <code>hooks.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;PostToolUse&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>插件可以有自己的 Hook 文件结构，但普通用户和项目设置仍应放在 <code>settings.json</code>。</p>
+<p>查看：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/hooks</span><br></pre></td></tr></table></figure>
+
+<p>当前 <code>/hooks</code> 界面主要用于查看，修改应编辑设置文件或让 Claude 编辑。</p>
+<h3 id="4-3-编辑后格式化"><a href="#4-3-编辑后格式化" class="headerlink" title="4.3 编辑后格式化"></a>4.3 编辑后格式化</h3><p><code>.claude/settings.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;PostToolUse&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;matcher&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Edit|Write&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">          <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;command&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;jq -r &#x27;.tool_input.file_path&#x27; | xargs npx prettier --write&quot;</span></span><br><span class="line">          <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>Hook 从标准输入接收 JSON。示例依赖 <code>jq</code> 和 <code>xargs</code>，在 Windows 原生环境中应编写等价 PowerShell 脚本，不要直接复制 Unix 管道。</p>
+<p>格式化 Hook 会修改文件。应确认格式化器受项目依赖锁定，且不会对不支持的文件批量重写。</p>
+<h3 id="4-4-保护已发布迁移"><a href="#4-4-保护已发布迁移" class="headerlink" title="4.4 保护已发布迁移"></a>4.4 保护已发布迁移</h3><p>最可靠的方式是将判断逻辑放到项目脚本，并让 <code>PreToolUse</code> 调用。Hook 读取 <code>.tool_input.file_path</code>，当目标属于已发布迁移时向 stderr 输出原因并以退出码 2 结束。</p>
+<p>注册：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;PreToolUse&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">&#123;</span></span><br><span class="line">        <span class="attr">&quot;matcher&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Edit|Write&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">&quot;hooks&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">          <span class="punctuation">&#123;</span></span><br><span class="line">            <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;command&quot;</span><span class="punctuation">,</span></span><br><span class="line">            <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;\&quot;$CLAUDE_PROJECT_DIR\&quot;/.claude/hooks/protect-migrations.sh&quot;</span></span><br><span class="line">          <span class="punctuation">&#125;</span></span><br><span class="line">        <span class="punctuation">]</span></span><br><span class="line">      <span class="punctuation">&#125;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>脚本必须：</p>
+<ul>
+<li>解析 JSON，而不是对原始字符串做脆弱匹配；</li>
+<li>规范化路径并防止 <code>..</code>、符号链接绕过；</li>
+<li>明确维护“已发布迁移”的来源；</li>
+<li>默认失败关闭；</li>
+<li>不输出 Secret；</li>
+<li>有独立测试。</li>
+</ul>
+<p>简单路径保护也应同时使用 Edit deny。Hook 适合实现更动态的规则。</p>
+<h3 id="4-5-常用事件"><a href="#4-5-常用事件" class="headerlink" title="4.5 常用事件"></a>4.5 常用事件</h3><table>
+<thead>
+<tr>
+<th>事件</th>
+<th>时机</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SessionStart</code></td>
+<td>新建或恢复会话</td>
+</tr>
+<tr>
+<td><code>UserPromptSubmit</code></td>
+<td>Claude 处理用户提示前</td>
+</tr>
+<tr>
+<td><code>PreToolUse</code></td>
+<td>工具执行前，可阻止</td>
+</tr>
+<tr>
+<td><code>PermissionRequest</code></td>
+<td>即将显示权限对话框</td>
+</tr>
+<tr>
+<td><code>PostToolUse</code></td>
+<td>工具成功后</td>
+</tr>
+<tr>
+<td><code>PostToolUseFailure</code></td>
+<td>工具失败后</td>
+</tr>
+<tr>
+<td><code>Notification</code></td>
+<td>Claude Code 发出通知</td>
+</tr>
+<tr>
+<td><code>SubagentStart</code> &#x2F; <code>SubagentStop</code></td>
+<td>子代理开始或结束</td>
+</tr>
+<tr>
+<td><code>Stop</code></td>
+<td>Claude 准备结束当前轮次</td>
+</tr>
+<tr>
+<td><code>ConfigChange</code></td>
+<td>配置发生变化</td>
+</tr>
+<tr>
+<td><code>PreCompact</code> &#x2F; <code>PostCompact</code></td>
+<td>上下文压缩前后</td>
+</tr>
+<tr>
+<td><code>SessionEnd</code></td>
+<td>会话结束</td>
+</tr>
+<tr>
+<td><code>WorktreeCreate</code> &#x2F; <code>WorktreeRemove</code></td>
+<td>工作树创建或移除</td>
+</tr>
+</tbody></table>
+<p>完整事件和输入 schema 必须查阅 Hooks reference。不要依据事件名称猜测 JSON 字段。</p>
+<h3 id="4-6-退出码与-JSON"><a href="#4-6-退出码与-JSON" class="headerlink" title="4.6 退出码与 JSON"></a>4.6 退出码与 JSON</h3><p>命令 Hook 常见约定：</p>
+<ul>
+<li><code>0</code>：成功；</li>
+<li><code>2</code>：在支持阻止的事件中阻止，并把 stderr 作为反馈；</li>
+<li>其他非零：通常作为非阻断错误，具体取决于事件。</li>
+</ul>
+<p>需要允许、拒绝、修改输入或附加上下文时，退出 0 并只在 stdout 输出符合事件 schema 的 JSON。</p>
+<p>不要同时“退出 2”又期望 JSON 被解析；官方说明 JSON 只在退出 0 时处理。</p>
+<h3 id="4-7-Hook-安全"><a href="#4-7-Hook-安全" class="headerlink" title="4.7 Hook 安全"></a>4.7 Hook 安全</h3><p>Hook 会自动执行本机代码。检查：</p>
+<ul>
+<li>项目 Hook 是否来自可信仓库；</li>
+<li>命令参数是否正确引用；</li>
+<li>是否存在命令注入；</li>
+<li>是否使用绝对或基于 <code>$CLAUDE_PROJECT_DIR</code> 的路径；</li>
+<li>是否设置超时；</li>
+<li>是否把完整工具输入写入公共日志；</li>
+<li>是否意外访问网络；</li>
+<li>是否在每次编辑后运行昂贵全量测试；</li>
+<li>是否会无限阻止 Stop。</li>
+</ul>
+<h2 id="5-MCP"><a href="#5-MCP" class="headerlink" title="5. MCP"></a>5. MCP</h2><h3 id="5-1-MCP-解决什么"><a href="#5-1-MCP-解决什么" class="headerlink" title="5.1 MCP 解决什么"></a>5.1 MCP 解决什么</h3><p>Model Context Protocol 让 Claude Code 通过服务器访问外部工具和数据，例如：</p>
+<ul>
+<li>Issue 和 Pull Request；</li>
+<li>监控告警；</li>
+<li>数据库；</li>
+<li>设计稿；</li>
+<li>浏览器；</li>
+<li>文档系统；</li>
+<li>团队聊天。</li>
+</ul>
+<p>当用户不断从另一系统复制数据到 Claude Code 时，MCP 是候选方案。MCP 提供连接，Skill 可以补充“如何正确使用”。</p>
+<h3 id="5-2-连接官方文档-MCP"><a href="#5-2-连接官方文档-MCP" class="headerlink" title="5.2 连接官方文档 MCP"></a>5.2 连接官方文档 MCP</h3><p>Claude Code 官方 Quickstart 提供文档 MCP 示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude mcp add --transport http claude-code-docs https://code.claude.com/docs/mcp</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude mcp list</span><br><span class="line">claude mcp get claude-code-docs</span><br></pre></td></tr></table></figure>
+
+<p>进入会话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/mcp</span><br></pre></td></tr></table></figure>
+
+<p>使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">使用 claude-code-docs MCP 查找 MCP_TIMEOUT 的当前含义和适用范围。</span><br></pre></td></tr></table></figure>
+
+<p>删除：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude mcp remove claude-code-docs</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-三种作用域"><a href="#5-3-三种作用域" class="headerlink" title="5.3 三种作用域"></a>5.3 三种作用域</h3><table>
+<thead>
+<tr>
+<th>作用域</th>
+<th>配置位置</th>
+<th>范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>local</code></td>
+<td><code>~/.claude.json</code> 的项目条目</td>
+<td>仅自己、当前项目；默认</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td>项目根 <code>.mcp.json</code></td>
+<td>团队共享</td>
+</tr>
+<tr>
+<td><code>user</code></td>
+<td><code>~/.claude.json</code> 顶层</td>
+<td>仅自己、所有项目</td>
+</tr>
+</tbody></table>
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude mcp add --scope user --transport http \</span><br><span class="line">  claude-code-docs https://code.claude.com/docs/mcp</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude mcp add --scope project --transport http \</span><br><span class="line">  claude-code-docs https://code.claude.com/docs/mcp</span><br></pre></td></tr></table></figure>
+
+<p>Project MCP 会写入 <code>.mcp.json</code>。协作者首次加载时必须审批，防止克隆仓库后静默启动本机程序。</p>
+<h3 id="5-4-本地-stdio-Server"><a href="#5-4-本地-stdio-Server" class="headerlink" title="5.4 本地 stdio Server"></a>5.4 本地 stdio Server</h3><p>官方示例使用 Playwright MCP：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude mcp add playwright -- npx -y @playwright/mcp@latest</span><br></pre></td></tr></table></figure>
+
+<p><code>--</code> 后是 Claude Code 启动 Server 的命令。<code>npx -y</code> 可能从网络下载并执行包，只能对可信包使用；生产和企业环境应固定版本并经过供应链审查，而不是长期依赖 <code>@latest</code>。</p>
+<h3 id="5-5-mcp-json"><a href="#5-5-mcp-json" class="headerlink" title="5.5 .mcp.json"></a>5.5 <code>.mcp.json</code></h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;mcpServers&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;claude-code-docs&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;http&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;url&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://code.claude.com/docs/mcp&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;playwright&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;type&quot;</span><span class="punctuation">:</span> <span class="string">&quot;stdio&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;command&quot;</span><span class="punctuation">:</span> <span class="string">&quot;npx&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;args&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;-y&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="string">&quot;@playwright/mcp@&lt;reviewed-version&gt;&quot;</span></span><br><span class="line">      <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>不要把 <code>mcpServers</code> 写进 <code>.claude/settings.json</code>；项目 MCP 配置位于仓库根 <code>.mcp.json</code>。</p>
+<h3 id="5-6-凭据与-OAuth"><a href="#5-6-凭据与-OAuth" class="headerlink" title="5.6 凭据与 OAuth"></a>5.6 凭据与 OAuth</h3><p>远程 MCP 可能通过浏览器 OAuth 登录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/mcp</span><br></pre></td></tr></table></figure>
+
+<p>选择 Server 后 Authenticate。</p>
+<p>静态 Token 可通过 Header 或环境变量配置，但不得把真实 Token 提交到 <code>.mcp.json</code>。项目配置可使用官方支持的环境变量展开方式，并由每个用户或 CI 注入。</p>
+<p>审查第三方 MCP：</p>
+<ul>
+<li>Server 维护者与代码来源；</li>
+<li>工具会读取和写入什么；</li>
+<li>OAuth Scope；</li>
+<li>数据发送位置与保留策略；</li>
+<li>是否可执行任意本地命令；</li>
+<li>是否包含提示注入内容；</li>
+<li>是否真的需要 Project 作用域；</li>
+<li>是否可以只给只读权限。</li>
+</ul>
+<h3 id="5-7-MCP-上下文成本"><a href="#5-7-MCP-上下文成本" class="headerlink" title="5.7 MCP 上下文成本"></a>5.7 MCP 上下文成本</h3><p>连接过多 Server 会增加工具名称和说明。Claude Code 默认使用工具搜索延迟加载完整 schema，但空闲 Server 仍有成本。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/mcp</span><br></pre></td></tr></table></figure>
+
+<p>查看状态和上下文成本，断开不再使用的 Server。</p>
+<h2 id="6-插件"><a href="#6-插件" class="headerlink" title="6. 插件"></a>6. 插件</h2><h3 id="6-1-插件是什么"><a href="#6-1-插件是什么" class="headerlink" title="6.1 插件是什么"></a>6.1 插件是什么</h3><p>插件是分发层，可包含：</p>
+<ul>
+<li>Skills；</li>
+<li>Agents；</li>
+<li>Hooks；</li>
+<li>MCP Servers；</li>
+<li>LSP Servers；</li>
+<li>主题和其他扩展组件。</li>
+</ul>
+<p>当第二个仓库需要同一套配置，或团队希望通过 Marketplace 管理版本时，应考虑插件，而不是复制多个 <code>.claude/</code> 目录。</p>
+<h3 id="6-2-浏览官方-Marketplace"><a href="#6-2-浏览官方-Marketplace" class="headerlink" title="6.2 浏览官方 Marketplace"></a>6.2 浏览官方 Marketplace</h3><p>进入会话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/plugin</span><br></pre></td></tr></table></figure>
+
+<p>界面通常包括 Discover、Installed、Marketplaces 和 Errors。安装前检查详情中的：</p>
+<ul>
+<li>组件清单；</li>
+<li>上下文成本；</li>
+<li>更新时间；</li>
+<li>来源和主页；</li>
+<li>MCP、Hook 或可执行程序。</li>
+</ul>
+<p>官方 Marketplace 会自动可用。第三方 Marketplace 需要明确添加。</p>
+<h3 id="6-3-安装与作用域"><a href="#6-3-安装与作用域" class="headerlink" title="6.3 安装与作用域"></a>6.3 安装与作用域</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/plugin install &lt;plugin-name&gt;@&lt;marketplace-name&gt;</span><br></pre></td></tr></table></figure>
+
+<p>作用域：</p>
+<ul>
+<li>User：个人所有项目；</li>
+<li>Project：项目团队共享，写入 <code>.claude/settings.json</code>；</li>
+<li>Local：个人当前项目。</li>
+</ul>
+<p>Shell 中也可：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude plugin install formatter@your-org --scope project</span><br></pre></td></tr></table></figure>
+
+<p>安装或启用后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/reload-plugins</span><br></pre></td></tr></table></figure>
+
+<p>插件 Skill 使用命名空间：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/plugin-name:skill-name</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-4-代码智能插件"><a href="#6-4-代码智能插件" class="headerlink" title="6.4 代码智能插件"></a>6.4 代码智能插件</h3><p>对 TypeScript、Python、Rust 等类型化语言，官方推荐安装对应 code intelligence 插件。它通过 Language Server 提供：</p>
+<ul>
+<li>跳转定义；</li>
+<li>查找引用；</li>
+<li>类型信息；</li>
+<li>符号和调用层次；</li>
+<li>编辑后自动诊断。</li>
+</ul>
+<p>这比纯 Grep 更精确，并可能减少读取整个文件的上下文成本。插件本身不安装所有语言运行环境时，仍需按插件说明准备 Language Server。</p>
+<h3 id="6-5-插件安全"><a href="#6-5-插件安全" class="headerlink" title="6.5 插件安全"></a>6.5 插件安全</h3><p>Anthropic 官方提醒：安装前必须信任插件。即便 Marketplace 提供目录，插件仍可能包含 MCP Server、Hook、脚本和其他软件。</p>
+<p>项目作用域插件会影响信任仓库的协作者。团队应：</p>
+<ul>
+<li>固定来源与版本；</li>
+<li>审查更新；</li>
+<li>限制允许的 Marketplace；</li>
+<li>检查插件依赖；</li>
+<li>在测试项目验证；</li>
+<li>使用 <code>/plugin</code> 查看未使用和错误插件；</li>
+<li>删除不再需要的插件。</li>
+</ul>
+<h2 id="7-组合设计"><a href="#7-组合设计" class="headerlink" title="7. 组合设计"></a>7. 组合设计</h2><p>为 <code>task-board</code> 构建一套合理组合：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">CLAUDE.md</span><br><span class="line">  └── 始终提供构建、架构和工作流约定</span><br><span class="line"></span><br><span class="line">.claude/rules/</span><br><span class="line">  └── 只在 API 或迁移路径加载细则</span><br><span class="line"></span><br><span class="line">/fix-issue Skill</span><br><span class="line">  └── 复用 Issue 修复流程</span><br><span class="line"></span><br><span class="line">security-reviewer Agent</span><br><span class="line">  └── 独立上下文只读审查</span><br><span class="line"></span><br><span class="line">PostToolUse Hook</span><br><span class="line">  └── 每次编辑后格式化</span><br><span class="line"></span><br><span class="line">PreToolUse Hook + Edit deny</span><br><span class="line">  └── 阻止已发布迁移被修改</span><br><span class="line"></span><br><span class="line">GitHub MCP</span><br><span class="line">  └── 获取 Issue 与 PR 数据</span><br><span class="line"></span><br><span class="line">TypeScript code intelligence plugin</span><br><span class="line">  └── 符号导航与类型诊断</span><br></pre></td></tr></table></figure>
+
+<p>应避免：</p>
+<ul>
+<li>把完整 API 文档放进 <code>CLAUDE.md</code>；</li>
+<li>让 Skill 负责必须无条件执行的安全拦截；</li>
+<li>用子代理完成一句话就能回答的小问题；</li>
+<li>安装大量从未使用的 MCP 与插件；</li>
+<li>让第三方 Plugin 获得未经审查的发布权限；</li>
+<li>用 Hook 输出几万行日志回填上下文。</li>
+</ul>
+<h2 id="8-调试扩展"><a href="#8-调试扩展" class="headerlink" title="8. 调试扩展"></a>8. 调试扩展</h2><h3 id="8-1-总览"><a href="#8-1-总览" class="headerlink" title="8.1 总览"></a>8.1 总览</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/context       查看 Skill、Agent、MCP 和记忆的上下文占用</span><br><span class="line">/skills        查看 Skills</span><br><span class="line">/hooks         查看 Hooks</span><br><span class="line">/mcp           查看 MCP 连接与审批</span><br><span class="line">/permissions   查看权限</span><br><span class="line">/status        查看设置来源</span><br><span class="line">/doctor        检查重复 Agent、无效配置和未使用扩展</span><br></pre></td></tr></table></figure>
+
+<p>Shell：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude doctor</span><br><span class="line">claude --safe-mode</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-2-Skill-不出现"><a href="#8-2-Skill-不出现" class="headerlink" title="8.2 Skill 不出现"></a>8.2 Skill 不出现</h3><p>错误：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/fix-issue.md</span><br></pre></td></tr></table></figure>
+
+<p>正确：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/fix-issue/SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p>如果目录在会话启动后首次创建，重启会话。</p>
+<h3 id="8-3-Hook-不触发"><a href="#8-3-Hook-不触发" class="headerlink" title="8.3 Hook 不触发"></a>8.3 Hook 不触发</h3><p>检查：</p>
+<ul>
+<li>Hooks 是否位于 <code>settings.json</code> 的 <code>&quot;hooks&quot;</code>；</li>
+<li><code>matcher</code> 是否是字符串而不是数组；</li>
+<li>工具名大小写是否正确；</li>
+<li><code>Edit|Write</code> 是否写成有效匹配；</li>
+<li>脚本是否可执行；</li>
+<li>stdout 是否混入非 JSON 内容；</li>
+<li>Windows 与 Unix 命令是否匹配当前 shell。</li>
+</ul>
+<p>调试：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --debug hooks</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-4-MCP-不出现"><a href="#8-4-MCP-不出现" class="headerlink" title="8.4 MCP 不出现"></a>8.4 MCP 不出现</h3><p>检查：</p>
+<ul>
+<li>项目文件是否为根目录 <code>.mcp.json</code>；</li>
+<li>是否从另一个项目添加了 local Server；</li>
+<li>Project Server 是否尚未批准；</li>
+<li>stdio 命令是否使用错误相对路径；</li>
+<li>需要的环境变量是否应放在 Server 自己的 <code>env</code>；</li>
+<li><code>/mcp</code> 是否显示认证或连接错误。</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude mcp list</span><br><span class="line">claude mcp get &lt;name&gt;</span><br></pre></td></tr></table></figure>
+
+<h3 id="8-5-Plugin-变更不生效"><a href="#8-5-Plugin-变更不生效" class="headerlink" title="8.5 Plugin 变更不生效"></a>8.5 Plugin 变更不生效</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/reload-plugins</span><br></pre></td></tr></table></figure>
+
+<p>然后检查：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/plugin</span><br><span class="line">/context</span><br></pre></td></tr></table></figure>
+
+<p>下一篇将把 Claude Code 作为可组合的命令行程序使用：非交互 <code>-p</code>、<code>--bare</code>、JSON 与流式输出、权限预算、模型与 Effort、成本控制，以及一套从 <code>/context</code> 到 Safe mode 的系统排障流程。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/features-overview">Extend Claude Code</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/skills">Extend Claude with skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/sub-agents">Create custom subagents</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/hooks-guide">Automate actions with hooks</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/hooks">Hooks reference</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/mcp-quickstart">Connect to MCP servers</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/mcp">Connect Claude Code to tools via MCP</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/discover-plugins">Discover and install plugins</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/plugins-reference">Plugins reference</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/">https://lx-cel.github.io/2026/07/25/Claude-Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/Claude-Code/">Claude Code</a><a class="post-meta__tags" href="/tags/AI%E7%BC%96%E7%A8%8B/">AI编程</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a><a class="post-meta__tags" href="/tags/MCP/">MCP</a></div><div class="post-share"><div class="social-share" data-image="/img/51.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" title="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查"><img class="cover" src="/img/52.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</div></div><div class="info-2"><div class="info-item-1">Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。  0. 自动化与排障速查0.1 一次性查询1claude -p &quot;概括这个项目的模块和入口&quot;  推荐的可复现脚本模式： 12claude --bare -p &quot;只读审查当前差异&quot; \  --allowedTools &quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;  0.2 JSON 输出123claude --bare -p &quot;列出所有 HTTP 端点&quot; \  --output-format json |  jq...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E5%AE%89%E8%A3%85%E3%80%81%E8%AE%A4%E8%AF%81%E4%B8%8E%E9%A6%96%E6%AC%A1%E4%BC%9A%E8%AF%9D/" title="Claude Code终端使用指南（一）—安装、认证与首次会话"><img class="cover" src="/img/53.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（一）—安装、认证与首次会话</div></div><div class="info-2"><div class="info-item-1">Claude Code 是 Anthropic 提供的智能编程代理。它可以在终端中读取项目文件、搜索代码、编辑文件、运行命令，并围绕测试或构建结果继续迭代。它与 claude.ai 的普通聊天界面、Claude Desktop 以及 IDE 插件并不是同一个使用入口。本系列只讨论在本地终端中通过 claude 命令启动的 Claude Code CLI。 本文是系列的第一篇，介绍系统要求、安装方式、认证、版本更新、首次启动和基础交互。后续文章依次讨论：  核心工作流与提示策略； 项目记忆、配置、权限与沙箱； 会话、上下文、Git 与并行开发； Skills、子代理、Hooks、MCP 与插件； 非交互自动化、成本控制与故障排查。  系列以“能够独立、可靠地在终端中使用 Claude Code 完成真实项目工作”为范围，覆盖安装认证、交互工作流、项目配置、安全边界、状态管理、并行开发、扩展机制、脚本化和排障。Claude Desktop、IDE 插件和 Claude Code on the web...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/" title="Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱"><img class="cover" src="/img/55.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱</div></div><div class="info-2"><div class="info-item-1">Claude Code 的项目定制包含两类本质不同的机制：  CLAUDE.md、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断； 设置、权限规则、Hooks 和沙箱限制工具实际能做什么。  前者是指导，后者才是执行边界。把“不要读取 .env”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。 本文继续使用虚构的 TypeScript 项目 task-board，建立一套可提交给团队的 Claude Code 项目配置。内容包括项目记忆、自动记忆、设置作用域、权限模式、规则语法、敏感文件保护、沙箱和提示注入防护。  0. 配置决策速查   需求 应使用的机制    每个会话都应知道构建命令和架构约定 CLAUDE.md   只处理特定路径时才需要的规则 .claude/rules/*.md 的...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E6%8F%90%E7%A4%BA%E7%AD%96%E7%95%A5/" title="Claude Code终端使用指南（二）—核心工作流与提示策略"><img class="cover" src="/img/54.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（二）—核心工作流与提示策略</div></div><div class="info-2"><div class="info-item-1">Claude Code 的效果并不只取决于模型能力。启动位置、任务边界、提供的上下文、验证信号和会话中的纠偏方式，都会影响最终结果。官方最佳实践将上下文窗口视为最重要的有限资源，并推荐为 Claude 提供可以自行执行的验证手段。 本文延续第一篇中的虚构 TypeScript 项目 task-board，以“为创建任务接口增加幂等性”为端到端场景，介绍如何让 Claude Code 从理解代码开始，经过规划、实现、测试和审查，最终产出可验证的修改。 本文讨论的是终端 CLI。文中的项目名、接口和文件路径均为虚构示例，不代表真实可访问的仓库。  0. 推荐工作流速查0.1 复杂任务12cd /path/to/task-boardclaude --permission-mode plan --name task-idempotency  在规划模式中： 123只读分析 POST /tasks 的调用链、数据库写入位置、错误处理和现有测试。找出项目中是否已有幂等键、唯一约束或请求去重模式。暂时不要修改文件。  继续要求规划： 1234目标：支持 Idempotency-Key...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" title="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查"><img class="cover" src="/img/52.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</div></div><div class="info-2"><div class="info-item-1">Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。  0. 自动化与排障速查0.1 一次性查询1claude -p &quot;概括这个项目的模块和入口&quot;  推荐的可复现脚本模式： 12claude --bare -p &quot;只读审查当前差异&quot; \  --allowedTools &quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;  0.2 JSON 输出123claude --bare -p &quot;列出所有 HTTP 端点&quot; \  --output-format json |  jq...</div></div></div></a><a class="pagination-related" href="/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/" title="mattpocock&#x2F;skills—面向真实工程的AI编程工作流"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-26</div><div class="info-item-2">mattpocock&#x2F;skills—面向真实工程的AI编程工作流</div></div><div class="info-2"><div class="info-item-1">mattpocock/skills 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。 如果是第一次接触这个项目，可以先记住三个答案：  它解决什么问题？ 它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任务拆得无法独立验收、实现偏离规格，以及复杂缺陷只能靠猜。  第一次应该安装哪些 Skill？ 使用 Claude Code 原生插件时直接安装整个插件即可。真正需要先学会的，是本文重点介绍的 10 个高频入口；grilling、domain-modeling、tdd 和 code-review 会由主流程在内部调用。  面对一个任务应该从哪个 Skill 开始？ 第一次在仓库中使用先运行 /setup-matt-pocock-skills；不知道如何选择流程时运行 /ask-matt；如果需求本身还不清楚，通常从 /grill-with-docs 开始，而不是直接...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0-%E6%89%A9%E5%B1%95%E6%9C%BA%E5%88%B6%E9%80%89%E6%8B%A9%E9%80%9F%E6%9F%A5"><span class="toc-text">0. 扩展机制选择速查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E7%90%86%E8%A7%A3%E6%89%A9%E5%B1%95%E5%9C%A8%E4%BB%A3%E7%90%86%E5%BE%AA%E7%8E%AF%E4%B8%AD%E7%9A%84%E4%BD%8D%E7%BD%AE"><span class="toc-text">1. 理解扩展在代理循环中的位置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-Skills"><span class="toc-text">2. Skills</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-Skill-%E9%80%82%E5%90%88%E4%BB%80%E4%B9%88"><span class="toc-text">2.1 Skill 适合什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E4%BD%8D%E7%BD%AE%E4%B8%8E%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="toc-text">2.2 位置与作用域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E5%88%9B%E5%BB%BA-fix-issue"><span class="toc-text">2.3 创建 &#x2F;fix-issue</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-Skill-Front-Matter"><span class="toc-text">2.4 Skill Front Matter</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E5%8F%82%E6%95%B0%E4%B8%8E%E5%8A%A8%E6%80%81%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-text">2.5 参数与动态上下文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-%E6%94%AF%E6%8C%81%E6%96%87%E4%BB%B6"><span class="toc-text">2.6 支持文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-7-%E6%B5%8B%E8%AF%95-Skill"><span class="toc-text">2.7 测试 Skill</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%87%AA%E5%AE%9A%E4%B9%89%E5%AD%90%E4%BB%A3%E7%90%86"><span class="toc-text">3. 自定义子代理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%AD%90%E4%BB%A3%E7%90%86%E7%9A%84%E4%BB%B7%E5%80%BC"><span class="toc-text">3.1 子代理的价值</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E4%BD%8D%E7%BD%AE%E4%B8%8E%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">3.2 位置与优先级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E5%88%9B%E5%BB%BA%E5%8F%AA%E8%AF%BB%E5%AE%89%E5%85%A8%E5%AE%A1%E6%9F%A5-Agent"><span class="toc-text">3.3 创建只读安全审查 Agent</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E5%B8%B8%E7%94%A8%E5%AD%97%E6%AE%B5"><span class="toc-text">3.4 常用字段</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-5-%E5%B7%A5%E4%BD%9C%E6%A0%91%E9%9A%94%E7%A6%BB"><span class="toc-text">3.5 工作树隔离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-6-%E5%89%8D%E5%8F%B0%E4%B8%8E%E5%90%8E%E5%8F%B0"><span class="toc-text">3.6 前台与后台</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-7-%E5%AD%90%E4%BB%A3%E7%90%86%E7%9A%84%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-text">3.7 子代理的上下文</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-Hooks"><span class="toc-text">4. Hooks</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-Hooks-%E4%B8%8E%E8%87%AA%E7%84%B6%E8%AF%AD%E8%A8%80%E6%8C%87%E4%BB%A4%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-text">4.1 Hooks 与自然语言指令的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E9%85%8D%E7%BD%AE%E4%BD%8D%E7%BD%AE"><span class="toc-text">4.2 配置位置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E7%BC%96%E8%BE%91%E5%90%8E%E6%A0%BC%E5%BC%8F%E5%8C%96"><span class="toc-text">4.3 编辑后格式化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E4%BF%9D%E6%8A%A4%E5%B7%B2%E5%8F%91%E5%B8%83%E8%BF%81%E7%A7%BB"><span class="toc-text">4.4 保护已发布迁移</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E5%B8%B8%E7%94%A8%E4%BA%8B%E4%BB%B6"><span class="toc-text">4.5 常用事件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-6-%E9%80%80%E5%87%BA%E7%A0%81%E4%B8%8E-JSON"><span class="toc-text">4.6 退出码与 JSON</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-7-Hook-%E5%AE%89%E5%85%A8"><span class="toc-text">4.7 Hook 安全</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-MCP"><span class="toc-text">5. MCP</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-MCP-%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="toc-text">5.1 MCP 解决什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E8%BF%9E%E6%8E%A5%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3-MCP"><span class="toc-text">5.2 连接官方文档 MCP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E4%B8%89%E7%A7%8D%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="toc-text">5.3 三种作用域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E6%9C%AC%E5%9C%B0-stdio-Server"><span class="toc-text">5.4 本地 stdio Server</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-mcp-json"><span class="toc-text">5.5 .mcp.json</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-6-%E5%87%AD%E6%8D%AE%E4%B8%8E-OAuth"><span class="toc-text">5.6 凭据与 OAuth</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-7-MCP-%E4%B8%8A%E4%B8%8B%E6%96%87%E6%88%90%E6%9C%AC"><span class="toc-text">5.7 MCP 上下文成本</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E6%8F%92%E4%BB%B6"><span class="toc-text">6. 插件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E6%8F%92%E4%BB%B6%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-text">6.1 插件是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E6%B5%8F%E8%A7%88%E5%AE%98%E6%96%B9-Marketplace"><span class="toc-text">6.2 浏览官方 Marketplace</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="toc-text">6.3 安装与作用域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-4-%E4%BB%A3%E7%A0%81%E6%99%BA%E8%83%BD%E6%8F%92%E4%BB%B6"><span class="toc-text">6.4 代码智能插件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-5-%E6%8F%92%E4%BB%B6%E5%AE%89%E5%85%A8"><span class="toc-text">6.5 插件安全</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E7%BB%84%E5%90%88%E8%AE%BE%E8%AE%A1"><span class="toc-text">7. 组合设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-%E8%B0%83%E8%AF%95%E6%89%A9%E5%B1%95"><span class="toc-text">8. 调试扩展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#8-1-%E6%80%BB%E8%A7%88"><span class="toc-text">8.1 总览</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-2-Skill-%E4%B8%8D%E5%87%BA%E7%8E%B0"><span class="toc-text">8.2 Skill 不出现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-3-Hook-%E4%B8%8D%E8%A7%A6%E5%8F%91"><span class="toc-text">8.3 Hook 不触发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-4-MCP-%E4%B8%8D%E5%87%BA%E7%8E%B0"><span class="toc-text">8.4 MCP 不出现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-5-Plugin-%E5%8F%98%E6%9B%B4%E4%B8%8D%E7%94%9F%E6%95%88"><span class="toc-text">8.5 Plugin 变更不生效</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战">C++上机考试冲刺（六）—设计题、业务模拟与三题实战</a><time datetime="2026-08-08T09:02:00.000Z" title="发表于 2026-08-08 17:02:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式">C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式</a><time datetime="2026-08-08T09:01:00.000Z" title="发表于 2026-08-08 17:01:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（四）—排序、查找与二分模板"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板">C++上机考试冲刺（四）—排序、查找与二分模板</a><time datetime="2026-08-08T09:00:00.000Z" title="发表于 2026-08-08 17:00:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（三）—STL容器与常用数据结构"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构">C++上机考试冲刺（三）—STL容器与常用数据结构</a><time datetime="2026-08-08T08:59:00.000Z" title="发表于 2026-08-08 16:59:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流">C++上机考试冲刺（二）—字符串、进制、位运算与字节流</a><time datetime="2026-08-08T08:58:00.000Z" title="发表于 2026-08-08 16:58:00">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2026 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="输入要搜索的文章..." type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

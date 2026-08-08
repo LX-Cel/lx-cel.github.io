@@ -1,0 +1,1048 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>mattpocock/skills—面向真实工程的AI编程工作流 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="mattpocock&#x2F;skills 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。 如果是第一次接触这个项目，可以先记住三个答案：  它解决什么问题？ 它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mattpocock&#x2F;skills—面向真实工程的AI编程工作流">
+<meta property="og:url" content="https://lx-cel.github.io/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="mattpocock&#x2F;skills 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。 如果是第一次接触这个项目，可以先记住三个答案：  它解决什么问题？ 它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/51.png">
+<meta property="article:published_time" content="2026-07-26T13:15:04.000Z">
+<meta property="article:modified_time" content="2026-07-26T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Agent Skills">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="Codex">
+<meta property="article:tag" content="开发工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/51.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'mattpocock/skills—面向真实工程的AI编程工作流',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 8.1.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/51.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">mattpocock/skills—面向真实工程的AI编程工作流</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">mattpocock/skills—面向真实工程的AI编程工作流</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-07-26T13:15:04.000Z" title="发表于 2026-07-26 21:15:04">2026-07-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-07-26T16:00:00.000Z" title="更新于 2026-07-27 00:00:00">2026-07-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">15.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>49分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p><code>mattpocock/skills</code> 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。</p>
+<p>如果是第一次接触这个项目，可以先记住三个答案：</p>
+<ol>
+<li><p><strong>它解决什么问题？</strong></p>
+<p>它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任务拆得无法独立验收、实现偏离规格，以及复杂缺陷只能靠猜。</p>
+</li>
+<li><p><strong>第一次应该安装哪些 Skill？</strong></p>
+<p>使用 Claude Code 原生插件时直接安装整个插件即可。真正需要先学会的，是本文重点介绍的 10 个高频入口；<code>grilling</code>、<code>domain-modeling</code>、<code>tdd</code> 和 <code>code-review</code> 会由主流程在内部调用。</p>
+</li>
+<li><p><strong>面对一个任务应该从哪个 Skill 开始？</strong></p>
+<p>第一次在仓库中使用先运行 <code>/setup-matt-pocock-skills</code>；不知道如何选择流程时运行 <code>/ask-matt</code>；如果需求本身还不清楚，通常从 <code>/grill-with-docs</code> 开始，而不是直接 <code>/implement</code>。</p>
+</li>
+</ol>
+<p>本文不逐项解释仓库中的所有 Skill。低频工具、作者个人工作流、开发中能力和已弃用能力并不是首次使用这套 Skills 的重点。下面只围绕最常用的 10 个 Skill，完成一个从模糊需求到上线前修复的完整案例。</p>
+<h2 id="一、先建立正确的使用模型"><a href="#一、先建立正确的使用模型" class="headerlink" title="一、先建立正确的使用模型"></a>一、先建立正确的使用模型</h2><h3 id="1-Skill-不是必须全部执行的流水线"><a href="#1-Skill-不是必须全部执行的流水线" class="headerlink" title="1. Skill 不是必须全部执行的流水线"></a>1. Skill 不是必须全部执行的流水线</h3><p>这套 Skills 提供的是一组可以组合的工程阶段，而不是每个任务都必须走完的固定流程。</p>
+<ul>
+<li>改一处已经明确的文案，不需要先写规格。</li>
+<li>只有通过实际交互才能判断的界面问题，才值得制作原型。</li>
+<li>一个可以在单次会话内安全完成的小改动，通常不需要先拆成多个 Ticket。</li>
+<li>已经有稳定复现和明确原因的简单缺陷，不必启动完整的系统诊断。</li>
+</ul>
+<p>真正重要的是：<strong>在信息不足时不要过早进入实现，在上下文过长时不要勉强留在同一会话，在任务较大时不要让一个 Agent 同时记住所有设计和代码细节。</strong></p>
+<h3 id="2-本文会用到的工程术语"><a href="#2-本文会用到的工程术语" class="headerlink" title="2. 本文会用到的工程术语"></a>2. 本文会用到的工程术语</h3><p>这套 Skills 来自软件工程场景，其中一些英文词在日常语言中可能有不同含义。先明确本文的用法：</p>
+<ul>
+<li><strong>Agent（智能体）</strong>：能够读取仓库、调用工具并完成编程任务的 AI，例如 Claude Code 中正在工作的 Claude。</li>
+<li><strong>Skill（技能）</strong>：提供给 Agent 的一套可复用工作说明。它规定什么时候使用、按什么步骤执行以及应该产生什么结果，不等同于一个独立应用。</li>
+<li><strong>Issue Tracker（工作项跟踪系统）</strong>：保存需求、缺陷和开发任务的地方，例如 GitHub Issues、GitLab Issues、Linear、Jira，或者项目中的本地 Markdown 文件。</li>
+<li><strong>Issue（工作项）</strong>：Issue Tracker 中的一条记录。它可以记录一个缺陷、一份完整功能规格，也可以记录一项具体开发任务。</li>
+<li><strong>Ticket（任务单）</strong>：从规格中拆出、准备交给开发者或 Agent 实施的工作单元。它应包含明确范围、验收标准和依赖关系。Ticket 不是某种固定文件格式：在 GitHub 中通常表现为一条 Issue，在 Linear 中是一个工作项，使用 Local Markdown 时则是一个 Markdown 文件。</li>
+<li><strong>Spec（规格，也常称 PRD）</strong>：对“要解决什么问题、系统应该如何表现、如何验收以及哪些内容不做”的正式说明。它比一句需求描述更完整，但通常不包含容易过期的逐行代码方案。</li>
+<li><strong>ADR（Architecture Decision Record，架构决策记录）</strong>：记录重要技术决策及其背景、备选方案和取舍理由的文档，用来回答“为什么当时这样设计”。</li>
+<li><strong>Test seam（测试接缝）</strong>：测试能够从外部控制输入并观察结果的稳定边界，例如 API、领域服务或 Worker 入口。提前确认 seam，是为了避免测试只能依赖内部实现细节。</li>
+<li><strong>Queue、Job 与 Worker</strong>：Queue 是等待处理的任务队列；Job 是队列中的一项具体后台任务；Worker 是取出并执行 Job 的进程。本例使用 BullMQ 管理它们。</li>
+<li><strong>幂等（Idempotency）</strong>：同一个操作因为重试或并发被执行多次时，最终业务结果仍然只出现一次。例如 Worker 重试三次，用户也只能收到一条提醒。</li>
+<li><strong>Out of Scope（范围之外）</strong>：本次规格明确不实现的内容。主动写出非目标，可以防止 Agent 在实现时顺手扩大需求。</li>
+<li><strong>垂直切片（Vertical Slice）</strong>：围绕一个很小但完整的用户行为，贯穿该行为所需的界面、API、数据、后台处理和测试。<code>to-tickets</code> 章节会用任务提醒案例详细说明。</li>
+</ul>
+<p>后文第一次出现其他不常见术语时，也会结合当前步骤解释其具体含义。</p>
+<h3 id="3-本文贯穿场景：TaskBoard-的任务到期提醒"><a href="#3-本文贯穿场景：TaskBoard-的任务到期提醒" class="headerlink" title="3. 本文贯穿场景：TaskBoard 的任务到期提醒"></a>3. 本文贯穿场景：TaskBoard 的任务到期提醒</h3><p>假设我们正在维护一个名为 <code>task-board</code> 的任务管理应用。它包含 Web 前端、API 服务、PostgreSQL 数据库，以及使用 BullMQ 和 Redis 运行的后台任务。</p>
+<p>产品只给出了一句话：</p>
+<blockquote>
+<p>给任务增加到期提醒，用户可以在截止时间前收到通知。</p>
+</blockquote>
+<p>这句话还不能直接实现。至少有以下问题尚未确定：</p>
+<ul>
+<li>通知通过站内消息、邮件还是短信发送？</li>
+<li>可以提前多久提醒？</li>
+<li>修改任务截止时间后，旧提醒如何处理？</li>
+<li>创建时已经过期的任务是否补发提醒？</li>
+<li>Worker 重试时如何避免重复通知？</li>
+<li>第一个版本是否需要重复提醒、免打扰和时区设置？</li>
+</ul>
+<p>接下来会看到，不同 Skill 的职责并不是“换一种方式继续问 AI”，而是分别消除这些问题中的不同风险。</p>
+<h3 id="4-一条典型主流程"><a href="#4-一条典型主流程" class="headerlink" title="4. 一条典型主流程"></a>4. 一条典型主流程</h3><p>对于需要跨多个会话完成的功能，常见顺序是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">仓库初始化</span><br><span class="line">  → 选择流程</span><br><span class="line">  → 调研外部事实</span><br><span class="line">  → 澄清需求与领域规则</span><br><span class="line">  → 必要时制作一次性原型</span><br><span class="line">  → 发布规格</span><br><span class="line">  → 拆分垂直 Ticket</span><br><span class="line">  → 在新会话中逐张实现</span><br><span class="line">  → 遇到复杂缺陷时系统诊断</span><br><span class="line">  → 上下文过长时交接</span><br></pre></td></tr></table></figure>
+
+<p>其中，调研和原型是按需分支；交接可以出现在任意阶段。</p>
+<h2 id="二、安装：Claude-Code-为主，skills-sh-为辅"><a href="#二、安装：Claude-Code-为主，skills-sh-为辅" class="headerlink" title="二、安装：Claude Code 为主，skills.sh 为辅"></a>二、安装：Claude Code 为主，skills.sh 为辅</h2><h3 id="1-Claude-Code-原生插件"><a href="#1-Claude-Code-原生插件" class="headerlink" title="1. Claude Code 原生插件"></a>1. Claude Code 原生插件</h3><p>在 Claude Code 中，先添加项目提供的插件市场，再安装插件：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/plugin marketplace add mattpocock/skills</span><br><span class="line">/plugin install mattpocock-skills@mattpocock</span><br></pre></td></tr></table></figure>
+
+<p>安装完成后，进入实际项目目录并启动 Claude Code。本文中的调用都使用斜杠命令，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ask-matt 我准备给任务系统增加到期提醒，但需求还不完整，而且会跨前后端。</span><br></pre></td></tr></table></figure>
+
+<p>原生插件适合希望直接获得完整依赖关系和后续更新的使用者。某个主 Skill 需要 <code>tdd</code> 或 <code>code-review</code> 时，插件能够提供对应的支撑能力，不需要手工复制提示词。</p>
+<h3 id="2-skills-sh：适合需要修改-Skill-的项目"><a href="#2-skills-sh：适合需要修改-Skill-的项目" class="headerlink" title="2. skills.sh：适合需要修改 Skill 的项目"></a>2. skills.sh：适合需要修改 Skill 的项目</h3><p>如果希望把 Skill 安装为本地文件，以便阅读、定制或纳入自己的配置，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npx skills@latest add mattpocock/skills</span><br></pre></td></tr></table></figure>
+
+<p>这种方式更适合以下情况：</p>
+<ul>
+<li>团队需要调整 Issue 模板、标签名称或文档路径；</li>
+<li>希望审查每个 <code>SKILL.md</code> 后再启用；</li>
+<li>需要把工作流固定在项目或个人的 Agent 配置中；</li>
+<li>准备基于原 Skill 派生自己的内部流程。</li>
+</ul>
+<p>手工挑选 Skill 时，不要只复制 10 个入口文件而忽略依赖。本文涉及的内部支撑能力至少包括：</p>
+<ul>
+<li><code>grilling</code> 和 <code>domain-modeling</code>：支撑 <code>grill-with-docs</code>；</li>
+<li><code>tdd</code> 和 <code>code-review</code>：支撑 <code>implement</code>。</li>
+</ul>
+<h3 id="3-Codex-兼容性"><a href="#3-Codex-兼容性" class="headerlink" title="3. Codex 兼容性"></a>3. Codex 兼容性</h3><p>这些 Skill 使用的是通用的 Agent Skills 结构，也可以通过 skills.sh 安装到支持该结构的 Codex 环境。区别主要在调用方式：Claude Code 可以直接使用 <code>/skill-name</code>；在 Codex 中通常明确写出 Skill 名称和任务，例如“使用 <code>research</code> 调研 BullMQ 的 Job ID 规则”。本文后续仍以 Claude Code 的原生命令为准。</p>
+<h2 id="三、setup-matt-pocock-skills：让工作流认识当前仓库"><a href="#三、setup-matt-pocock-skills：让工作流认识当前仓库" class="headerlink" title="三、setup-matt-pocock-skills：让工作流认识当前仓库"></a>三、<code>setup-matt-pocock-skills</code>：让工作流认识当前仓库</h2><p><code>setup-matt-pocock-skills</code> 是一次性的仓库初始化入口。它不是安装命令，而是把这套通用工作流与当前项目的 Issue Tracker、领域文档和 Agent 说明连接起来。</p>
+<h3 id="什么时候使用"><a href="#什么时候使用" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>第一次在某个仓库中使用这套 Skills；</li>
+<li>仓库还没有说明使用 GitHub Issues、Linear 还是本地文件管理工作；</li>
+<li>缺少统一的领域文档位置；</li>
+<li>安装了 <code>triage</code>，但 Agent 还不知道哪些标签表示“待分流”“缺少信息”或“可以交给 Agent”。</li>
+</ul>
+<h3 id="什么时候不需要使用"><a href="#什么时候不需要使用" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>同一仓库已经完成初始化，而且 Tracker、标签与文档约定没有改变；</li>
+<li>只是进入一个新会话继续工作；</li>
+<li>只想临时试用某个不依赖仓库约定的 Skill。</li>
+</ul>
+<h3 id="精确调用"><a href="#精确调用" class="headerlink" title="精确调用"></a>精确调用</h3><p>在 <code>task-board</code> 仓库根目录启动 Claude Code，先单独发送：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/setup-matt-pocock-skills</span><br></pre></td></tr></table></figure>
+
+<p>发送后等待 Agent 开始初始化并询问 Issue Tracker、标签和文档位置，再把下面的配置作为<strong>下一条消息</strong>发送，不要与斜杠命令拼在同一条消息中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">这个项目使用 GitHub Issues。</span><br><span class="line">如果已经安装 triage，请使用默认标签：</span><br><span class="line">needs-triage、needs-info、ready-for-agent、ready-for-human 和 wontfix。</span><br><span class="line">领域文档放在 docs/agents/domain.md。</span><br><span class="line">仓库已经有 CLAUDE.md，请在现有内容上补充，不要覆盖。</span><br></pre></td></tr></table></figure>
+
+<p>这里的 <code>triage</code> 指“对新工作项进行分类并决定下一步”。默认标签的含义是：</p>
+<ul>
+<li><code>needs-triage</code>：尚未完成分类；</li>
+<li><code>needs-info</code>：缺少继续处理所需的信息；</li>
+<li><code>ready-for-agent</code>：范围已经清楚，可以交给 Agent 实施；</li>
+<li><code>ready-for-human</code>：需要人类判断或操作；</li>
+<li><code>wontfix</code>：确认不处理。</li>
+</ul>
+<p>只有已经安装 <code>triage</code> Skill 时，初始化流程才需要配置这些标签。项目已有自己的标签体系时可以进行映射，不必创建含义重复的新标签。</p>
+<h3 id="Agent-接下来会做什么"><a href="#Agent-接下来会做什么" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>它会先检查仓库当前约定，而不是假定所有项目都使用同一种工具。随后确认：</p>
+<ol>
+<li>工作项记录在哪里；</li>
+<li>如何创建、关联和关闭工作项；</li>
+<li>使用哪些状态与分流标签；</li>
+<li>领域知识保存在哪里；</li>
+<li>应该把这些约定写入 <code>CLAUDE.md</code> 还是 <code>AGENTS.md</code>。</li>
+</ol>
+<h3 id="会生成或修改什么"><a href="#会生成或修改什么" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>常见结果包括：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">docs/agents/issue-tracker.md</span><br><span class="line">docs/agents/domain.md</span><br><span class="line">docs/agents/triage-labels.md   # 仅在需要时创建</span><br><span class="line">CLAUDE.md                      # 在现有内容上更新</span><br></pre></td></tr></table></figure>
+
+<p>对于示例项目，<code>issue-tracker.md</code> 应说明 GitHub Issues 的使用方式，<code>domain.md</code> 应先记录 Task、Due Date、Reminder 等核心术语。这里建立的是项目级约定，不是某一个功能的详细规格。</p>
+<blockquote>
+<p>如果仓库已经有 <code>CLAUDE.md</code> 或 <code>AGENTS.md</code>，应先审查差异。初始化的目标是补充工作流入口，不是覆盖团队现有规范。</p>
+</blockquote>
+<h3 id="下一阶段"><a href="#下一阶段" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>初始化只回答“如何在这个仓库工作”，不回答“当前需求该走什么流程”。下一步通常是 <code>/ask-matt</code>，或者在已经确认需求模糊时直接使用 <code>/grill-with-docs</code>。</p>
+<h2 id="四、ask-matt：不知道从哪里开始时先做路由"><a href="#四、ask-matt：不知道从哪里开始时先做路由" class="headerlink" title="四、ask-matt：不知道从哪里开始时先做路由"></a>四、<code>ask-matt</code>：不知道从哪里开始时先做路由</h2><p><code>ask-matt</code> 是工作流路由器。它根据任务状态推荐接下来使用哪个 Skill，本身不会代替调研、写规格或实现。</p>
+<h3 id="什么时候使用-1"><a href="#什么时候使用-1" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>知道自己要做什么，但不知道应该先调研、澄清、写规格还是实现；</li>
+<li>一个任务同时包含产品、架构和代码问题；</li>
+<li>不确定任务是否需要跨多个会话；</li>
+<li>刚接触这套 Skills，希望避免选错入口。</li>
+</ul>
+<h3 id="什么时候不需要使用-1"><a href="#什么时候不需要使用-1" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>已经知道下一步，例如外部 API 行为不确定，明确需要 <code>/research</code>；</li>
+<li>只是执行既有 Ticket，直接 <code>/implement &lt;Issue&gt;</code> 即可；</li>
+<li>正在按照上一阶段给出的明确下一步继续工作。</li>
+</ul>
+<h3 id="精确调用-1"><a href="#精确调用-1" class="headerlink" title="精确调用"></a>精确调用</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ask-matt 我准备给 task-board 增加任务到期提醒。需求还不完整，预计会修改 Web 前端、API、数据库和 BullMQ Worker，可能需要多个会话完成。我应该从哪个流程开始？</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-1"><a href="#Agent-接下来会做什么-1" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p><code>ask-matt</code> 会判断任务目前缺少的是哪类信息。例如：</p>
+<ul>
+<li>需求语义不清楚：推荐 <code>grill-with-docs</code>；</li>
+<li>关键实现依赖第三方工具行为：先执行 <code>research</code>；</li>
+<li>只能通过交互体验决定：插入 <code>prototype</code>；</li>
+<li>需求已确定但工作量较大：进入 <code>to-spec</code> 和 <code>to-tickets</code>；</li>
+<li>已有明确、可执行的 Ticket：进入 <code>implement</code>；</li>
+<li>是难以定位的缺陷：使用 <code>diagnosing-bugs</code>。</li>
+</ul>
+<p>在这个场景中，一个合理的路由结果是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">先 research BullMQ 的调度与重试语义</span><br><span class="line">→ 再 grill-with-docs 确认产品和领域规则</span><br><span class="line">→ 如提醒选择器仍有交互分歧，再 prototype</span><br><span class="line">→ 最后 to-spec → to-tickets → implement</span><br></pre></td></tr></table></figure>
+
+<h3 id="会生成或修改什么-1"><a href="#会生成或修改什么-1" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>通常不会修改源码、文档或远程 Issue。它的主要产物是一条带理由的推荐路径。</p>
+<p>这也是理解它的关键：如果 <code>/ask-matt</code> 已经开始替你实现功能，就超出了路由器的职责。</p>
+<h3 id="下一阶段-1"><a href="#下一阶段-1" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>按照推荐结果进入最先需要的阶段。本例先调研 BullMQ 的官方行为，因此下一步是 <code>/research</code>。</p>
+<h2 id="五、research：先把外部事实查清，再做内部决策"><a href="#五、research：先把外部事实查清，再做内部决策" class="headerlink" title="五、research：先把外部事实查清，再做内部决策"></a>五、<code>research</code>：先把外部事实查清，再做内部决策</h2><p><code>research</code> 用于调查仓库之外的事实，例如框架行为、API 限制、协议规范和公开实现。<strong>如果 Claude Code 已启用网页搜索或网页读取工具，并且当前网络可用，Agent 会主动访问互联网查找资料</strong>，不需要使用者提前收集所有链接。它会优先使用官方文档、官方仓库、标准文本和论文等一手资料，再把带引用的结论写回仓库。</p>
+<p>需要注意，<code>research</code> 只是规定调研方法，并不会凭空为 Claude Code 增加网络能力。实际能否联网取决于当前环境：</p>
+<ul>
+<li>Claude Code 可以使用 <code>WebSearch</code>、<code>WebFetch</code> 等工具时，Agent 会自行搜索和打开网页；</li>
+<li>工具调用触发权限确认时，需要允许本次网页访问；</li>
+<li>当前环境不能联网时，Agent 应明确报告限制，改用使用者提供的资料或仓库中的现有文档；</li>
+<li>没有实际读取来源时，Agent 不能把模型记忆包装成“已经查阅官方文档”的结论。</li>
+</ul>
+<h3 id="什么时候使用-2"><a href="#什么时候使用-2" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>实现依赖第三方库的具体语义；</li>
+<li>团队对框架行为存在不同记忆；</li>
+<li>设计决策必须建立在官方限制之上；</li>
+<li>需要让后续会话复用调研结果，而不是重复搜索。</li>
+</ul>
+<h3 id="什么时候不需要使用-2"><a href="#什么时候不需要使用-2" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>答案可以直接从当前仓库代码、测试或配置中确定；</li>
+<li>这是产品偏好，而不是外部事实；</li>
+<li>只需要确认一个简单且稳定的本地类型定义；</li>
+<li>已有近期、可信并且可追溯的项目调研文档。</li>
+</ul>
+<h3 id="精确调用-2"><a href="#精确调用-2" class="headerlink" title="精确调用"></a>精确调用</h3><p><code>research</code> 是带任务参数的命令。与需要先启动、再等待提问的 <code>/setup-matt-pocock-skills</code> 不同，应该把 <code>/research</code> 和完整的调研要求写在<strong>同一条消息</strong>中发送：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/research 调研 task-board 使用 BullMQ 实现任务到期提醒时必须确认的官方行为：</span><br><span class="line">1. delayed job 的执行时间语义；</span><br><span class="line">2. attempts 与 backoff 如何触发重试；</span><br><span class="line">3. 自定义 Job ID 的唯一性、重复任务行为和字符限制；</span><br><span class="line">4. 任务截止时间修改后，旧 delayed job 的移除或重新调度方式；</span><br><span class="line">5. Worker 在外部通知已经成功、但任务确认失败时的重复执行风险。</span><br><span class="line">只使用 BullMQ 官方文档和官方仓库等一手资料。将带引用的结论写入仓库中的一份 Markdown 文件，并区分“官方事实”和“对本项目的设计建议”。</span><br></pre></td></tr></table></figure>
+
+<p>发送后，Agent 会自行搜索 BullMQ 官方网站和官方 GitHub 仓库。除非它遇到网页访问权限、登录限制或无法确认的问题，否则不需要再逐条告诉它应该打开哪些页面。如果希望进一步限制资料范围，也可以在命令中直接附上允许使用的链接或域名。</p>
+<h3 id="Agent-接下来会做什么-2"><a href="#Agent-接下来会做什么-2" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>该 Skill 通常会启动独立的调研过程，搜索并比较一手资料，然后完成以下工作：</p>
+<ol>
+<li>将问题拆成可以验证的子问题；</li>
+<li>为每条事实找到直接来源；</li>
+<li>区分文档明确保证的行为与根据资料做出的工程推论；</li>
+<li>标记仍然无法确认的部分；</li>
+<li>形成一份后续规格可以引用的调研文档。</li>
+</ol>
+<p>这里必须避免一个常见错误：把“我们准备怎么设计”写成“BullMQ 本来就是这样”。例如，使用稳定 Job ID 避免重复入队是项目方案；Job ID 的去重范围和字符限制才是需要从官方资料确认的事实。</p>
+<h3 id="会生成或修改什么-2"><a href="#会生成或修改什么-2" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>应生成一份有明确主题的 Markdown 文档，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docs/research/bullmq-task-reminders.md</span><br></pre></td></tr></table></figure>
+
+<p>内容可以采用以下结构：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># BullMQ 任务提醒调研</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 已确认的官方行为</span></span><br><span class="line"><span class="bullet">-</span> delayed job ...</span><br><span class="line"><span class="bullet">-</span> attempts/backoff ...</span><br><span class="line"><span class="bullet">-</span> custom Job ID ...</span><br><span class="line"></span><br><span class="line"><span class="section">## 对 task-board 的影响</span></span><br><span class="line"><span class="bullet">-</span> 调度延迟不能被当作精确到秒的定时器</span><br><span class="line"><span class="bullet">-</span> 通知发送需要业务级幂等记录</span><br><span class="line"></span><br><span class="line"><span class="section">## 尚待确认</span></span><br><span class="line"><span class="bullet">-</span> 当前项目使用的 BullMQ 版本是否支持计划采用的重新调度方法</span><br><span class="line"></span><br><span class="line"><span class="section">## 参考资料</span></span><br><span class="line"><span class="bullet">-</span> 官方文档链接</span><br></pre></td></tr></table></figure>
+
+<p>它不会直接改业务代码，也不应该在调研阶段擅自确定通知渠道等产品规则。</p>
+<h3 id="下一阶段-2"><a href="#下一阶段-2" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>外部约束明确后，使用 <code>/grill-with-docs</code> 澄清产品语义，并把最终决定写入领域上下文。</p>
+<h2 id="六、grill-with-docs：通过提问把模糊需求变成可执行决策"><a href="#六、grill-with-docs：通过提问把模糊需求变成可执行决策" class="headerlink" title="六、grill-with-docs：通过提问把模糊需求变成可执行决策"></a>六、<code>grill-with-docs</code>：通过提问把模糊需求变成可执行决策</h2><p><code>grill-with-docs</code> 是需求澄清的主入口。它不只是进行一轮访谈，还会通过内部的 <code>grilling</code> 和 <code>domain-modeling</code>，将已确认的规则持续写入 <code>CONTEXT.md</code> 和必要的 ADR。</p>
+<h3 id="什么时候使用-3"><a href="#什么时候使用-3" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>需求只有一句目标描述；</li>
+<li>多种解释都会产生合理但不同的实现；</li>
+<li>领域术语、边界条件或失败语义尚未统一；</li>
+<li>需要在写规格前确认什么属于首个版本。</li>
+</ul>
+<h3 id="什么时候不需要使用-3"><a href="#什么时候不需要使用-3" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>已有经过确认且足够具体的规格；</li>
+<li>修改是机械性的，没有产品或领域歧义；</li>
+<li>当前问题只是第三方行为未知，应先使用 <code>research</code>；</li>
+<li>只是需要在已有 Ticket 上执行实现。</li>
+</ul>
+<h3 id="精确调用-3"><a href="#精确调用-3" class="headerlink" title="精确调用"></a>精确调用</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/grill-with-docs 我们要为 task-board 增加任务到期提醒。当前只有一句需求：“用户可以在任务截止时间前收到通知”。请结合 docs/research/bullmq-task-reminders.md，逐个澄清通知渠道、提前时间、任务改期、取消截止时间、创建时已过期、重复提醒和 Worker 重试的语义。把确认后的领域规则维护到项目文档中，不要开始实现。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-3"><a href="#Agent-接下来会做什么-3" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>这个 Skill 内部组合了两个支撑能力。</p>
+<h4 id="grilling：一次只解决一个关键问题"><a href="#grilling：一次只解决一个关键问题" class="headerlink" title="grilling：一次只解决一个关键问题"></a><code>grilling</code>：一次只解决一个关键问题</h4><p><code>grilling</code> 不会一次抛出二十个问题让使用者填表。它会优先选择当前最影响设计的问题，一次提问一个，并通常给出推荐答案和理由。</p>
+<p>例如第一问可能是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">首个版本使用哪种通知渠道？</span><br><span class="line"></span><br><span class="line">建议：只支持站内通知。</span><br><span class="line">原因：邮件和短信会引入供应商、投递状态、退订与成本问题，</span><br><span class="line">这些都不是验证“到期提醒”核心价值所必需的。</span><br></pre></td></tr></table></figure>
+
+<p>确定渠道后，再继续确认提前时间：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">首个版本是否允许任意分钟数？</span><br><span class="line"></span><br><span class="line">建议：先提供 10 分钟、30 分钟、1 天三个预设值。</span><br><span class="line">原因：可以覆盖主要场景，同时避免自由输入、上下限和复杂校验扩大范围。</span><br></pre></td></tr></table></figure>
+
+<p>在完整访谈后，本例可能得到以下规则：</p>
+<ul>
+<li>V1 只发送站内通知；</li>
+<li>提供提前 10 分钟、30 分钟和 1 天三个选项；</li>
+<li>没有截止时间的任务不能启用提醒；</li>
+<li>修改截止时间或提前量时，旧计划失效并建立新计划；</li>
+<li>移除截止时间或关闭提醒时，取消尚未触发的计划；</li>
+<li>创建或修改时已经错过提醒时间，不补发历史提醒；</li>
+<li>同一个“任务 + 截止时间版本”最多产生一条业务通知；</li>
+<li>Queue 重试不能让用户收到重复通知；</li>
+<li>V1 不包含邮件、短信、重复提醒、免打扰和用户自定义提前量。</li>
+</ul>
+<p>这些答案不是 Skill 自动替产品负责人决定的。Agent 会给出建议，但关键选择仍应由拥有产品上下文的人确认。</p>
+<h4 id="domain-modeling：让答案进入长期上下文"><a href="#domain-modeling：让答案进入长期上下文" class="headerlink" title="domain-modeling：让答案进入长期上下文"></a><code>domain-modeling</code>：让答案进入长期上下文</h4><p>访谈中已经确认的稳定概念会被及时写入 <code>CONTEXT.md</code> 或项目指定的领域文档，而不是等对话结束后依靠记忆整理。</p>
+<p>例如：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## Reminder</span></span><br><span class="line"></span><br><span class="line">A Reminder schedules one in-app notification for a Task due-date version.</span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> A Task without <span class="code">`dueAt`</span> cannot enable a Reminder.</span><br><span class="line"><span class="bullet">-</span> Changing <span class="code">`dueAt`</span> invalidates the previous Reminder schedule.</span><br><span class="line"><span class="bullet">-</span> A missed reminder time is not delivered retroactively.</span><br><span class="line"><span class="bullet">-</span> Delivery is idempotent per Task due-date version.</span><br></pre></td></tr></table></figure>
+
+<p>如果某项决定同时满足以下条件，才值得记录为 ADR：</p>
+<ol>
+<li>难以轻易撤销；</li>
+<li>对不了解背景的人并不显然；</li>
+<li>存在真实的方案权衡。</li>
+</ol>
+<p>例如“为什么除了稳定 Queue Job ID 之外，还需要数据库中的通知幂等记录”可能值得写成 ADR，因为外部发送成功与 Queue 确认失败之间存在跨系统边界。相反，“按钮放在表单右侧”不应该成为架构决策记录。</p>
+<h3 id="会生成或修改什么-3"><a href="#会生成或修改什么-3" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>根据仓库约定，可能更新：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">CONTEXT.md</span><br><span class="line">docs/agents/domain.md</span><br><span class="line">docs/decisions/ADR-00x-reminder-delivery-idempotency.md</span><br></pre></td></tr></table></figure>
+
+<p>它不会生成实现代码，也不会直接发布正式规格。访谈结束时应得到“共同理解”，而不是一堆仍然互相冲突的聊天记录。</p>
+<h3 id="下一阶段-3"><a href="#下一阶段-3" class="headerlink" title="下一阶段"></a>下一阶段</h3><ul>
+<li>如果某个交互只有实际体验后才能决定，进入可选的 <code>/prototype</code>；</li>
+<li>如果关键规则已经确认，直接使用 <code>/to-spec</code>。</li>
+</ul>
+<h2 id="七、prototype：只有必须体验才能决定时才使用"><a href="#七、prototype：只有必须体验才能决定时才使用" class="headerlink" title="七、prototype：只有必须体验才能决定时才使用"></a>七、<code>prototype</code>：只有必须体验才能决定时才使用</h2><p><code>prototype</code> 用最少代码回答一个具体设计问题。它产生的是一次性实验，不是生产实现的开端。</p>
+<p>在本例中，领域规则已经确定了三个提醒预设值，但团队仍无法仅凭文字判断选择器应该放在哪里、采用什么交互。这个问题适合原型验证。</p>
+<h3 id="什么时候使用-4"><a href="#什么时候使用-4" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>只有实际点击、输入或观察运行结果才能做决定；</li>
+<li>两到三个 UI 方案都合理，讨论无法继续收敛；</li>
+<li>某项技术可行性需要用最小实验验证；</li>
+<li>结论的价值高于一次性代码的成本。</li>
+</ul>
+<h3 id="什么时候不需要使用-4"><a href="#什么时候不需要使用-4" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>通过文档、代码阅读或简单讨论就能回答；</li>
+<li>产品规则尚未澄清，原型目标仍在变化；</li>
+<li>已有明确设计稿和验收标准；</li>
+<li>只是希望“先写一点生产代码看看”，这会混淆实验与实现。</li>
+</ul>
+<h3 id="精确调用-4"><a href="#精确调用-4" class="headerlink" title="精确调用"></a>精确调用</h3><p>建议先切换到一次性分支，再调用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/prototype 为 task-board 的任务编辑表单制作三个可切换的一次性 UI 方案，用来比较提醒时间选择器：</span><br><span class="line">A. 截止时间下方的内联 Select；</span><br><span class="line">B. “启用提醒”后展开的设置区；</span><br><span class="line">C. 单独的 Reminder Popover。</span><br><span class="line">三个方案使用相同的 10 分钟、30 分钟、1 天选项。提供一个运行命令，并允许通过 URL 查询参数切换方案。不要接数据库、不要写完整测试、不要进行生产级抽象。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-4"><a href="#Agent-接下来会做什么-4" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>它会先把问题限制为“哪种提醒选择器最容易理解”，然后只实现回答这个问题所需的界面：</p>
+<ul>
+<li>复用最少的项目基础设施；</li>
+<li>使用固定的示例任务数据；</li>
+<li>让三个方案可以快速并排或切换比较；</li>
+<li>提供一条本地运行命令；</li>
+<li>记录观察结果与最终选择。</li>
+</ul>
+<p>原型不应扩展为完整功能。持久化、权限、无障碍细节、完整错误处理和长期测试，除非它们正是要验证的问题，否则都应留到正式实现。</p>
+<h3 id="会生成或修改什么-4"><a href="#会生成或修改什么-4" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>它会产生临时原型代码和一份结论。推荐在 throwaway 分支中完成，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">codex/reminder-picker-prototype</span><br></pre></td></tr></table></figure>
+
+<p>验证后保留的应该是决策，而不是原型代码。这里的 throwaway branch 指“只用于实验、验证结束后不合并的临时分支”。例如：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">选择方案 B：启用提醒后展开设置区。</span><br><span class="line"></span><br><span class="line">原因：</span><br><span class="line"><span class="bullet">-</span> 未启用提醒时不增加表单噪声；</span><br><span class="line"><span class="bullet">-</span> 截止时间与提醒设置仍处于同一编辑上下文；</span><br><span class="line"><span class="bullet">-</span> 移除截止时间时，提醒不可用状态更容易解释。</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>不要把实验分支直接合并到主分支。正式实现应该根据规格重新完成，避免把为了快速验证而省略的边界处理带入生产代码。</p>
+</blockquote>
+<h3 id="下一阶段-4"><a href="#下一阶段-4" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>把原型结论带回主工作分支，然后运行 <code>/to-spec</code>。如果原型对话已经很长，可以先使用 <code>/handoff</code> 将结论交给一个干净会话。</p>
+<h2 id="八、to-spec：把共同理解发布成稳定规格"><a href="#八、to-spec：把共同理解发布成稳定规格" class="headerlink" title="八、to-spec：把共同理解发布成稳定规格"></a>八、<code>to-spec</code>：把共同理解发布成稳定规格</h2><p><code>to-spec</code> 将已经完成的调研、访谈和原型结论整理为可以被后续 Agent 独立读取的规格。它不是新的需求访谈，因此调用前应先解决关键歧义。</p>
+<h3 id="是否一定会创建远程-GitHub-Issue"><a href="#是否一定会创建远程-GitHub-Issue" class="headerlink" title="是否一定会创建远程 GitHub Issue"></a>是否一定会创建远程 GitHub Issue</h3><p>不一定。<code>to-spec</code> 的固定目标是“把规格发布到当前项目配置的 Issue Tracker”，但这个 Tracker 不一定是 GitHub。<code>/setup-matt-pocock-skills</code> 会把选择记录在 <code>docs/agents/issue-tracker.md</code>，后续 Skill 根据该文件决定发布位置：</p>
+<ul>
+<li>配置为 GitHub：创建远程 GitHub Issue；</li>
+<li>配置为 GitLab：创建远程 GitLab Issue；</li>
+<li>配置为 Linear、Jira 等其他平台：按照项目记录的工作流发布；</li>
+<li>配置为 Local Markdown：只在本地写入 Markdown 工作项，不访问远程 Tracker。</li>
+</ul>
+<p>本文的 <code>task-board</code> 场景在初始化阶段明确选择了 GitHub Issues，所以后面的 <code>#142</code> 才代表远程 GitHub Issue。<strong>这是本例的配置结果，不是 <code>to-spec</code> 对所有项目都固定执行的行为。</strong></p>
+<p>如果项目配置的是 GitHub，但当前只想审阅草稿、不希望立刻创建远程 Issue，可以在调用中明确增加：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">先在对话中展示完整规格草稿，得到我确认后再发布到 Issue Tracker。</span><br></pre></td></tr></table></figure>
+
+<h3 id="什么时候使用-5"><a href="#什么时候使用-5" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>功能需要多个会话或多张 Ticket 才能完成；</li>
+<li>需要将聊天中的决定转化为稳定、可引用的工作项；</li>
+<li>参与实现的人不一定经历了前面的讨论；</li>
+<li>希望在拆票前冻结范围、验收方式与非目标。</li>
+</ul>
+<h3 id="什么时候不需要使用-5"><a href="#什么时候不需要使用-5" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>改动足够小，可以在一个会话内完成并验证；</li>
+<li>关键需求仍未确认，应返回 <code>grill-with-docs</code>；</li>
+<li>只是调查问题，还没有计划进入实现；</li>
+<li>已经存在内容充分且仍然有效的规格。</li>
+</ul>
+<h3 id="精确调用-5"><a href="#精确调用-5" class="headerlink" title="精确调用"></a>精确调用</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/to-spec 将当前关于 task-board“任务到期提醒”的已确认上下文整理为规格。引用 docs/research/bullmq-task-reminders.md、领域文档和提醒选择器原型结论。规格必须包含用户故事、领域规则、实现决策、测试 seam、验收标准、失败语义和 Out of Scope。先在对话中展示完整草稿，得到我确认后，再发布到项目配置的 Issue Tracker 并应用 ready-for-agent 标签。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-5"><a href="#Agent-接下来会做什么-5" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p><code>to-spec</code> 会从当前上下文中提取已经确认的内容，并检查规格能否独立回答以下问题：</p>
+<ul>
+<li>用户为什么需要这个功能；</li>
+<li>哪些行为属于首个版本；</li>
+<li>系统在正常、改期、取消、过期和重试情况下如何表现；</li>
+<li>哪些技术决定已经确定，哪些仍留给实现者；</li>
+<li>从哪个公共 seam 验证行为；</li>
+<li>哪些内容明确不做。</li>
+</ul>
+<p>它还会确认测试 seam。对于本例，合理的 seam 可能包括：</p>
+<ul>
+<li>API 层：保存任务提醒设置后，计划记录与响应是否正确；</li>
+<li>调度层：给定任务、截止时间和提前量，生成确定的计划标识与执行时间；</li>
+<li>Worker 层：重复处理同一提醒时，只产生一次站内通知；</li>
+<li>UI 层：没有截止时间时提醒控件不可用，修改截止时间后提交正确设置。</li>
+</ul>
+<p>测试 seam 不是把内部私有函数全部暴露出来，而是提前确定“后续如何证明功能真的成立”。</p>
+<h3 id="会生成或修改什么-5"><a href="#会生成或修改什么-5" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>它会把规格发布到 <code>docs/agents/issue-tracker.md</code> 指定的位置，并应用相应状态。由于本例配置的是 GitHub，所以最终结果是一个远程 GitHub Issue；如果配置的是 Local Markdown，结果则是本地工作项文件。规格的核心结构为：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Task due reminders</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Problem Statement</span></span><br><span class="line"><span class="section">## Solution</span></span><br><span class="line"><span class="section">## User stories</span></span><br><span class="line"><span class="section">## Implementation decisions</span></span><br><span class="line"><span class="section">## Testing decisions</span></span><br><span class="line"><span class="section">## Out of scope</span></span><br><span class="line"><span class="section">## Further notes</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>当 Tracker 配置为 GitHub、GitLab、Linear 或 Jira 等外部系统时，这是一个会修改远程状态的 Skill。发布前应确认目标项目和标签。配置为 Local Markdown 时则只修改本地文件。</p>
+</blockquote>
+<p>本例的 Out of Scope 至少包括：</p>
+<ul>
+<li>邮件和短信通知；</li>
+<li>重复提醒；</li>
+<li>免打扰时间；</li>
+<li>任意分钟数输入；</li>
+<li>为已经错过提醒时间的任务补发通知。</li>
+</ul>
+<h3 id="下一阶段-5"><a href="#下一阶段-5" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>如果规格可以在一个会话内实现，可以直接进入实现；本例横跨 UI、API 和 Worker，应使用 <code>/to-tickets</code> 将规格拆成可独立验证的垂直切片。</p>
+<h2 id="九、to-tickets：把规格拆成可独立验收的垂直切片"><a href="#九、to-tickets：把规格拆成可独立验收的垂直切片" class="headerlink" title="九、to-tickets：把规格拆成可独立验收的垂直切片"></a>九、<code>to-tickets</code>：把规格拆成可独立验收的垂直切片</h2><p><code>to-tickets</code> 的目标不是按照技术目录分工，而是把规格拆成多个可以在单个上下文中实现、验证和审查的行为切片。</p>
+<h3 id="先理解什么是“垂直切片”"><a href="#先理解什么是“垂直切片”" class="headerlink" title="先理解什么是“垂直切片”"></a>先理解什么是“垂直切片”</h3><p>这里的“垂直”不是指界面布局，而是指一张 Ticket 会跨过让某个行为成立所需的多个技术层。可以把 <code>task-board</code> 想象成由以下部分组成：</p>
+<ul>
+<li>前端：让用户启用提醒；</li>
+<li>API：接收并校验提醒设置；</li>
+<li>数据库：保存设置和通知记录；</li>
+<li>BullMQ：在正确时间调度任务；</li>
+<li>Worker：触发站内通知；</li>
+<li>测试：从可观察入口证明整条路径成立。</li>
+</ul>
+<p>如果按照技术层拆票，会得到“建表”“写 API”“写页面”“最后补测试”等水平任务。完成“建表”后，用户仍然不能启用提醒；完成“API”后也不一定能收到通知。每张 Ticket 都只是零件，只有所有任务结束后才能判断功能是否可用。</p>
+<p>垂直切片换一个方向拆：**每张 Ticket 选择一个很小的用户行为，并贯穿实现该行为所必需的所有层。**例如第一张 Ticket 只交付以下行为：</p>
+<blockquote>
+<p>用户为一个 12:00 到期的任务启用固定提前 30 分钟提醒后，系统保存设置、创建 11:30 执行的 Job，并在 Job 执行时生成一条站内通知。</p>
+</blockquote>
+<p>为了让这个行为真的成立，这张 Ticket 可以同时包含少量 UI、API、数据库、Queue、Worker 和测试改动。范围虽然窄，却已经形成完整闭环。完成后可以独立演示，也可以通过自动化测试验收，不必等后续 Ticket。</p>
+<p>这就是项目原文所说的 tracer bullet：先用一条很窄但贯穿系统的路径证明整条链路可行，再逐步增加多个提前量、改期处理和重试幂等。这里并不是要求每张 Ticket 机械地修改所有目录，而是要覆盖该行为成立所必需的层，避免交付无法单独运行的半成品。</p>
+<h3 id="什么时候使用-6"><a href="#什么时候使用-6" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>规格需要多个会话才能完成；</li>
+<li>功能包含多个可逐步交付的行为；</li>
+<li>希望每张 Ticket 都能独立验证；</li>
+<li>需要明确 Ticket 之间的依赖和阻塞关系。</li>
+</ul>
+<h3 id="什么时候不需要使用-6"><a href="#什么时候不需要使用-6" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>整个规格可以在一个会话内安全完成；</li>
+<li>当前还没有稳定规格；</li>
+<li>只是一个不可再拆的修复；</li>
+<li>拆分后每个任务都只能产生无法运行的半成品。</li>
+</ul>
+<h3 id="精确调用-6"><a href="#精确调用-6" class="headerlink" title="精确调用"></a>精确调用</h3><p>假设规格发布在 GitHub Issue <code>#142</code>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/to-tickets https://github.com/example/task-board/issues/142</span><br><span class="line">请拆成能在单个 Agent 会话内完成并独立验证的垂直切片，标明依赖关系。不要按照“数据库、后端、前端、测试”拆成水平任务。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-6"><a href="#Agent-接下来会做什么-6" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>它会先阅读完整规格，寻找最小的端到端 tracer bullet，然后提出一个编号拆分方案。此时还不会立即发布 Ticket，而是先询问使用者：</p>
+<ul>
+<li>每张 Ticket 的大小是否适合一个新会话；</li>
+<li>是否有 Ticket 过粗或过细；</li>
+<li>阻塞关系是否正确；</li>
+<li>是否需要合并或继续拆分。</li>
+</ul>
+<p>只有使用者确认拆分方案后，它才会把 Ticket 发布到已配置的 Tracker。每张 Ticket 应包含：</p>
+<ul>
+<li>清晰的用户可见行为；</li>
+<li>必要的上下文和规格链接；</li>
+<li>明确的范围与非目标；</li>
+<li>可执行的验收标准；</li>
+<li>测试 seam；</li>
+<li>对其他 Ticket 的阻塞关系。</li>
+</ul>
+<p>“阻塞关系”通常写成 <code>Blocked by</code>，表示当前 Ticket 必须等哪些前置 Ticket 完成后才能开始。例如 <code>Ticket 2 — Blocked by Ticket 1</code> 表示 Ticket 1 没有完成时，Ticket 2 还不具备可靠的实施基础；<code>Blocked by: None</code> 则表示可以立即开始。</p>
+<p>错误的水平拆分如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Ticket A：设计数据库表</span><br><span class="line">Ticket B：编写后端接口</span><br><span class="line">Ticket C：编写前端页面</span><br><span class="line">Ticket D：补充测试</span><br></pre></td></tr></table></figure>
+
+<p>这种拆法会导致前三张 Ticket 都无法独立证明用户获得了任何能力，而且“测试”被推迟到最后。</p>
+<p>更合适的垂直拆分可以是：</p>
+<h3 id="Ticket-1：固定提前-30-分钟的站内提醒"><a href="#Ticket-1：固定提前-30-分钟的站内提醒" class="headerlink" title="Ticket 1：固定提前 30 分钟的站内提醒"></a>Ticket 1：固定提前 30 分钟的站内提醒</h3><ul>
+<li>用户可以为有截止时间的任务启用提醒；</li>
+<li>从 API、计划记录、BullMQ Job 到站内通知形成最小闭环；</li>
+<li>使用固定的 30 分钟提前量；</li>
+<li>包含端到端行为测试；</li>
+<li>不包含改期和多个预设值。</li>
+</ul>
+<h3 id="Ticket-2：支持三个提醒提前量"><a href="#Ticket-2：支持三个提醒提前量" class="headerlink" title="Ticket 2：支持三个提醒提前量"></a>Ticket 2：支持三个提醒提前量</h3><ul>
+<li>UI 提供 10 分钟、30 分钟和 1 天；</li>
+<li>API 校验仅接受三个合法值；</li>
+<li>修改提前量会更新计划；</li>
+<li>每个选项都有可观察的行为测试。</li>
+</ul>
+<h3 id="Ticket-3：截止时间改期、移除和过期语义"><a href="#Ticket-3：截止时间改期、移除和过期语义" class="headerlink" title="Ticket 3：截止时间改期、移除和过期语义"></a>Ticket 3：截止时间改期、移除和过期语义</h3><ul>
+<li>修改截止时间时使旧计划失效；</li>
+<li>移除截止时间或关闭提醒时取消计划；</li>
+<li>已错过提醒时间时不补发；</li>
+<li>覆盖旧 Job 未触发的回归测试。</li>
+</ul>
+<h3 id="Ticket-4：重试与业务幂等"><a href="#Ticket-4：重试与业务幂等" class="headerlink" title="Ticket 4：重试与业务幂等"></a>Ticket 4：重试与业务幂等</h3><ul>
+<li>重复执行同一提醒不会产生第二条站内通知；</li>
+<li>记录通知唯一键和发送状态；</li>
+<li>覆盖“已写入通知但 Worker 重试”的场景；</li>
+<li>明确可观测性与失败恢复方式。</li>
+</ul>
+<p>这里的每一张 Ticket 都跨越必要的数据库、服务和测试层，但只交付一个完整行为。这就是垂直切片。</p>
+<h3 id="会生成或修改什么-6"><a href="#会生成或修改什么-6" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>发布方式同样由 <code>docs/agents/issue-tracker.md</code> 决定：</p>
+<ul>
+<li>Local Markdown：在 <code>.scratch/&lt;feature-slug&gt;/issues/</code> 下为每张 Ticket 写一个独立文件，并在文件中记录 <code>Blocked by</code>；</li>
+<li>GitHub、GitLab、Linear 等真实 Tracker：每张 Ticket 创建一个远程 Issue，使用平台支持的阻塞关系；平台不支持时，在正文中写明 <code>Blocked by</code>。</li>
+</ul>
+<p>在本文场景中，Tracker 配置为 GitHub，因此会创建多张相互关联的远程 Issue，并链接回规格 Issue。</p>
+<blockquote>
+<p>使用远程 Tracker 时，这一步会修改远程状态；使用 Local Markdown 时只修改本地文件。Skill 会先展示拆分方案并等待确认，仍应在确认时检查数量、依赖和范围。</p>
+</blockquote>
+<h3 id="下一阶段-6"><a href="#下一阶段-6" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>按照依赖顺序，每张 Ticket 都开启一个新的 Claude Code 会话，并分别执行 <code>/implement &lt;Issue URL&gt;</code>。不要在已经承载整个规格讨论的长会话中连续实现所有 Ticket。</p>
+<h2 id="十、implement：在新会话中完成一张-Ticket"><a href="#十、implement：在新会话中完成一张-Ticket" class="headerlink" title="十、implement：在新会话中完成一张 Ticket"></a>十、<code>implement</code>：在新会话中完成一张 Ticket</h2><p><code>implement</code> 是执行阶段。它的输入应该是一张范围明确、能够独立验证的 Ticket，而不是一句模糊需求。它会在内部使用 <code>tdd</code> 和 <code>code-review</code>，完成实现、验证、审查和提交。</p>
+<h3 id="什么时候使用-7"><a href="#什么时候使用-7" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>已经有明确的 Ticket、验收标准和测试 seam；</li>
+<li>当前分支和工作区状态已经确认；</li>
+<li>任务适合在本次会话中完成；</li>
+<li>依赖的前置 Ticket 已经落地。</li>
+</ul>
+<h3 id="什么时候不需要使用-7"><a href="#什么时候不需要使用-7" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>需求仍然不完整；</li>
+<li>Ticket 大到无法在单个上下文中完成，应先重新拆分；</li>
+<li>当前目标只是探索或原型；</li>
+<li>正在诊断一个原因不明的复杂缺陷，应使用 <code>diagnosing-bugs</code>。</li>
+</ul>
+<h3 id="精确调用-7"><a href="#精确调用-7" class="headerlink" title="精确调用"></a>精确调用</h3><p>为 Ticket 1 开启一个新的 Claude Code 会话，在正确分支中运行：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/implement https://github.com/example/task-board/issues/143</span><br><span class="line">先确认工作区和依赖状态。按照 Ticket 的测试 seam 实施，只完成固定提前 30 分钟的站内提醒，不提前实现后续 Ticket。</span><br></pre></td></tr></table></figure>
+
+<p>处理 Ticket 2 时再开启另一个新会话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/implement https://github.com/example/task-board/issues/144</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-7"><a href="#Agent-接下来会做什么-7" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>它会先读取 Ticket、规格、仓库规范和相关代码，然后形成一个受 Ticket 范围约束的实现计划。接下来通常包含以下阶段。</p>
+<h3 id="1-内部使用-tdd-完成单个红—绿行为切片"><a href="#1-内部使用-tdd-完成单个红—绿行为切片" class="headerlink" title="1. 内部使用 tdd 完成单个红—绿行为切片"></a>1. 内部使用 <code>tdd</code> 完成单个红—绿行为切片</h3><p><code>tdd</code> 不是“先把所有测试写完，再一次性补实现”，而是反复完成小的行为闭环：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">选择一个公共行为</span><br><span class="line">→ 写一个会因为缺少该行为而失败的测试</span><br><span class="line">→ 运行并确认失败原因正确</span><br><span class="line">→ 写最少实现使其通过</span><br><span class="line">→ 重构但保持测试为绿</span><br><span class="line">→ 再进入下一个行为</span><br></pre></td></tr></table></figure>
+
+<p>以 Ticket 1 为例，第一个切片可以是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">行为：为 dueAt=12:00 的任务启用提醒时，</span><br><span class="line">系统创建 runAt=11:30 的 Reminder 计划。</span><br></pre></td></tr></table></figure>
+
+<p>测试先通过 API 或领域服务这一公共 seam 表达行为：</p>
+<figure class="highlight ts"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">it</span>(<span class="string">&quot;schedules an in-app reminder 30 minutes before the due date&quot;</span>, <span class="title function_">async</span> () =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> task = <span class="keyword">await</span> <span class="title function_">createTask</span>(&#123; <span class="attr">dueAt</span>: <span class="string">&quot;2026-08-01T12:00:00Z&quot;</span> &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">await</span> <span class="title function_">enableReminder</span>(task.<span class="property">id</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">await</span> <span class="title function_">expectReminder</span>(task.<span class="property">id</span>).<span class="title function_">toMatchObject</span>(&#123;</span><br><span class="line">    <span class="attr">runAt</span>: <span class="string">&quot;2026-08-01T11:30:00Z&quot;</span>,</span><br><span class="line">    <span class="attr">channel</span>: <span class="string">&quot;in_app&quot;</span>,</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>先运行它并确认失败是因为提醒能力尚不存在，而不是测试环境错误。随后只实现让这一行为通过所需的最少代码，再进入“计划被送入 Queue”“Worker 生成站内通知”等下一个切片。</p>
+<p>这种做法有两个边界：</p>
+<ul>
+<li>测试公共行为，不锁死私有函数的内部结构；</li>
+<li>一次只推进一个红—绿切片，避免失败时无法判断是哪部分引入问题。</li>
+</ul>
+<h3 id="2-运行分层验证"><a href="#2-运行分层验证" class="headerlink" title="2. 运行分层验证"></a>2. 运行分层验证</h3><p>目标行为通过后，<code>implement</code> 不会把单个测试变绿当作完成。它还应依次运行：</p>
+<ol>
+<li>与改动直接相关的测试；</li>
+<li>类型检查；</li>
+<li>仓库要求的静态检查；</li>
+<li>完整测试套件；</li>
+<li>Ticket 指定的手工或端到端验证。</li>
+</ol>
+<p>如果完整测试出现回归，应该继续修正，不应以“目标测试已经通过”为理由忽略。</p>
+<h3 id="3-内部使用-code-review-做双轴审查"><a href="#3-内部使用-code-review-做双轴审查" class="headerlink" title="3. 内部使用 code-review 做双轴审查"></a>3. 内部使用 <code>code-review</code> 做双轴审查</h3><p><code>code-review</code> 会从一个固定比较点审查当前改动，而不是只看最后编辑的文件。审查包含两条轴：</p>
+<ul>
+<li><strong>Standards 轴</strong>：是否遵守仓库约定、类型和错误处理是否可靠、是否引入安全或性能问题；</li>
+<li><strong>Spec 轴</strong>：是否真正满足 Ticket 和上游规格，是否越界实现了后续功能，是否遗漏验收条件。</li>
+</ul>
+<p>例如，代码可能在技术上完全正确，却擅自增加了邮件通知。它能通过 Standards 审查，但会在 Spec 审查中被指出超出 Ticket 1 的范围。</p>
+<p>审查时应基于分支与固定基线之间的完整差异，例如 Git 的 three-dot diff。three-dot diff 表示“当前分支相对于它和目标分支共同祖先所新增的改动”，适合只查看本次分支带来的变化。审查不能只依赖 Agent 对自己刚才操作的记忆；发现问题后应修复，并重新运行受影响的验证。</p>
+<h3 id="4-创建提交"><a href="#4-创建提交" class="headerlink" title="4. 创建提交"></a>4. 创建提交</h3><p>当前 <code>implement</code> 工作流默认会在完成验证和审查后创建 Git 提交。这是一个必须提前知道的副作用。</p>
+<p>调用前应检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git status --short</span><br><span class="line">git diff --check</span><br></pre></td></tr></table></figure>
+
+<p>确保工作区没有其他人的未提交改动，也没有不属于当前 Ticket 的文件。否则自动提交可能把无关内容一起带入历史。</p>
+<h3 id="会生成或修改什么-7"><a href="#会生成或修改什么-7" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>它会：</p>
+<ul>
+<li>修改实现代码和测试；</li>
+<li>可能更新与 Ticket 直接相关的文档；</li>
+<li>运行项目验证；</li>
+<li>完成代码审查；</li>
+<li>默认创建一个 Git 提交。</li>
+</ul>
+<p>它不应：</p>
+<ul>
+<li>修改规格之外的行为；</li>
+<li>顺手实现后续 Ticket；</li>
+<li>自动把实验原型当作生产代码；</li>
+<li>把未验证的改动标记为完成。</li>
+</ul>
+<h3 id="下一阶段-7"><a href="#下一阶段-7" class="headerlink" title="下一阶段"></a>下一阶段</h3><ul>
+<li>当前 Ticket 完成后，在新会话中实现下一张 Ticket；</li>
+<li>出现原因不明、反复修补仍失败的缺陷时，切换到 <code>/diagnosing-bugs</code>；</li>
+<li>上下文已经过长但工作尚未完成时，使用 <code>/handoff</code>。</li>
+</ul>
+<h2 id="十一、diagnosing-bugs：定位并修复难以解释的运行时-Bug"><a href="#十一、diagnosing-bugs：定位并修复难以解释的运行时-Bug" class="headerlink" title="十一、diagnosing-bugs：定位并修复难以解释的运行时 Bug"></a>十一、<code>diagnosing-bugs</code>：定位并修复难以解释的运行时 Bug</h2><p>假设到期提醒上线前出现一个缺陷：</p>
+<blockquote>
+<p>同一个任务偶尔收到两条完全相同的提醒。</p>
+</blockquote>
+<p>如果直接在 Queue、数据库和前端各加一个“去重判断”，可能暂时隐藏现象，却无法知道重复发生在哪个边界。<code>diagnosing-bugs</code> 的目标是先建立快速、可重复的反馈回路，再通过证据缩小原因。</p>
+<h3 id="它能不能用来定位程序运行时-Bug"><a href="#它能不能用来定位程序运行时-Bug" class="headerlink" title="它能不能用来定位程序运行时 Bug"></a>它能不能用来定位程序运行时 Bug</h3><p>可以，这正是 <code>diagnosing-bugs</code> 的主要用途。它不是只阅读代码的“错误扫描器”，而是一套让 Agent <strong>运行程序、复现问题、收集证据、定位原因并验证修复</strong>的诊断流程。</p>
+<p>例如，以下问题都适合使用：</p>
+<ul>
+<li>程序启动后崩溃，但从报错堆栈看不出真正原因；</li>
+<li>某个接口偶尔返回错误结果；</li>
+<li>同一个请求被处理两次；</li>
+<li>只在特定数据、并发量或操作顺序下出现异常；</li>
+<li>测试偶发失败；</li>
+<li>程序突然变慢、内存持续增长或 CPU 占用异常；</li>
+<li>已经尝试过直觉修复，但问题仍然出现。</li>
+</ul>
+<p>调用时应尽量提供以下信息：</p>
+<ul>
+<li><strong>预期结果</strong>：正常情况下应该发生什么；</li>
+<li><strong>实际结果</strong>：现在出现了什么错误；</li>
+<li><strong>复现步骤</strong>：执行哪些操作或命令能够看到问题；</li>
+<li><strong>错误证据</strong>：报错信息、堆栈、日志或失败截图；</li>
+<li><strong>运行环境</strong>：操作系统、运行方式、相关依赖版本；</li>
+<li><strong>出现频率</strong>：必现、偶发，还是只在生产环境出现；</li>
+<li><strong>最近变化</strong>：问题出现前修改过哪些代码、配置或依赖。</li>
+</ul>
+<p>例如，一个普通 Node.js 运行时错误可以这样调用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">/diagnosing-bugs task-board 启动正常，但调用 POST /tasks 时会返回 500。</span><br><span class="line">预期：创建任务并返回 201。</span><br><span class="line">实际：日志出现 TypeError: Cannot read properties of undefined (reading &#x27;id&#x27;)。</span><br><span class="line">复现命令：npm run dev，然后执行 tests/repro/create-task.ps1。</span><br><span class="line">Node.js 版本为 22，问题每次都能复现，昨天修改过任务创建事务。</span><br><span class="line">请先运行复现步骤并建立会失败的最小测试，再定位根因；不要只根据堆栈猜测。</span><br></pre></td></tr></table></figure>
+
+<p>如果 Agent 可以访问代码和运行环境，它会实际执行复现命令、测试与必要的插桩。如果问题只存在于无法访问的生产环境，它仍然可以根据脱敏后的日志和监控信息制定排查方案，但不能在没有证据的情况下保证已经找到根因。</p>
+<h3 id="使用这个-Skill-时会发生什么"><a href="#使用这个-Skill-时会发生什么" class="headerlink" title="使用这个 Skill 时会发生什么"></a>使用这个 Skill 时会发生什么</h3><p>调用 <code>/diagnosing-bugs</code> 后，Claude Code 不会切换成另一个更强的模型，Skill 也不会为 Agent 增加原本没有的文件、终端、生产环境或网络权限。它的作用是把一套严格的诊断方法加载到当前 Agent 的工作上下文中，让 Agent 按证据推进，而不是看到报错后立即修改第一处可疑代码。</p>
+<p>在权限允许的范围内，Agent 通常会：</p>
+<ol>
+<li>阅读相关代码、测试、配置、错误堆栈和日志；</li>
+<li>运行程序或测试，确认问题是否能够复现；</li>
+<li>缩小复现范围，排除无关模块和环境因素；</li>
+<li>提出 3～5 个按可能性排序、能够被证据推翻的原因假设；</li>
+<li>添加临时日志、断言或诊断测试，一次验证一个假设；</li>
+<li>根据证据确定根因，而不是根据第一印象猜测；</li>
+<li>添加能够稳定重现原问题的回归测试；</li>
+<li>实施针对根因的最小修复；</li>
+<li>运行相关测试与完整测试；</li>
+<li>删除没有长期价值的临时插桩。</li>
+</ol>
+<p>如果缺少复现命令、运行依赖或必要日志，Agent 可能先向使用者索取信息。它不能访问的生产环境也不会因为调用 Skill 而自动变得可访问。</p>
+<h3 id="与直接要求-Agent-定位并修复有什么区别"><a href="#与直接要求-Agent-定位并修复有什么区别" class="headerlink" title="与直接要求 Agent 定位并修复有什么区别"></a>与直接要求 Agent 定位并修复有什么区别</h3><p>两种方式使用的仍然是同一个 Agent，区别在于是否强制执行系统化的诊断过程。</p>
+<table>
+<thead>
+<tr>
+<th>直接要求“定位并修复 Bug”</th>
+<th>使用 <code>/diagnosing-bugs</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Agent 可能直接根据堆栈猜测原因</td>
+<td>先建立复现，再根据证据判断</td>
+</tr>
+<tr>
+<td>容易修改第一处看起来可疑的代码</td>
+<td>先提出可证伪假设，再逐项排除</td>
+</tr>
+<tr>
+<td>可能只让表面现象暂时消失</td>
+<td>要求说明能够解释现象的真正根因</td>
+</tr>
+<tr>
+<td>修复后可能只运行已有测试</td>
+<td>要求增加针对原问题的回归测试</td>
+</tr>
+<tr>
+<td>多处修改可能同时进行，难以判断哪一项有效</td>
+<td>一次验证一个假设，保持反馈清晰</td>
+</tr>
+<tr>
+<td>临时日志可能遗留在代码中</td>
+<td>诊断结束后清理临时插桩</td>
+</tr>
+<tr>
+<td>更适合原因明确、改动局部的小问题</td>
+<td>更适合偶发、并发、重试、缓存和性能问题</td>
+</tr>
+</tbody></table>
+<p>以“同一个任务收到两条提醒”为例，直接要求修复时，Agent 可能马上增加一个 <code>notificationExists</code> 判断。这可能隐藏重复结果，却没有解释重复调度发生在哪里。</p>
+<p><code>diagnosing-bugs</code> 会先区分：</p>
+<ul>
+<li>API 是否创建了两个 Job；</li>
+<li>两个 Job 是否使用了不同的 Job ID；</li>
+<li>Worker 是否因为失败而重试；</li>
+<li>通知是否已经写入，但 Worker 在确认 Job 完成前崩溃；</li>
+<li>数据库是否缺少业务唯一约束。</li>
+</ul>
+<p>只有证据表明“通知已经写入，但 Worker 确认失败后再次执行”时，才应该使用数据库唯一约束或幂等写入修复，并用回归测试模拟这个失败边界。</p>
+<h3 id="可以只定位，不立即修改代码吗"><a href="#可以只定位，不立即修改代码吗" class="headerlink" title="可以只定位，不立即修改代码吗"></a>可以只定位，不立即修改代码吗</h3><p>可以。<code>diagnosing-bugs</code> 的完整流程包含修复，但使用者可以在命令中限制本轮权限。如果只希望先确认根因：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/diagnosing-bugs 调查 task-board 的重复提醒问题。</span><br><span class="line">先建立复现并定位根因，在我确认之前不要修改生产代码。</span><br></pre></td></tr></table></figure>
+
+<p>如果希望 Agent 完成诊断、修复和验证：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/diagnosing-bugs 调查并修复 task-board 的重复提醒问题。</span><br><span class="line">先复现并用证据确认根因，然后添加回归测试、实施最小修复并运行完整测试。</span><br></pre></td></tr></table></figure>
+
+<p>这个 Skill 可能在本地修改诊断测试、临时插桩和业务代码，但它本身不会默认创建远程 Issue、推送分支或创建 Git 提交。实际文件修改仍受调用要求和当前工具权限约束。</p>
+<h3 id="什么时候使用-8"><a href="#什么时候使用-8" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>缺陷无法稳定解释；</li>
+<li>已经尝试过一两个直觉修复但问题仍在；</li>
+<li>涉及并发、重试、缓存、时序或性能；</li>
+<li>需要插桩才能观察内部状态；</li>
+<li>错误横跨多个系统边界。</li>
+</ul>
+<h3 id="什么时候不需要使用-8"><a href="#什么时候不需要使用-8" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>已有稳定复现、明确根因和局部修复；</li>
+<li>只是编译错误、拼写错误或显然的条件判断错误；</li>
+<li>当前只有产品行为争议而不是代码缺陷；</li>
+<li>缺少任何复现信息，此时应先收集基本环境和日志。</li>
+</ul>
+<h3 id="精确调用-8"><a href="#精确调用-8" class="headerlink" title="精确调用"></a>精确调用</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/diagnosing-bugs task-board 中同一个任务偶尔收到两条相同的到期提醒。</span><br><span class="line">已知现象：生产环境 BullMQ Worker 开启 attempts=3；重复通知的 taskId 和 dueAt 相同，时间相差约 2 秒。</span><br><span class="line">请先建立能够变红的最小反馈回路，再提出可证伪假设并逐项验证。不要先添加泛化的去重条件。修复后补充回归测试，并移除临时插桩。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-8"><a href="#Agent-接下来会做什么-8" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><h4 id="1-建立反馈回路"><a href="#1-建立反馈回路" class="headerlink" title="1. 建立反馈回路"></a>1. 建立反馈回路</h4><p>首先找到能够快速重复运行并观察“重复通知”的方式。理想情况是一条自动化测试；如果暂时做不到，也可以是受控脚本、局部日志或最小测试环境。</p>
+<p>反馈回路必须能够在缺陷存在时变红，否则后面的修复无法被证明。</p>
+<h4 id="2-最小化复现"><a href="#2-最小化复现" class="headerlink" title="2. 最小化复现"></a>2. 最小化复现</h4><p>Agent 会逐步移除无关因素，例如：</p>
+<ul>
+<li>不经过浏览器，只直接调用 Worker；</li>
+<li>不等待真实时间，使用可控时钟；</li>
+<li>使用单个任务和固定 Job ID；</li>
+<li>模拟第一次通知写入成功后，Queue 确认失败；</li>
+<li>对比单 Worker 与多 Worker。</li>
+</ul>
+<p>目标是找到仍然能够产生两条通知的最小系统。</p>
+<h4 id="3-提出-3—5-个有排序、可证伪的假设"><a href="#3-提出-3—5-个有排序、可证伪的假设" class="headerlink" title="3. 提出 3—5 个有排序、可证伪的假设"></a>3. 提出 3—5 个有排序、可证伪的假设</h4><p>本例可能包括：</p>
+<ol>
+<li>通知已写入数据库，但 Worker 在确认 Job 完成前失败，重试再次写入；</li>
+<li>API 并发保存导致同一任务版本被调度两次；</li>
+<li>修改截止时间时旧 delayed job 没有失效；</li>
+<li>多个 Worker 对同一业务事件分别完成了物化；</li>
+<li>自定义 Job ID 没有按预期构造，两个调度使用了不同 ID。</li>
+</ol>
+<p>“BullMQ 有问题”不是合格假设，因为它无法指导下一项观察。合格假设必须说明：如果它是真的，应该看到什么；如果看不到什么，就可以排除。</p>
+<h4 id="4-添加针对性插桩"><a href="#4-添加针对性插桩" class="headerlink" title="4. 添加针对性插桩"></a>4. 添加针对性插桩</h4><p>为了区分假设，可以临时记录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">taskId</span><br><span class="line">dueAtVersion</span><br><span class="line">queueJobId</span><br><span class="line">attemptNumber</span><br><span class="line">reminderRecordId</span><br><span class="line">notificationId</span><br><span class="line">workerStartedAt</span><br><span class="line">notificationInsertedAt</span><br><span class="line">workerCompletedAt</span><br></pre></td></tr></table></figure>
+
+<p>插桩应围绕系统边界，而不是无选择地输出全部对象。日志中也不能包含访问令牌、完整用户内容等敏感数据。</p>
+<h4 id="5-修复、回归和清理"><a href="#5-修复、回归和清理" class="headerlink" title="5. 修复、回归和清理"></a>5. 修复、回归和清理</h4><p>假设如果被证据证实，例如“通知写入后 Worker 重试造成第二次插入”，修复可能是建立数据库唯一约束和幂等写入，而不只是依赖 Queue Job ID。</p>
+<p>回归测试应精确重现该边界：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">第一次执行成功写入通知</span><br><span class="line">→ 在 Job 完成确认前模拟失败</span><br><span class="line">→ 第二次执行同一 reminder</span><br><span class="line">→ 数据库仍只有一条通知</span><br></pre></td></tr></table></figure>
+
+<p>最后重新运行完整测试，并删除临时插桩或将真正有长期价值的指标整理为正式可观测性。</p>
+<h3 id="会生成或修改什么-8"><a href="#会生成或修改什么-8" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p>诊断过程中可能产生：</p>
+<ul>
+<li>最小复现测试或脚本；</li>
+<li>临时的定向日志和指标；</li>
+<li>一份假设与证据记录；</li>
+<li>最终修复；</li>
+<li>能够阻止复发的回归测试。</li>
+</ul>
+<p>它的核心产物不是“改了哪一行”，而是一条可以证明根因和修复有效的证据链。</p>
+<h3 id="下一阶段-8"><a href="#下一阶段-8" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>修复被完整验证后回到正常交付流程。如果问题尚未解决但上下文已接近上限，使用 <code>/handoff</code> 保存复现方式、已排除假设和下一项实验。</p>
+<h2 id="十二、handoff：把必要上下文交给一个干净会话"><a href="#十二、handoff：把必要上下文交给一个干净会话" class="headerlink" title="十二、handoff：把必要上下文交给一个干净会话"></a>十二、<code>handoff</code>：把必要上下文交给一个干净会话</h2><p><code>handoff</code> 用于结束当前会话并生成一份面向新会话的交接说明。它不会把整段聊天机械复制过去，而是引用已经存在的规格、Issue、ADR、提交和差异，只补充尚未持久化的关键信息。</p>
+<h3 id="什么时候使用-9"><a href="#什么时候使用-9" class="headerlink" title="什么时候使用"></a>什么时候使用</h3><ul>
+<li>对话已经很长，Agent 开始遗忘早期约束；</li>
+<li>即将从需求讨论切换到独立实现；</li>
+<li>原型实验完成，需要回到干净的正式实现环境；</li>
+<li>缺陷诊断尚未结束，但已经积累了复现和排除证据；</li>
+<li>需要把工作交给另一个人或另一个 Agent 会话。</li>
+</ul>
+<h3 id="什么时候不需要使用-9"><a href="#什么时候不需要使用-9" class="headerlink" title="什么时候不需要使用"></a>什么时候不需要使用</h3><ul>
+<li>当前任务即将完成，剩余步骤很少；</li>
+<li>所有必要信息都已经在一张自包含 Ticket 中，新会话可以直接读取；</li>
+<li>只是暂停几分钟，不会更换上下文；</li>
+<li>尚未形成任何可复用结论。</li>
+</ul>
+<h3 id="精确调用-9"><a href="#精确调用-9" class="headerlink" title="精确调用"></a>精确调用</h3><h4 id="从原型分支返回正式流程"><a href="#从原型分支返回正式流程" class="headerlink" title="从原型分支返回正式流程"></a>从原型分支返回正式流程</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/handoff 为 task-board 到期提醒创建新会话交接。说明提醒选择器原型最终选择方案 B；引用规格 Issue #142、BullMQ 调研文档和提醒幂等 ADR；明确原型分支不能合并，下一步是在主工作分支执行 /to-tickets。</span><br></pre></td></tr></table></figure>
+
+<h4 id="在缺陷诊断中交接"><a href="#在缺陷诊断中交接" class="headerlink" title="在缺陷诊断中交接"></a>在缺陷诊断中交接</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/handoff 交接“重复提醒”诊断。保留最小复现命令、已经排除的假设、当前插桩字段、相关提交和下一项实验。引用 Issue 与 ADR，不复制完整内容。检查并移除日志中的令牌、Cookie 和个人数据。</span><br></pre></td></tr></table></figure>
+
+<h3 id="Agent-接下来会做什么-9"><a href="#Agent-接下来会做什么-9" class="headerlink" title="Agent 接下来会做什么"></a>Agent 接下来会做什么</h3><p>它会整理：</p>
+<ul>
+<li>当前目标和完成状态；</li>
+<li>已经确认的决定；</li>
+<li>规格、Issue、ADR、研究文档和提交引用；</li>
+<li>当前分支与工作区状态；</li>
+<li>已执行的验证及结果；</li>
+<li>未解决问题；</li>
+<li>新会话应该执行的第一条命令。</li>
+</ul>
+<p>对诊断任务，还应特别记录：</p>
+<ul>
+<li>最小复现方法；</li>
+<li>哪些假设已经被什么证据排除；</li>
+<li>哪些临时插桩仍然存在；</li>
+<li>下一项最有信息价值的实验。</li>
+</ul>
+<h3 id="会生成或修改什么-9"><a href="#会生成或修改什么-9" class="headerlink" title="会生成或修改什么"></a>会生成或修改什么</h3><p><code>handoff</code> 通常会在操作系统临时目录中写入一份 Markdown 交接文件，供使用者在新会话中加载。它倾向于引用已有材料，而不是复制整份规格。</p>
+<p>交接前会检查敏感信息。终端输出、环境变量、Cookie、令牌和真实用户数据不应进入交接文档。</p>
+<p>它不会自动替你完成远程发布，也不会把未提交改动安全地“传送”到另一个分支。分支、提交和工作区状态仍需明确检查。</p>
+<h3 id="下一阶段-9"><a href="#下一阶段-9" class="headerlink" title="下一阶段"></a>下一阶段</h3><p>开启新会话，加载交接文件，先核对目标、分支和工作区，再执行交接中写明的下一步。例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">请读取交接文件，然后继续 Issue #147 的重复提醒诊断。</span><br><span class="line">先运行其中的最小复现，不要重复已经排除的实验。</span><br></pre></td></tr></table></figure>
+
+<h2 id="十三、把整个案例连起来"><a href="#十三、把整个案例连起来" class="headerlink" title="十三、把整个案例连起来"></a>十三、把整个案例连起来</h2><p>下面是一套可以照着执行的顺序。命令中的仓库地址和 Issue 编号是示例，需要替换为真实值。</p>
+<h3 id="阶段-1：初始化仓库"><a href="#阶段-1：初始化仓库" class="headerlink" title="阶段 1：初始化仓库"></a>阶段 1：初始化仓库</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/setup-matt-pocock-skills</span><br></pre></td></tr></table></figure>
+
+<p>确认 GitHub Issues、标签、领域文档路径和 <code>CLAUDE.md</code> 已经建立连接。这一步每个仓库通常只执行一次。</p>
+<h3 id="阶段-2：让路由器选择流程"><a href="#阶段-2：让路由器选择流程" class="headerlink" title="阶段 2：让路由器选择流程"></a>阶段 2：让路由器选择流程</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/ask-matt 我准备给 task-board 增加任务到期提醒。需求还不完整，预计跨 Web、API、数据库和 BullMQ Worker，并需要多个会话。</span><br></pre></td></tr></table></figure>
+
+<p>获得调研、澄清、规格化和拆票的推荐顺序。</p>
+<h3 id="阶段-3：调查第三方约束"><a href="#阶段-3：调查第三方约束" class="headerlink" title="阶段 3：调查第三方约束"></a>阶段 3：调查第三方约束</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/research 调研 BullMQ delayed job、attempts/backoff、自定义 Job ID、重新调度和重复执行的官方语义。只使用一手资料，并把事实与项目建议分开写入 docs/research/bullmq-task-reminders.md。</span><br></pre></td></tr></table></figure>
+
+<p>确保后续设计建立在可引用的外部事实之上。</p>
+<h3 id="阶段-4：确认产品与领域语义"><a href="#阶段-4：确认产品与领域语义" class="headerlink" title="阶段 4：确认产品与领域语义"></a>阶段 4：确认产品与领域语义</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/grill-with-docs 结合 BullMQ 调研，逐个澄清 task-board 到期提醒的渠道、提前时间、改期、取消、过期和重复发送语义。将确定规则维护到领域文档，必要时记录 ADR，不要实现。</span><br></pre></td></tr></table></figure>
+
+<p>结束条件不是“所有问题都问过”，而是规格所需的关键决定已经一致。</p>
+<h3 id="阶段-5：按需验证交互"><a href="#阶段-5：按需验证交互" class="headerlink" title="阶段 5：按需验证交互"></a>阶段 5：按需验证交互</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/prototype 为提醒时间选择器制作三个一次性 UI 方案。只验证交互选择，提供一个运行命令，不接持久化，不做生产抽象。</span><br></pre></td></tr></table></figure>
+
+<p>只有当实际体验会改变决定时才执行。完成后只保留结论。</p>
+<h3 id="阶段-6：发布规格"><a href="#阶段-6：发布规格" class="headerlink" title="阶段 6：发布规格"></a>阶段 6：发布规格</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/to-spec 将任务到期提醒的确认上下文发布为规格，包含用户故事、领域规则、实现决策、测试 seam、验收标准和 Out of Scope。</span><br></pre></td></tr></table></figure>
+
+<p>检查生成的远程 Issue 是否准确，然后再继续。</p>
+<h3 id="阶段-7：拆分垂直-Ticket"><a href="#阶段-7：拆分垂直-Ticket" class="headerlink" title="阶段 7：拆分垂直 Ticket"></a>阶段 7：拆分垂直 Ticket</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/to-tickets https://github.com/example/task-board/issues/142</span><br><span class="line">拆成单会话可完成且可独立验证的垂直切片，不按技术层拆分。</span><br></pre></td></tr></table></figure>
+
+<p>确认每张 Ticket 都交付一个完整行为，并具有清晰依赖。</p>
+<h3 id="阶段-8：逐张-Ticket-实施"><a href="#阶段-8：逐张-Ticket-实施" class="headerlink" title="阶段 8：逐张 Ticket 实施"></a>阶段 8：逐张 Ticket 实施</h3><p>每张 Ticket 都使用新会话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/implement https://github.com/example/task-board/issues/143</span><br></pre></td></tr></table></figure>
+
+<p>观察它是否：</p>
+<ul>
+<li>先从公共 seam 写出一个会正确失败的测试；</li>
+<li>以单个红—绿切片推进；</li>
+<li>运行类型检查、目标测试和完整测试；</li>
+<li>同时按仓库规范与规格审查；</li>
+<li>只提交当前 Ticket 的文件。</li>
+</ul>
+<h3 id="阶段-9：系统诊断复杂缺陷"><a href="#阶段-9：系统诊断复杂缺陷" class="headerlink" title="阶段 9：系统诊断复杂缺陷"></a>阶段 9：系统诊断复杂缺陷</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/diagnosing-bugs 同一任务偶尔收到两条提醒。先建立会变红的最小复现，提出并验证可证伪假设，修复后添加回归测试并清理临时插桩。</span><br></pre></td></tr></table></figure>
+
+<p>不要把“加一个去重判断”当作已经找到根因。</p>
+<h3 id="阶段-10：必要时交接"><a href="#阶段-10：必要时交接" class="headerlink" title="阶段 10：必要时交接"></a>阶段 10：必要时交接</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/handoff 引用规格、Ticket、ADR、调研和相关提交，记录当前状态、验证结果、未解决问题与新会话的第一步。</span><br></pre></td></tr></table></figure>
+
+<p>新会话应从交接中的第一项验证开始，而不是重新阅读整段历史对话。</p>
+<h2 id="十四、推荐的工作原则"><a href="#十四、推荐的工作原则" class="headerlink" title="十四、推荐的工作原则"></a>十四、推荐的工作原则</h2><h3 id="1-让文档承担跨会话记忆"><a href="#1-让文档承担跨会话记忆" class="headerlink" title="1. 让文档承担跨会话记忆"></a>1. 让文档承担跨会话记忆</h3><p>对话适合探索，仓库文档和 Tracker 适合长期保存。外部事实进入 research 文档，领域规则进入 <code>CONTEXT.md</code>，重要权衡进入 ADR，可执行范围进入规格和 Ticket。</p>
+<h3 id="2-一张-Ticket-对应一个新实现会话"><a href="#2-一张-Ticket-对应一个新实现会话" class="headerlink" title="2. 一张 Ticket 对应一个新实现会话"></a>2. 一张 Ticket 对应一个新实现会话</h3><p>规格讨论需要宽上下文，实现 Ticket 需要窄上下文。让新的 Agent 只读取当前 Ticket、上游规格和相关代码，通常比让同一会话连续处理整个功能更稳定。</p>
+<h3 id="3-原型代码默认丢弃"><a href="#3-原型代码默认丢弃" class="headerlink" title="3. 原型代码默认丢弃"></a>3. 原型代码默认丢弃</h3><p>原型的成功标准是帮助做出决定，而不是“已经写了不少代码，顺便继续做完”。保留结论，正式实现重新遵循仓库规范、测试和错误处理。</p>
+<h3 id="4-区分事实、决策与实现"><a href="#4-区分事实、决策与实现" class="headerlink" title="4. 区分事实、决策与实现"></a>4. 区分事实、决策与实现</h3><ul>
+<li><code>research</code> 回答外部世界如何工作；</li>
+<li><code>grill-with-docs</code> 回答项目希望如何工作；</li>
+<li><code>to-spec</code> 固化已经确认的合同；</li>
+<li><code>implement</code> 在合同范围内修改代码。</li>
+</ul>
+<p>混淆这四类信息，是 AI 编程最常见的返工来源之一。</p>
+<h3 id="5-提前认识有副作用的阶段"><a href="#5-提前认识有副作用的阶段" class="headerlink" title="5. 提前认识有副作用的阶段"></a>5. 提前认识有副作用的阶段</h3><p><code>setup-matt-pocock-skills</code> 会修改项目文档，<code>to-spec</code> 和 <code>to-tickets</code> 可能创建远程工作项，<code>implement</code> 默认创建 Git 提交。调用前检查目标仓库、工作区和远程 Tracker，调用后审查实际差异。</p>
+<h2 id="十五、最后只记住这张决策图"><a href="#十五、最后只记住这张决策图" class="headerlink" title="十五、最后只记住这张决策图"></a>十五、最后只记住这张决策图</h2><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">第一次使用 → setup</span><br><span class="line">不知道选什么 → ask-matt</span><br><span class="line">需求不清楚 → grill-with-docs</span><br><span class="line">需要外部事实 → research</span><br><span class="line">必须实际体验才能决定 → prototype</span><br><span class="line">多会话功能 → to-spec → to-tickets → implement</span><br><span class="line">难处理缺陷 → diagnosing-bugs</span><br><span class="line">需要新上下文 → handoff</span><br></pre></td></tr></table></figure>
+
+<p>这套 Skills 的价值不在于命令数量，而在于让 Agent 在正确的阶段做正确的事：不确定时先澄清，依赖事实时先调研，需要体验时才做原型，复杂工作先沉淀规格和垂直 Ticket，实现时用测试与审查收口，问题难以解释时依靠证据诊断，最后用交接把上下文安全地带入新会话。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills">mattpocock&#x2F;skills 项目主页</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/setup-matt-pocock-skills/SKILL.md">setup-matt-pocock-skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/ask-matt/SKILL.md">ask-matt</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/research/SKILL.md">research</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/grill-with-docs/SKILL.md">grill-with-docs</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/prototype/SKILL.md">prototype</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/to-spec/SKILL.md">to-spec</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/to-tickets/SKILL.md">to-tickets</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/implement/SKILL.md">implement</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/engineering/diagnosing-bugs/SKILL.md">diagnosing-bugs</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/mattpocock/skills/blob/main/skills/productivity/handoff/SKILL.md">handoff</a></li>
+<li><a target="_blank" rel="noopener" href="https://skills.sh/mattpocock/skills">skills.sh 上的 mattpocock&#x2F;skills</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/plugins">Claude Code 插件文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.bullmq.io/guide/jobs/delayed">BullMQ Delayed Jobs</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.bullmq.io/guide/jobs/job-ids">BullMQ Job IDs</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.bullmq.io/guide/retrying-failing-jobs">BullMQ Retrying Failing Jobs</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/">https://lx-cel.github.io/2026/07/26/mattpocock-skills—面向真实工程的AI编程工作流/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Claude-Code/">Claude Code</a><a class="post-meta__tags" href="/tags/AI%E7%BC%96%E7%A8%8B/">AI编程</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a><a class="post-meta__tags" href="/tags/Agent-Skills/">Agent Skills</a><a class="post-meta__tags" href="/tags/Codex/">Codex</a></div><div class="post-share"><div class="social-share" data-image="/img/51.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/07/31/WezTerm%E9%85%8D%E7%BD%AE%E4%B8%8E%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%E2%80%94Windows-PowerShell-WSL%E4%B8%8E%E5%A4%9A%E7%AA%97%E6%A0%BC%E5%B7%A5%E4%BD%9C%E6%B5%81/" title="WezTerm配置与使用指南—Windows、PowerShell、WSL与多窗格工作流"><img class="cover" src="/img/62.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">WezTerm配置与使用指南—Windows、PowerShell、WSL与多窗格工作流</div></div><div class="info-2"><div class="info-item-1">WezTerm 是一个使用 Rust 编写、支持 GPU 加速和 Lua 配置的跨平台终端模拟器。本文介绍的不是 WezTerm 默认配置，而是基于 KevinSilvester&#x2F;wezterm-config 调整后的 Windows 配置。它将 PowerShell 7 作为默认 Shell，同时接入 Windows PowerShell、Command Prompt、Git Bash 和 Ubuntu WSL，并提供背景图片、状态栏、标签页状态、多窗格操作以及一套以 Alt 为核心的快捷键。 本文以当前实际安装环境为准：    项目 当前配置    操作系统 Windows   WezTerm 20260729-115229-46a166d6   配置来源 KevinSilvester/wezterm-config，提交 052853e   配置目录 C:\Users\li&#39;xiao\.config\wezterm   默认 Shell PowerShell 7   WSL Ubuntu，用户 lixiao，登录 Shell 为 Bash   Git...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" title="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查"><img class="cover" src="/img/52.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</div></div><div class="info-2"><div class="info-item-1">Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。  0. 自动化与排障速查0.1 一次性查询1claude -p &quot;概括这个项目的模块和入口&quot;  推荐的可复现脚本模式： 12claude --bare -p &quot;只读审查当前差异&quot; \  --allowedTools &quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;  0.2 JSON 输出123claude --bare -p &quot;列出所有 HTTP 端点&quot; \  --output-format json |  jq...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E5%AE%89%E8%A3%85%E3%80%81%E8%AE%A4%E8%AF%81%E4%B8%8E%E9%A6%96%E6%AC%A1%E4%BC%9A%E8%AF%9D/" title="Claude Code终端使用指南（一）—安装、认证与首次会话"><img class="cover" src="/img/53.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（一）—安装、认证与首次会话</div></div><div class="info-2"><div class="info-item-1">Claude Code 是 Anthropic 提供的智能编程代理。它可以在终端中读取项目文件、搜索代码、编辑文件、运行命令，并围绕测试或构建结果继续迭代。它与 claude.ai 的普通聊天界面、Claude Desktop 以及 IDE 插件并不是同一个使用入口。本系列只讨论在本地终端中通过 claude 命令启动的 Claude Code CLI。 本文是系列的第一篇，介绍系统要求、安装方式、认证、版本更新、首次启动和基础交互。后续文章依次讨论：  核心工作流与提示策略； 项目记忆、配置、权限与沙箱； 会话、上下文、Git 与并行开发； Skills、子代理、Hooks、MCP 与插件； 非交互自动化、成本控制与故障排查。  系列以“能够独立、可靠地在终端中使用 Claude Code 完成真实项目工作”为范围，覆盖安装认证、交互工作流、项目配置、安全边界、状态管理、并行开发、扩展机制、脚本化和排障。Claude Desktop、IDE 插件和 Claude Code on the web...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/" title="Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱"><img class="cover" src="/img/55.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱</div></div><div class="info-2"><div class="info-item-1">Claude Code 的项目定制包含两类本质不同的机制：  CLAUDE.md、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断； 设置、权限规则、Hooks 和沙箱限制工具实际能做什么。  前者是指导，后者才是执行边界。把“不要读取 .env”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。 本文继续使用虚构的 TypeScript 项目 task-board，建立一套可提交给团队的 Claude Code 项目配置。内容包括项目记忆、自动记忆、设置作用域、权限模式、规则语法、敏感文件保护、沙箱和提示注入防护。  0. 配置决策速查   需求 应使用的机制    每个会话都应知道构建命令和架构约定 CLAUDE.md   只处理特定路径时才需要的规则 .claude/rules/*.md 的...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E6%8F%90%E7%A4%BA%E7%AD%96%E7%95%A5/" title="Claude Code终端使用指南（二）—核心工作流与提示策略"><img class="cover" src="/img/54.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（二）—核心工作流与提示策略</div></div><div class="info-2"><div class="info-item-1">Claude Code 的效果并不只取决于模型能力。启动位置、任务边界、提供的上下文、验证信号和会话中的纠偏方式，都会影响最终结果。官方最佳实践将上下文窗口视为最重要的有限资源，并推荐为 Claude 提供可以自行执行的验证手段。 本文延续第一篇中的虚构 TypeScript 项目 task-board，以“为创建任务接口增加幂等性”为端到端场景，介绍如何让 Claude Code 从理解代码开始，经过规划、实现、测试和审查，最终产出可验证的修改。 本文讨论的是终端 CLI。文中的项目名、接口和文件路径均为虚构示例，不代表真实可访问的仓库。  0. 推荐工作流速查0.1 复杂任务12cd /path/to/task-boardclaude --permission-mode plan --name task-idempotency  在规划模式中： 123只读分析 POST /tasks 的调用链、数据库写入位置、错误处理和现有测试。找出项目中是否已有幂等键、唯一约束或请求去重模式。暂时不要修改文件。  继续要求规划： 1234目标：支持 Idempotency-Key...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/" title="Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</div></div><div class="info-2"><div class="info-item-1">Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 /fix-issue Skill； 创建只读 security-reviewer 子代理； 配置编辑后格式化和保护迁移文件的 Hooks； 连接 Claude Code 官方文档 MCP； 说明何时使用插件与代码智能插件。   0....</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" title="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查"><img class="cover" src="/img/52.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</div></div><div class="info-2"><div class="info-item-1">Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。  0. 自动化与排障速查0.1 一次性查询1claude -p &quot;概括这个项目的模块和入口&quot;  推荐的可复现脚本模式： 12claude --bare -p &quot;只读审查当前差异&quot; \  --allowedTools &quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;  0.2 JSON 输出123claude --bare -p &quot;列出所有 HTTP 端点&quot; \  --output-format json |  jq...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%85%88%E5%BB%BA%E7%AB%8B%E6%AD%A3%E7%A1%AE%E7%9A%84%E4%BD%BF%E7%94%A8%E6%A8%A1%E5%9E%8B"><span class="toc-text">一、先建立正确的使用模型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Skill-%E4%B8%8D%E6%98%AF%E5%BF%85%E9%A1%BB%E5%85%A8%E9%83%A8%E6%89%A7%E8%A1%8C%E7%9A%84%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-text">1. Skill 不是必须全部执行的流水线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%9C%AC%E6%96%87%E4%BC%9A%E7%94%A8%E5%88%B0%E7%9A%84%E5%B7%A5%E7%A8%8B%E6%9C%AF%E8%AF%AD"><span class="toc-text">2. 本文会用到的工程术语</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%9C%AC%E6%96%87%E8%B4%AF%E7%A9%BF%E5%9C%BA%E6%99%AF%EF%BC%9ATaskBoard-%E7%9A%84%E4%BB%BB%E5%8A%A1%E5%88%B0%E6%9C%9F%E6%8F%90%E9%86%92"><span class="toc-text">3. 本文贯穿场景：TaskBoard 的任务到期提醒</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E4%B8%80%E6%9D%A1%E5%85%B8%E5%9E%8B%E4%B8%BB%E6%B5%81%E7%A8%8B"><span class="toc-text">4. 一条典型主流程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%AE%89%E8%A3%85%EF%BC%9AClaude-Code-%E4%B8%BA%E4%B8%BB%EF%BC%8Cskills-sh-%E4%B8%BA%E8%BE%85"><span class="toc-text">二、安装：Claude Code 为主，skills.sh 为辅</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Claude-Code-%E5%8E%9F%E7%94%9F%E6%8F%92%E4%BB%B6"><span class="toc-text">1. Claude Code 原生插件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-skills-sh%EF%BC%9A%E9%80%82%E5%90%88%E9%9C%80%E8%A6%81%E4%BF%AE%E6%94%B9-Skill-%E7%9A%84%E9%A1%B9%E7%9B%AE"><span class="toc-text">2. skills.sh：适合需要修改 Skill 的项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Codex-%E5%85%BC%E5%AE%B9%E6%80%A7"><span class="toc-text">3. Codex 兼容性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81setup-matt-pocock-skills%EF%BC%9A%E8%AE%A9%E5%B7%A5%E4%BD%9C%E6%B5%81%E8%AE%A4%E8%AF%86%E5%BD%93%E5%89%8D%E4%BB%93%E5%BA%93"><span class="toc-text">三、setup-matt-pocock-skills：让工作流认识当前仓库</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81ask-matt%EF%BC%9A%E4%B8%8D%E7%9F%A5%E9%81%93%E4%BB%8E%E5%93%AA%E9%87%8C%E5%BC%80%E5%A7%8B%E6%97%B6%E5%85%88%E5%81%9A%E8%B7%AF%E7%94%B1"><span class="toc-text">四、ask-matt：不知道从哪里开始时先做路由</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-1"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-1"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-1"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-1"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-1"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-1"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81research%EF%BC%9A%E5%85%88%E6%8A%8A%E5%A4%96%E9%83%A8%E4%BA%8B%E5%AE%9E%E6%9F%A5%E6%B8%85%EF%BC%8C%E5%86%8D%E5%81%9A%E5%86%85%E9%83%A8%E5%86%B3%E7%AD%96"><span class="toc-text">五、research：先把外部事实查清，再做内部决策</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-2"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-2"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-2"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-2"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-2"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-2"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81grill-with-docs%EF%BC%9A%E9%80%9A%E8%BF%87%E6%8F%90%E9%97%AE%E6%8A%8A%E6%A8%A1%E7%B3%8A%E9%9C%80%E6%B1%82%E5%8F%98%E6%88%90%E5%8F%AF%E6%89%A7%E8%A1%8C%E5%86%B3%E7%AD%96"><span class="toc-text">六、grill-with-docs：通过提问把模糊需求变成可执行决策</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-3"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-3"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-3"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-3"><span class="toc-text">Agent 接下来会做什么</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#grilling%EF%BC%9A%E4%B8%80%E6%AC%A1%E5%8F%AA%E8%A7%A3%E5%86%B3%E4%B8%80%E4%B8%AA%E5%85%B3%E9%94%AE%E9%97%AE%E9%A2%98"><span class="toc-text">grilling：一次只解决一个关键问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#domain-modeling%EF%BC%9A%E8%AE%A9%E7%AD%94%E6%A1%88%E8%BF%9B%E5%85%A5%E9%95%BF%E6%9C%9F%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-text">domain-modeling：让答案进入长期上下文</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-3"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-3"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81prototype%EF%BC%9A%E5%8F%AA%E6%9C%89%E5%BF%85%E9%A1%BB%E4%BD%93%E9%AA%8C%E6%89%8D%E8%83%BD%E5%86%B3%E5%AE%9A%E6%97%B6%E6%89%8D%E4%BD%BF%E7%94%A8"><span class="toc-text">七、prototype：只有必须体验才能决定时才使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-4"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-4"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-4"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-4"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-4"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-4"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81to-spec%EF%BC%9A%E6%8A%8A%E5%85%B1%E5%90%8C%E7%90%86%E8%A7%A3%E5%8F%91%E5%B8%83%E6%88%90%E7%A8%B3%E5%AE%9A%E8%A7%84%E6%A0%BC"><span class="toc-text">八、to-spec：把共同理解发布成稳定规格</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%98%AF%E5%90%A6%E4%B8%80%E5%AE%9A%E4%BC%9A%E5%88%9B%E5%BB%BA%E8%BF%9C%E7%A8%8B-GitHub-Issue"><span class="toc-text">是否一定会创建远程 GitHub Issue</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-5"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-5"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-5"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-5"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-5"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-5"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81to-tickets%EF%BC%9A%E6%8A%8A%E8%A7%84%E6%A0%BC%E6%8B%86%E6%88%90%E5%8F%AF%E7%8B%AC%E7%AB%8B%E9%AA%8C%E6%94%B6%E7%9A%84%E5%9E%82%E7%9B%B4%E5%88%87%E7%89%87"><span class="toc-text">九、to-tickets：把规格拆成可独立验收的垂直切片</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%88%E7%90%86%E8%A7%A3%E4%BB%80%E4%B9%88%E6%98%AF%E2%80%9C%E5%9E%82%E7%9B%B4%E5%88%87%E7%89%87%E2%80%9D"><span class="toc-text">先理解什么是“垂直切片”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-6"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-6"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-6"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-6"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ticket-1%EF%BC%9A%E5%9B%BA%E5%AE%9A%E6%8F%90%E5%89%8D-30-%E5%88%86%E9%92%9F%E7%9A%84%E7%AB%99%E5%86%85%E6%8F%90%E9%86%92"><span class="toc-text">Ticket 1：固定提前 30 分钟的站内提醒</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ticket-2%EF%BC%9A%E6%94%AF%E6%8C%81%E4%B8%89%E4%B8%AA%E6%8F%90%E9%86%92%E6%8F%90%E5%89%8D%E9%87%8F"><span class="toc-text">Ticket 2：支持三个提醒提前量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ticket-3%EF%BC%9A%E6%88%AA%E6%AD%A2%E6%97%B6%E9%97%B4%E6%94%B9%E6%9C%9F%E3%80%81%E7%A7%BB%E9%99%A4%E5%92%8C%E8%BF%87%E6%9C%9F%E8%AF%AD%E4%B9%89"><span class="toc-text">Ticket 3：截止时间改期、移除和过期语义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Ticket-4%EF%BC%9A%E9%87%8D%E8%AF%95%E4%B8%8E%E4%B8%9A%E5%8A%A1%E5%B9%82%E7%AD%89"><span class="toc-text">Ticket 4：重试与业务幂等</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-6"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-6"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81implement%EF%BC%9A%E5%9C%A8%E6%96%B0%E4%BC%9A%E8%AF%9D%E4%B8%AD%E5%AE%8C%E6%88%90%E4%B8%80%E5%BC%A0-Ticket"><span class="toc-text">十、implement：在新会话中完成一张 Ticket</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-7"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-7"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-7"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-7"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%86%85%E9%83%A8%E4%BD%BF%E7%94%A8-tdd-%E5%AE%8C%E6%88%90%E5%8D%95%E4%B8%AA%E7%BA%A2%E2%80%94%E7%BB%BF%E8%A1%8C%E4%B8%BA%E5%88%87%E7%89%87"><span class="toc-text">1. 内部使用 tdd 完成单个红—绿行为切片</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%BF%90%E8%A1%8C%E5%88%86%E5%B1%82%E9%AA%8C%E8%AF%81"><span class="toc-text">2. 运行分层验证</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%86%85%E9%83%A8%E4%BD%BF%E7%94%A8-code-review-%E5%81%9A%E5%8F%8C%E8%BD%B4%E5%AE%A1%E6%9F%A5"><span class="toc-text">3. 内部使用 code-review 做双轴审查</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%88%9B%E5%BB%BA%E6%8F%90%E4%BA%A4"><span class="toc-text">4. 创建提交</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-7"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-7"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81diagnosing-bugs%EF%BC%9A%E5%AE%9A%E4%BD%8D%E5%B9%B6%E4%BF%AE%E5%A4%8D%E9%9A%BE%E4%BB%A5%E8%A7%A3%E9%87%8A%E7%9A%84%E8%BF%90%E8%A1%8C%E6%97%B6-Bug"><span class="toc-text">十一、diagnosing-bugs：定位并修复难以解释的运行时 Bug</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%83%E8%83%BD%E4%B8%8D%E8%83%BD%E7%94%A8%E6%9D%A5%E5%AE%9A%E4%BD%8D%E7%A8%8B%E5%BA%8F%E8%BF%90%E8%A1%8C%E6%97%B6-Bug"><span class="toc-text">它能不能用来定位程序运行时 Bug</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E8%BF%99%E4%B8%AA-Skill-%E6%97%B6%E4%BC%9A%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88"><span class="toc-text">使用这个 Skill 时会发生什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8E%E7%9B%B4%E6%8E%A5%E8%A6%81%E6%B1%82-Agent-%E5%AE%9A%E4%BD%8D%E5%B9%B6%E4%BF%AE%E5%A4%8D%E6%9C%89%E4%BB%80%E4%B9%88%E5%8C%BA%E5%88%AB"><span class="toc-text">与直接要求 Agent 定位并修复有什么区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E4%BB%A5%E5%8F%AA%E5%AE%9A%E4%BD%8D%EF%BC%8C%E4%B8%8D%E7%AB%8B%E5%8D%B3%E4%BF%AE%E6%94%B9%E4%BB%A3%E7%A0%81%E5%90%97"><span class="toc-text">可以只定位，不立即修改代码吗</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-8"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-8"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-8"><span class="toc-text">精确调用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-8"><span class="toc-text">Agent 接下来会做什么</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E5%BB%BA%E7%AB%8B%E5%8F%8D%E9%A6%88%E5%9B%9E%E8%B7%AF"><span class="toc-text">1. 建立反馈回路</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%9C%80%E5%B0%8F%E5%8C%96%E5%A4%8D%E7%8E%B0"><span class="toc-text">2. 最小化复现</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E6%8F%90%E5%87%BA-3%E2%80%945-%E4%B8%AA%E6%9C%89%E6%8E%92%E5%BA%8F%E3%80%81%E5%8F%AF%E8%AF%81%E4%BC%AA%E7%9A%84%E5%81%87%E8%AE%BE"><span class="toc-text">3. 提出 3—5 个有排序、可证伪的假设</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E6%B7%BB%E5%8A%A0%E9%92%88%E5%AF%B9%E6%80%A7%E6%8F%92%E6%A1%A9"><span class="toc-text">4. 添加针对性插桩</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E4%BF%AE%E5%A4%8D%E3%80%81%E5%9B%9E%E5%BD%92%E5%92%8C%E6%B8%85%E7%90%86"><span class="toc-text">5. 修复、回归和清理</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-8"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-8"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81handoff%EF%BC%9A%E6%8A%8A%E5%BF%85%E8%A6%81%E4%B8%8A%E4%B8%8B%E6%96%87%E4%BA%A4%E7%BB%99%E4%B8%80%E4%B8%AA%E5%B9%B2%E5%87%80%E4%BC%9A%E8%AF%9D"><span class="toc-text">十二、handoff：把必要上下文交给一个干净会话</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BD%BF%E7%94%A8-9"><span class="toc-text">什么时候使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E9%9C%80%E8%A6%81%E4%BD%BF%E7%94%A8-9"><span class="toc-text">什么时候不需要使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B2%BE%E7%A1%AE%E8%B0%83%E7%94%A8-9"><span class="toc-text">精确调用</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%8E%E5%8E%9F%E5%9E%8B%E5%88%86%E6%94%AF%E8%BF%94%E5%9B%9E%E6%AD%A3%E5%BC%8F%E6%B5%81%E7%A8%8B"><span class="toc-text">从原型分支返回正式流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8%E7%BC%BA%E9%99%B7%E8%AF%8A%E6%96%AD%E4%B8%AD%E4%BA%A4%E6%8E%A5"><span class="toc-text">在缺陷诊断中交接</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Agent-%E6%8E%A5%E4%B8%8B%E6%9D%A5%E4%BC%9A%E5%81%9A%E4%BB%80%E4%B9%88-9"><span class="toc-text">Agent 接下来会做什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E7%94%9F%E6%88%90%E6%88%96%E4%BF%AE%E6%94%B9%E4%BB%80%E4%B9%88-9"><span class="toc-text">会生成或修改什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E4%B8%80%E9%98%B6%E6%AE%B5-9"><span class="toc-text">下一阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E6%8A%8A%E6%95%B4%E4%B8%AA%E6%A1%88%E4%BE%8B%E8%BF%9E%E8%B5%B7%E6%9D%A5"><span class="toc-text">十三、把整个案例连起来</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-1%EF%BC%9A%E5%88%9D%E5%A7%8B%E5%8C%96%E4%BB%93%E5%BA%93"><span class="toc-text">阶段 1：初始化仓库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-2%EF%BC%9A%E8%AE%A9%E8%B7%AF%E7%94%B1%E5%99%A8%E9%80%89%E6%8B%A9%E6%B5%81%E7%A8%8B"><span class="toc-text">阶段 2：让路由器选择流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-3%EF%BC%9A%E8%B0%83%E6%9F%A5%E7%AC%AC%E4%B8%89%E6%96%B9%E7%BA%A6%E6%9D%9F"><span class="toc-text">阶段 3：调查第三方约束</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-4%EF%BC%9A%E7%A1%AE%E8%AE%A4%E4%BA%A7%E5%93%81%E4%B8%8E%E9%A2%86%E5%9F%9F%E8%AF%AD%E4%B9%89"><span class="toc-text">阶段 4：确认产品与领域语义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-5%EF%BC%9A%E6%8C%89%E9%9C%80%E9%AA%8C%E8%AF%81%E4%BA%A4%E4%BA%92"><span class="toc-text">阶段 5：按需验证交互</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-6%EF%BC%9A%E5%8F%91%E5%B8%83%E8%A7%84%E6%A0%BC"><span class="toc-text">阶段 6：发布规格</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-7%EF%BC%9A%E6%8B%86%E5%88%86%E5%9E%82%E7%9B%B4-Ticket"><span class="toc-text">阶段 7：拆分垂直 Ticket</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-8%EF%BC%9A%E9%80%90%E5%BC%A0-Ticket-%E5%AE%9E%E6%96%BD"><span class="toc-text">阶段 8：逐张 Ticket 实施</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-9%EF%BC%9A%E7%B3%BB%E7%BB%9F%E8%AF%8A%E6%96%AD%E5%A4%8D%E6%9D%82%E7%BC%BA%E9%99%B7"><span class="toc-text">阶段 9：系统诊断复杂缺陷</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5-10%EF%BC%9A%E5%BF%85%E8%A6%81%E6%97%B6%E4%BA%A4%E6%8E%A5"><span class="toc-text">阶段 10：必要时交接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E6%8E%A8%E8%8D%90%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E5%88%99"><span class="toc-text">十四、推荐的工作原则</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%AE%A9%E6%96%87%E6%A1%A3%E6%89%BF%E6%8B%85%E8%B7%A8%E4%BC%9A%E8%AF%9D%E8%AE%B0%E5%BF%86"><span class="toc-text">1. 让文档承担跨会话记忆</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E4%B8%80%E5%BC%A0-Ticket-%E5%AF%B9%E5%BA%94%E4%B8%80%E4%B8%AA%E6%96%B0%E5%AE%9E%E7%8E%B0%E4%BC%9A%E8%AF%9D"><span class="toc-text">2. 一张 Ticket 对应一个新实现会话</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%8E%9F%E5%9E%8B%E4%BB%A3%E7%A0%81%E9%BB%98%E8%AE%A4%E4%B8%A2%E5%BC%83"><span class="toc-text">3. 原型代码默认丢弃</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%8C%BA%E5%88%86%E4%BA%8B%E5%AE%9E%E3%80%81%E5%86%B3%E7%AD%96%E4%B8%8E%E5%AE%9E%E7%8E%B0"><span class="toc-text">4. 区分事实、决策与实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E6%8F%90%E5%89%8D%E8%AE%A4%E8%AF%86%E6%9C%89%E5%89%AF%E4%BD%9C%E7%94%A8%E7%9A%84%E9%98%B6%E6%AE%B5"><span class="toc-text">5. 提前认识有副作用的阶段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E6%9C%80%E5%90%8E%E5%8F%AA%E8%AE%B0%E4%BD%8F%E8%BF%99%E5%BC%A0%E5%86%B3%E7%AD%96%E5%9B%BE"><span class="toc-text">十五、最后只记住这张决策图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战">C++上机考试冲刺（六）—设计题、业务模拟与三题实战</a><time datetime="2026-08-08T09:02:00.000Z" title="发表于 2026-08-08 17:02:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式">C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式</a><time datetime="2026-08-08T09:01:00.000Z" title="发表于 2026-08-08 17:01:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（四）—排序、查找与二分模板"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板">C++上机考试冲刺（四）—排序、查找与二分模板</a><time datetime="2026-08-08T09:00:00.000Z" title="发表于 2026-08-08 17:00:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（三）—STL容器与常用数据结构"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构">C++上机考试冲刺（三）—STL容器与常用数据结构</a><time datetime="2026-08-08T08:59:00.000Z" title="发表于 2026-08-08 16:59:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流">C++上机考试冲刺（二）—字符串、进制、位运算与字节流</a><time datetime="2026-08-08T08:58:00.000Z" title="发表于 2026-08-08 16:58:00">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2026 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="输入要搜索的文章..." type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,984 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>使用Git与GitHub进行远程协作 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Git 是分布式版本控制系统，GitHub 则在 Git 仓库之上提供代码托管、Issue、Pull Request、代码审查和自动化检查等协作能力。在不具备原仓库写权限的情况下，GitHub 上常见的贡献方式是：Fork 原仓库，在个人 Fork 中维护功能分支，再通过 Pull Request 向原仓库提交变更。 本文以一个完整的开源贡献场景为主线，介绍 Fork、Clone、远程仓库配置、上">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用Git与GitHub进行远程协作">
+<meta property="og:url" content="https://lx-cel.github.io/2026/07/20/%E4%BD%BF%E7%94%A8Git%E4%B8%8EGitHub%E8%BF%9B%E8%A1%8C%E8%BF%9C%E7%A8%8B%E5%8D%8F%E4%BD%9C/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="Git 是分布式版本控制系统，GitHub 则在 Git 仓库之上提供代码托管、Issue、Pull Request、代码审查和自动化检查等协作能力。在不具备原仓库写权限的情况下，GitHub 上常见的贡献方式是：Fork 原仓库，在个人 Fork 中维护功能分支，再通过 Pull Request 向原仓库提交变更。 本文以一个完整的开源贡献场景为主线，介绍 Fork、Clone、远程仓库配置、上">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/04.jpg">
+<meta property="article:published_time" content="2026-07-20T01:10:09.000Z">
+<meta property="article:modified_time" content="2026-07-24T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="Git">
+<meta property="article:tag" content="GitHub">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="开发工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/04.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2026/07/20/%E4%BD%BF%E7%94%A8Git%E4%B8%8EGitHub%E8%BF%9B%E8%A1%8C%E8%BF%9C%E7%A8%8B%E5%8D%8F%E4%BD%9C/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '使用Git与GitHub进行远程协作',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 8.1.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/04.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">使用Git与GitHub进行远程协作</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">使用Git与GitHub进行远程协作</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-07-20T01:10:09.000Z" title="发表于 2026-07-20 09:10:09">2026-07-20</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-07-24T16:00:00.000Z" title="更新于 2026-07-25 00:00:00">2026-07-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">7.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>29分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Git 是分布式版本控制系统，GitHub 则在 Git 仓库之上提供代码托管、Issue、Pull Request、代码审查和自动化检查等协作能力。在不具备原仓库写权限的情况下，GitHub 上常见的贡献方式是：Fork 原仓库，在个人 Fork 中维护功能分支，再通过 Pull Request 向原仓库提交变更。</p>
+<p>本文以一个完整的开源贡献场景为主线，介绍 Fork、Clone、远程仓库配置、上游同步、分支开发、提交整理、Push、Pull Request、代码审查和分支清理。主流程参考 GitHub 官方 Fork 与 Pull Request 文档；rebase 相关内容以 Git 官方《Pro Git》为依据。具体项目的 <code>CONTRIBUTING.md</code> 和维护者要求具有更高优先级。</p>
+<hr>
+<h3 id="0-Git-与-GitHub-远程协作命令速查"><a href="#0-Git-与-GitHub-远程协作命令速查" class="headerlink" title="0. Git 与 GitHub 远程协作命令速查"></a>0. Git 与 GitHub 远程协作命令速查</h3><p>示例仓库：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">原仓库：alice/task-board</span><br><span class="line">个人 Fork：xiaoming/task-board</span><br><span class="line">任务分支：fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>将示例中的账号、仓库和分支替换为实际名称。</p>
+<h4 id="0-1-Fork-项目"><a href="#0-1-Fork-项目" class="headerlink" title="0.1 Fork 项目"></a>0.1 Fork 项目</h4><p>在原仓库页面执行：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Fork → Create a new fork</span><br></pre></td></tr></table></figure>
+
+<h4 id="0-2-SSH-配置（每台计算机执行一次）"><a href="#0-2-SSH-配置（每台计算机执行一次）" class="headerlink" title="0.2 SSH 配置（每台计算机执行一次）"></a>0.2 SSH 配置（每台计算机执行一次）</h4><p><strong>Linux、macOS 或 Git Bash：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name <span class="string">&quot;Xiao Ming&quot;</span></span><br><span class="line">git config --global user.email <span class="string">&quot;xiaoming@example.com&quot;</span></span><br><span class="line"></span><br><span class="line">ssh-keygen -t ed25519 -C <span class="string">&quot;xiaoming@example.com&quot;</span></span><br><span class="line"><span class="built_in">cat</span> ~/.ssh/id_ed25519.pub</span><br></pre></td></tr></table></figure>
+
+<p><strong>Windows PowerShell：</strong></p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git config <span class="literal">--global</span> user.name <span class="string">&quot;Xiao Ming&quot;</span></span><br><span class="line">git config <span class="literal">--global</span> user.email <span class="string">&quot;xiaoming@example.com&quot;</span></span><br><span class="line"></span><br><span class="line">ssh<span class="literal">-keygen</span> <span class="literal">-t</span> ed25519 <span class="literal">-C</span> <span class="string">&quot;xiaoming@example.com&quot;</span></span><br><span class="line"><span class="built_in">Get-Content</span> <span class="variable">$HOME</span>\.ssh\id_ed25519.pub</span><br></pre></td></tr></table></figure>
+
+<p>将公钥添加到：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GitHub → Settings → SSH and GPG keys → New SSH key</span><br></pre></td></tr></table></figure>
+
+<p>测试连接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -T git@github.com</span><br></pre></td></tr></table></figure>
+
+<h4 id="0-3-首次克隆-Fork-并配置上游仓库"><a href="#0-3-首次克隆-Fork-并配置上游仓库" class="headerlink" title="0.3 首次克隆 Fork 并配置上游仓库"></a>0.3 首次克隆 Fork 并配置上游仓库</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> git@github.com:xiaoming/task-board.git</span><br><span class="line"><span class="built_in">cd</span> task-board</span><br><span class="line"></span><br><span class="line">git remote add upstream git@github.com:alice/task-board.git</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>预期远程仓库：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">origin   → xiaoming/task-board</span><br><span class="line">upstream → alice/task-board</span><br></pre></td></tr></table></figure>
+
+<h4 id="0-4-每次开始新任务"><a href="#0-4-每次开始新任务" class="headerlink" title="0.4 每次开始新任务"></a>0.4 每次开始新任务</h4><p><strong>同步 <code>main</code>：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git status --short --branch</span><br><span class="line">git switch main</span><br><span class="line">git fetch upstream</span><br><span class="line">git merge --ff-only upstream/main</span><br><span class="line">git push origin main</span><br></pre></td></tr></table></figure>
+
+<p><strong>创建任务分支：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch -c fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p><strong>修改、检查、测试并提交：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git diff</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改代码</span></span><br><span class="line"><span class="comment"># 执行项目规定的测试</span></span><br><span class="line"></span><br><span class="line">git add &lt;file1&gt; &lt;file2&gt;</span><br><span class="line">git diff --staged</span><br><span class="line">git commit -m <span class="string">&quot;fix: reject tasks with an empty title&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>首次 Push 前同步上游：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br><span class="line">git rebase upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>发生 rebase 冲突：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改冲突文件</span></span><br><span class="line"></span><br><span class="line">git add &lt;resolved-file&gt;</span><br><span class="line">git rebase --<span class="built_in">continue</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 放弃本次 rebase</span></span><br><span class="line">git rebase --abort</span><br></pre></td></tr></table></figure>
+
+<p><strong>推送功能分支：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push -u origin fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p><strong>使用 GitHub CLI 创建 Pull Request：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gh auth login</span><br><span class="line">gh <span class="built_in">pr</span> create --repo alice/task-board --base main --<span class="built_in">head</span> xiaoming:fix/issue-128-empty-title --fill</span><br></pre></td></tr></table></figure>
+
+<p>查看 Pull Request：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gh <span class="built_in">pr</span> view --web</span><br><span class="line">gh <span class="built_in">pr</span> checks</span><br></pre></td></tr></table></figure>
+
+<h4 id="0-5-Review-后继续修改"><a href="#0-5-Review-后继续修改" class="headerlink" title="0.5 Review 后继续修改"></a>0.5 Review 后继续修改</h4><p><strong>追加提交：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">git switch fix/issue-128-empty-title</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改代码并执行测试</span></span><br><span class="line"></span><br><span class="line">git add &lt;file1&gt; &lt;file2&gt;</span><br><span class="line">git diff --staged</span><br><span class="line">git commit -m <span class="string">&quot;fix: address review comments&quot;</span></span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
+
+<p><strong>维护者要求先同步上游时：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br><span class="line">git rebase upstream/main</span><br><span class="line">git push --force-with-lease</span><br></pre></td></tr></table></figure>
+
+<p><code>--force-with-lease</code> 仅用于自己独占、允许改写历史的功能分支。</p>
+<h4 id="0-6-Pull-Request-合并后"><a href="#0-6-Pull-Request-合并后" class="headerlink" title="0.6 Pull Request 合并后"></a>0.6 Pull Request 合并后</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">git switch main</span><br><span class="line">git fetch upstream</span><br><span class="line">git merge --ff-only upstream/main</span><br><span class="line">git push origin main</span><br><span class="line"></span><br><span class="line">git branch -d fix/issue-128-empty-title</span><br><span class="line">git push origin --delete fix/issue-128-empty-title</span><br><span class="line"></span><br><span class="line">git fetch --prune origin</span><br><span class="line">git fetch --prune upstream</span><br></pre></td></tr></table></figure>
+
+<h4 id="0-7-常用状态检查"><a href="#0-7-常用状态检查" class="headerlink" title="0.7 常用状态检查"></a>0.7 常用状态检查</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git status --short --branch</span><br><span class="line">git branch --show-current</span><br><span class="line">git branch -vv</span><br><span class="line">git remote -v</span><br><span class="line">git <span class="built_in">log</span> --oneline --graph --decorate --all</span><br><span class="line">git diff</span><br><span class="line">git diff --staged</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="1-协作场景与目标"><a href="#1-协作场景与目标" class="headerlink" title="1. 协作场景与目标"></a>1. 协作场景与目标</h3><p>假设 GitHub 上存在以下项目和 Issue，名称均为示例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">原作者：alice</span><br><span class="line">原仓库：alice/task-board</span><br><span class="line">默认分支：main</span><br><span class="line">待处理问题：Issue #128，创建任务时允许提交空标题</span><br><span class="line"></span><br><span class="line">贡献者：xiaoming</span><br><span class="line">个人 Fork：xiaoming/task-board</span><br><span class="line">功能分支：fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>本次协作需要完成以下工作：</p>
+<ol>
+<li>将 <code>alice/task-board</code> Fork 到 <code>xiaoming</code> 账号；</li>
+<li>将个人 Fork 克隆到本地；</li>
+<li>配置原仓库为上游远程仓库；</li>
+<li>从最新的上游代码创建功能分支；</li>
+<li>完成代码修改、测试和提交；</li>
+<li>将功能分支推送到个人 Fork；</li>
+<li>向 <code>alice/task-board:main</code> 创建 Pull Request；</li>
+<li>根据代码审查结果继续更新；</li>
+<li>Pull Request 合并后同步主分支并清理功能分支。</li>
+</ol>
+<p>代码流向如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">alice/task-board（原仓库）</span><br><span class="line">        │</span><br><span class="line">        │ Fork</span><br><span class="line">        ↓</span><br><span class="line">xiaoming/task-board（个人 Fork）</span><br><span class="line">        │</span><br><span class="line">        │ Clone</span><br><span class="line">        ↓</span><br><span class="line">本地 task-board（功能分支开发）</span><br><span class="line">        │</span><br><span class="line">        │ Push</span><br><span class="line">        ↓</span><br><span class="line">xiaoming/task-board:fix/issue-128-empty-title</span><br><span class="line">        │</span><br><span class="line">        │ Pull Request</span><br><span class="line">        ↓</span><br><span class="line">alice/task-board:main</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="2-Git-远程协作模型"><a href="#2-Git-远程协作模型" class="headerlink" title="2. Git 远程协作模型"></a>2. Git 远程协作模型</h3><h4 id="2-1-工作区、暂存区与本地仓库"><a href="#2-1-工作区、暂存区与本地仓库" class="headerlink" title="2.1 工作区、暂存区与本地仓库"></a>2.1 工作区、暂存区与本地仓库</h4><p>本地修改在形成可共享提交之前，会经过工作区和暂存区：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">工作区 ── git add ──&gt; 暂存区 ── git commit ──&gt; 本地仓库</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><strong>工作区</strong>：项目文件实际所在的目录；</li>
+<li><strong>暂存区</strong>：下一次提交准备包含的变更集合；</li>
+<li><strong>本地仓库</strong>：保存在 <code>.git</code> 目录中的提交历史和分支引用。</li>
+</ul>
+<p><code>git add</code> 只更新暂存区，<code>git commit</code> 只创建本地提交。只有执行 <code>git push</code>，本地提交才会被发送到远程仓库。</p>
+<h4 id="2-2-Git-与-GitHub"><a href="#2-2-Git-与-GitHub" class="headerlink" title="2.2 Git 与 GitHub"></a>2.2 Git 与 GitHub</h4><p>Git 负责版本管理，可以在离线环境中创建提交、切换分支和查看历史。GitHub 负责托管 Git 仓库，并提供 Pull Request、Issue、Review 和 Actions 等协作功能。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Git：版本控制</span><br><span class="line">GitHub：仓库托管与协作平台</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-3-Fork-与-Clone"><a href="#2-3-Fork-与-Clone" class="headerlink" title="2.3 Fork 与 Clone"></a>2.3 Fork 与 Clone</h4><p>Fork 和 Clone 都会产生一份仓库副本，但发生位置和用途不同：</p>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>发生位置</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Fork</td>
+<td>GitHub 服务器</td>
+<td>个人账号下的远程仓库</td>
+</tr>
+<tr>
+<td>Clone</td>
+<td>本地计算机</td>
+<td>包含项目文件和 Git 历史的本地仓库</td>
+</tr>
+</tbody></table>
+<p>Fork 不会在本地创建项目目录，Clone 也不会在 GitHub 账号中创建 Fork。本文采用“先 Fork，后 Clone 个人 Fork”的顺序。</p>
+<h4 id="2-4-分支与提交"><a href="#2-4-分支与提交" class="headerlink" title="2.4 分支与提交"></a>2.4 分支与提交</h4><p>分支是指向某次提交的可移动引用。创建新提交后，当前分支引用会向前移动。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">main:       A---B---C</span><br><span class="line">                     \</span><br><span class="line">feature:             D---E</span><br></pre></td></tr></table></figure>
+
+<p><code>main</code> 通常承担稳定主线的职责。功能开发和问题修复应在独立分支中进行，使 Pull Request 只包含一个明确任务的变更。</p>
+<h4 id="2-5-origin-与-upstream"><a href="#2-5-origin-与-upstream" class="headerlink" title="2.5 origin 与 upstream"></a>2.5 <code>origin</code> 与 <code>upstream</code></h4><p>Git 允许为远程仓库设置本地名称。Fork 协作通常采用以下命名约定：</p>
+<table>
+<thead>
+<tr>
+<th>远程名</th>
+<th>指向</th>
+<th>主要用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>origin</code></td>
+<td>个人 Fork：<code>xiaoming/task-board</code></td>
+<td>推送个人分支</td>
+</tr>
+<tr>
+<td><code>upstream</code></td>
+<td>原仓库：<code>alice/task-board</code></td>
+<td>获取项目最新提交</td>
+</tr>
+</tbody></table>
+<p>数据方向可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">从 upstream 获取更新</span><br><span class="line">向 origin 推送变更</span><br></pre></td></tr></table></figure>
+
+<p><code>origin</code> 与 <code>upstream</code> 只是约定俗成的名称，并非 GitHub 预定义的特殊仓库。</p>
+<hr>
+<h3 id="3-Git-环境与-GitHub-认证"><a href="#3-Git-环境与-GitHub-认证" class="headerlink" title="3. Git 环境与 GitHub 认证"></a>3. Git 环境与 GitHub 认证</h3><h4 id="3-1-Git-安装与身份配置"><a href="#3-1-Git-安装与身份配置" class="headerlink" title="3.1 Git 安装与身份配置"></a>3.1 Git 安装与身份配置</h4><p>确认 Git 已安装：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git --version</span><br></pre></td></tr></table></figure>
+
+<p>配置提交者姓名和邮箱：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config --global user.name <span class="string">&quot;Xiao Ming&quot;</span></span><br><span class="line">git config --global user.email <span class="string">&quot;xiaoming@example.com&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>姓名和邮箱会写入提交历史。为了让 GitHub 正确关联提交，应使用 GitHub 账号中已经验证的邮箱，或者 GitHub 提供的 <code>noreply</code> 邮箱。</p>
+<p>查看全局配置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global --list</span><br></pre></td></tr></table></figure>
+
+<p>如果特定仓库需要使用不同身份，可以在仓库目录中省略 <code>--global</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git config user.name <span class="string">&quot;Work Name&quot;</span></span><br><span class="line">git config user.email <span class="string">&quot;work@example.com&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="3-2-SSH-认证"><a href="#3-2-SSH-认证" class="headerlink" title="3.2 SSH 认证"></a>3.2 SSH 认证</h4><p>本文使用 SSH 地址访问 GitHub。先检查本机是否已有 SSH 密钥：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">ls</span> -al ~/.ssh</span><br></pre></td></tr></table></figure>
+
+<p>如果没有可用的 Ed25519 密钥，可以生成新密钥：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t ed25519 -C <span class="string">&quot;xiaoming@example.com&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>默认生成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">~/.ssh/id_ed25519       私钥</span><br><span class="line">~/.ssh/id_ed25519.pub   公钥</span><br></pre></td></tr></table></figure>
+
+<p>私钥不应上传到仓库、网盘或通信工具。GitHub 账号只需要配置公钥。</p>
+<p>显示并复制公钥：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> ~/.ssh/id_ed25519.pub</span><br></pre></td></tr></table></figure>
+
+<p>进入 GitHub 的以下位置添加公钥：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">头像 → Settings → SSH and GPG keys → New SSH key</span><br></pre></td></tr></table></figure>
+
+<p>完成后测试连接：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh -T git@github.com</span><br></pre></td></tr></table></figure>
+
+<p>首次连接时，应核对终端显示的主机指纹与 GitHub 官方公布的指纹。认证成功后会显示包含 GitHub 用户名和 <code>successfully authenticated</code> 的提示。由于 GitHub 不提供普通 Shell，<code>ssh -T</code> 即使认证成功也可能返回退出码 1，应以认证提示内容判断结果。</p>
+<h4 id="3-3-HTTPS-认证"><a href="#3-3-HTTPS-认证" class="headerlink" title="3.3 HTTPS 认证"></a>3.3 HTTPS 认证</h4><p>HTTPS 远程地址的形式为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/xiaoming/task-board.git</span><br></pre></td></tr></table></figure>
+
+<p>HTTPS 可以使用 GitHub CLI、Git Credential Manager 或 Personal Access Token 完成认证。GitHub 的 Git 命令行认证不接受账号登录密码。</p>
+<p>SSH 和 HTTPS 任选一种即可。后续示例统一使用 SSH 地址。</p>
+<hr>
+<h3 id="4-贡献规范与仓库状态检查"><a href="#4-贡献规范与仓库状态检查" class="headerlink" title="4. 贡献规范与仓库状态检查"></a>4. 贡献规范与仓库状态检查</h3><h4 id="4-1-项目贡献规范"><a href="#4-1-项目贡献规范" class="headerlink" title="4.1 项目贡献规范"></a>4.1 项目贡献规范</h4><p>开始开发前，应阅读原仓库中的以下文件：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">README.md</span><br><span class="line">CONTRIBUTING.md</span><br><span class="line">CODE_OF_CONDUCT.md</span><br><span class="line">.github/PULL_REQUEST_TEMPLATE.md</span><br></pre></td></tr></table></figure>
+
+<p>需要确认的内容包括：</p>
+<ul>
+<li>依赖安装和本地启动方式；</li>
+<li>分支命名和提交信息规范；</li>
+<li>必须执行的测试和格式检查；</li>
+<li>Issue 的认领或讨论要求；</li>
+<li>Pull Request 的目标分支；</li>
+<li>项目采用的 merge、rebase 或 squash 策略。</li>
+</ul>
+<p>同时应阅读目标 Issue 的完整讨论，确认任务尚未由其他贡献者处理，并确保实现方案符合维护者预期。</p>
+<h4 id="4-2-仓库根目录"><a href="#4-2-仓库根目录" class="headerlink" title="4.2 仓库根目录"></a>4.2 仓库根目录</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">pwd</span></span><br><span class="line">git rev-parse --show-toplevel</span><br></pre></td></tr></table></figure>
+
+<p><code>git rev-parse --show-toplevel</code> 用于显示当前 Git 仓库的根目录。如果出现 <code>not a git repository</code>，说明终端当前不在 Git 仓库中。</p>
+<h4 id="4-3-当前分支"><a href="#4-3-当前分支" class="headerlink" title="4.3 当前分支"></a>4.3 当前分支</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch --show-current</span><br></pre></td></tr></table></figure>
+
+<p>修改、提交、rebase 和 Push 之前均应确认当前分支，避免把功能提交写入 <code>main</code> 或其他无关分支。</p>
+<h4 id="4-4-工作区状态"><a href="#4-4-工作区状态" class="headerlink" title="4.4 工作区状态"></a>4.4 工作区状态</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br></pre></td></tr></table></figure>
+
+<p><code>Changes not staged for commit</code> 表示存在未暂存修改，<code>Changes to be committed</code> 表示暂存区中已有内容，<code>Untracked files</code> 表示存在尚未由 Git 跟踪的文件。</p>
+<h4 id="4-5-远程仓库配置"><a href="#4-5-远程仓库配置" class="headerlink" title="4.5 远程仓库配置"></a>4.5 远程仓库配置</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>该命令用于核对 <code>origin</code> 和 <code>upstream</code> 的 Fetch、Push 地址。涉及远程操作时，应先确认目标地址与预期一致。</p>
+<hr>
+<h3 id="5-Fork、Clone-与远程仓库配置"><a href="#5-Fork、Clone-与远程仓库配置" class="headerlink" title="5. Fork、Clone 与远程仓库配置"></a>5. Fork、Clone 与远程仓库配置</h3><h4 id="5-1-Fork-原仓库"><a href="#5-1-Fork-原仓库" class="headerlink" title="5.1 Fork 原仓库"></a>5.1 Fork 原仓库</h4><p>打开原仓库：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/alice/task-board</span><br></pre></td></tr></table></figure>
+
+<p>点击页面右上角的 <strong>Fork</strong>，选择个人账号 <code>xiaoming</code> 作为 Owner，然后创建 Fork。完成后，个人账号下会出现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">https://github.com/xiaoming/task-board</span><br></pre></td></tr></table></figure>
+
+<p>此时仓库关系为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">alice/task-board       原仓库</span><br><span class="line">xiaoming/task-board    个人 Fork</span><br></pre></td></tr></table></figure>
+
+<p>如果贡献者已经拥有原仓库写权限，项目可能要求直接在原仓库创建功能分支，此时不一定需要 Fork。本文讨论的是没有原仓库写权限的贡献模式。</p>
+<h4 id="5-2-Clone-个人-Fork"><a href="#5-2-Clone-个人-Fork" class="headerlink" title="5.2 Clone 个人 Fork"></a>5.2 Clone 个人 Fork</h4><p>在个人 Fork 页面点击 <strong>Code</strong>，复制 SSH 地址：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> git@github.com:xiaoming/task-board.git</span><br><span class="line"><span class="built_in">cd</span> task-board</span><br></pre></td></tr></table></figure>
+
+<p>Clone 的目标应是个人 Fork，而不是原仓库：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">个人 Fork：git@github.com:xiaoming/task-board.git</span><br><span class="line">原仓库：  git@github.com:alice/task-board.git</span><br></pre></td></tr></table></figure>
+
+<p>普通贡献者通常没有原仓库写权限。如果将原仓库克隆为 <code>origin</code>，后续 Push 可能因权限不足而失败。</p>
+<p>Clone 完成后检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>预期远程配置为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">origin  git@github.com:xiaoming/task-board.git (fetch)</span><br><span class="line">origin  git@github.com:xiaoming/task-board.git (push)</span><br></pre></td></tr></table></figure>
+
+<p><code>git clone</code> 会自动将被克隆的仓库命名为 <code>origin</code>。</p>
+<h4 id="5-3-添加-upstream"><a href="#5-3-添加-upstream" class="headerlink" title="5.3 添加 upstream"></a>5.3 添加 <code>upstream</code></h4><p>将原仓库添加为 <code>upstream</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote add upstream git@github.com:alice/task-board.git</span><br></pre></td></tr></table></figure>
+
+<p>再次检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>预期输出：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">origin    git@github.com:xiaoming/task-board.git (fetch)</span><br><span class="line">origin    git@github.com:xiaoming/task-board.git (push)</span><br><span class="line">upstream  git@github.com:alice/task-board.git (fetch)</span><br><span class="line">upstream  git@github.com:alice/task-board.git (push)</span><br></pre></td></tr></table></figure>
+
+<p>如果出现 <code>remote upstream already exists</code>，应先查看已有地址：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote get-url upstream</span><br></pre></td></tr></table></figure>
+
+<p>地址错误时使用以下命令修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote set-url upstream git@github.com:alice/task-board.git</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="6-默认分支同步"><a href="#6-默认分支同步" class="headerlink" title="6. 默认分支同步"></a>6. 默认分支同步</h3><p>本地 <code>main</code> 应跟踪原仓库的 <code>upstream/main</code>，个人 Fork 的 <code>origin/main</code> 则保存同步后的远程副本。</p>
+<h4 id="6-1-同步流程"><a href="#6-1-同步流程" class="headerlink" title="6.1 同步流程"></a>6.1 同步流程</h4><p>确认工作区状态：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br></pre></td></tr></table></figure>
+
+<p>切换到本地 <code>main</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch main</span><br></pre></td></tr></table></figure>
+
+<p>获取原仓库的最新提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br></pre></td></tr></table></figure>
+
+<p>将本地 <code>main</code> 快进到 <code>upstream/main</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git merge --ff-only upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>更新个人 Fork：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin main</span><br></pre></td></tr></table></figure>
+
+<p>同步完成后的关系为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">upstream/main = 本地 main = origin/main</span><br></pre></td></tr></table></figure>
+
+<h4 id="6-2-upstream-与-origin-的同步职责"><a href="#6-2-upstream-与-origin-的同步职责" class="headerlink" title="6.2 upstream 与 origin 的同步职责"></a>6.2 <code>upstream</code> 与 <code>origin</code> 的同步职责</h4><p>在 Fork 工作流中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">upstream/main   原项目的主分支</span><br><span class="line">origin/main     个人 Fork 的主分支</span><br></pre></td></tr></table></figure>
+
+<p><code>git pull --ff-only origin main</code> 只能从个人 Fork 拉取。如果个人 Fork 已经落后于原仓库，该命令无法获取原项目的最新提交。因此，原仓库 <code>upstream</code> 应作为项目更新来源。</p>
+<h4 id="6-3-merge-ff-only-的使用依据"><a href="#6-3-merge-ff-only-的使用依据" class="headerlink" title="6.3 merge --ff-only 的使用依据"></a>6.3 <code>merge --ff-only</code> 的使用依据</h4><p>GitHub 官方命令行同步文档使用 <code>git merge upstream/main</code>。本文在该流程中增加 <code>--ff-only</code>，原因是本地 <code>main</code> 被约定为 <code>upstream/main</code> 的干净镜像，不承载个人开发提交。</p>
+<p><code>--ff-only</code> 具有以下行为：</p>
+<ul>
+<li>本地 <code>main</code> 仅落后于上游时执行快进；</li>
+<li>本地 <code>main</code> 存在额外提交时停止；</li>
+<li>不创建新的合并提交；</li>
+<li>不改写已有提交。</li>
+</ul>
+<p>这是针对当前分支模型增加的严格安全约束，并非所有项目必须使用的唯一同步命令。</p>
+<h4 id="6-4-默认分支与-rebase-的边界"><a href="#6-4-默认分支与-rebase-的边界" class="headerlink" title="6.4 默认分支与 rebase 的边界"></a>6.4 默认分支与 rebase 的边界</h4><p>本地 <code>main</code> 不应包含个人开发提交。如果在 <code>main</code> 上执行 <code>git rebase upstream/main</code>，Git 可能将误提交在 <code>main</code> 上的个人提交重新应用到最新上游之后，从而掩盖分支使用错误。</p>
+<p>本文采用以下策略：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">同步 main：git merge --ff-only upstream/main</span><br><span class="line">更新个人功能分支：项目允许时使用 git rebase upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>如果 <code>merge --ff-only</code> 返回 <code>Not possible to fast-forward</code>，说明本地 <code>main</code> 已与上游分叉。此时应先检查提交图：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">log</span> --oneline --graph --decorate --all -20</span><br></pre></td></tr></table></figure>
+
+<p>在确认本地额外提交是否需要保留之前，不应执行 <code>reset --hard</code> 或强制 Push。</p>
+<hr>
+<h3 id="7-功能分支创建"><a href="#7-功能分支创建" class="headerlink" title="7. 功能分支创建"></a>7. 功能分支创建</h3><p>在最新的 <code>main</code> 上创建并切换到任务分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch -c fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>确认当前分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch --show-current</span><br></pre></td></tr></table></figure>
+
+<p>预期输出：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>常见分支前缀包括：</p>
+<table>
+<thead>
+<tr>
+<th>前缀</th>
+<th>用途</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>feature/</code></td>
+<td>新功能</td>
+<td><code>feature/task-filter</code></td>
+</tr>
+<tr>
+<td><code>fix/</code></td>
+<td>问题修复</td>
+<td><code>fix/issue-128-empty-title</code></td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>文档更新</td>
+<td><code>docs/setup-guide</code></td>
+</tr>
+<tr>
+<td><code>refactor/</code></td>
+<td>代码重构</td>
+<td><code>refactor/task-service</code></td>
+</tr>
+<tr>
+<td><code>chore/</code></td>
+<td>工程维护</td>
+<td><code>chore/update-dependencies</code></td>
+</tr>
+</tbody></table>
+<p>一个功能分支应对应一个明确任务，避免把无关功能、依赖更新和格式化修改放入同一个 Pull Request。</p>
+<hr>
+<h3 id="8-本地开发与提交"><a href="#8-本地开发与提交" class="headerlink" title="8. 本地开发与提交"></a>8. 本地开发与提交</h3><p>假设本次修改涉及：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">src/components/TaskForm.js</span><br><span class="line">tests/TaskForm.test.js</span><br></pre></td></tr></table></figure>
+
+<h4 id="8-1-变更检查与测试"><a href="#8-1-变更检查与测试" class="headerlink" title="8.1 变更检查与测试"></a>8.1 变更检查与测试</h4><p>开发过程中可以使用以下命令检查状态和差异：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git diff</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>git status</code> 显示修改、新增和暂存状态；</li>
+<li><code>git diff</code> 显示工作区中尚未暂存的代码差异。</li>
+</ul>
+<p>完成修改后，按照项目文档执行测试和格式检查。例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm <span class="built_in">test</span></span><br><span class="line">npm run lint</span><br></pre></td></tr></table></figure>
+
+<p>具体命令应以项目的 <code>README.md</code>、<code>CONTRIBUTING.md</code> 和构建配置为准。</p>
+<h4 id="8-2-提交内容边界"><a href="#8-2-提交内容边界" class="headerlink" title="8.2 提交内容边界"></a>8.2 提交内容边界</h4><p>提交中不应包含：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">.env</span><br><span class="line">访问令牌</span><br><span class="line">数据库密码</span><br><span class="line">SSH 私钥</span><br><span class="line">云服务密钥</span><br><span class="line">本地配置</span><br><span class="line">依赖目录</span><br><span class="line">临时日志</span><br><span class="line">无关构建结果</span><br></pre></td></tr></table></figure>
+
+<p><code>.gitignore</code> 只能阻止尚未跟踪的文件进入仓库。已经被 Git 跟踪的文件不会因为后来加入 <code>.gitignore</code> 而自动停止跟踪。</p>
+<p>如果凭据曾经进入提交，应立即吊销并更换凭据。仅删除文件不能消除已经发生的泄露。</p>
+<h4 id="8-3-暂存与提交"><a href="#8-3-暂存与提交" class="headerlink" title="8.3 暂存与提交"></a>8.3 暂存与提交</h4><p>明确暂存当前任务涉及的文件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git add src/components/TaskForm.js tests/TaskForm.test.js</span><br></pre></td></tr></table></figure>
+
+<p>检查即将提交的内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git diff --staged</span><br></pre></td></tr></table></figure>
+
+<p>创建提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git commit -m <span class="string">&quot;fix: reject tasks with an empty title&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>验证结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git <span class="built_in">log</span> -1 --oneline</span><br></pre></td></tr></table></figure>
+
+<p>提交信息应准确描述变更目的，例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fix: reject tasks with an empty title</span><br><span class="line">test: cover whitespace-only task titles</span><br><span class="line">docs: explain local development setup</span><br></pre></td></tr></table></figure>
+
+<p>在未检查状态的情况下直接使用 <code>git add .</code>，可能将无关文件或敏感内容一并加入暂存区。显式指定文件能够提供更清晰的提交边界。</p>
+<hr>
+<h3 id="9-功能分支变基"><a href="#9-功能分支变基" class="headerlink" title="9. 功能分支变基"></a>9. 功能分支变基</h3><p>开发期间，<code>upstream/main</code> 可能已经包含其他贡献者的新提交。在项目允许整理个人提交的前提下，可以在首次 Push 前将功能分支变基到最新上游。</p>
+<p>尚未共享的个人功能分支是 rebase 风险较低的使用场景。rebase 不是创建 Pull Request 的必要条件，项目对提交历史的要求应以贡献规范为准。</p>
+<h4 id="9-1-rebase-原理"><a href="#9-1-rebase-原理" class="headerlink" title="9.1 rebase 原理"></a>9.1 rebase 原理</h4><p>假设功能分支基于提交 <code>C</code> 创建，并产生提交 <code>D</code> 和 <code>E</code>；与此同时，上游增加了 <code>F</code> 和 <code>G</code>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">              D---E  功能分支</span><br><span class="line">             /</span><br><span class="line">A---B---C---F---G    upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>Git 会找到共同祖先 <code>C</code>，暂存功能分支独有的修改，将功能分支移动到 <code>G</code>，然后按顺序重新应用 <code>D</code> 和 <code>E</code>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">A---B---C---F---G          upstream/main</span><br><span class="line">                 \</span><br><span class="line">                  D&#x27;---E&#x27;  功能分支</span><br></pre></td></tr></table></figure>
+
+<p><code>D&#39;</code> 和 <code>E&#39;</code> 的父提交已经改变，因此它们是具有新提交哈希的提交。rebase 改写的是当前功能分支，不会修改 <code>upstream/main</code>。</p>
+<h4 id="9-2-执行流程"><a href="#9-2-执行流程" class="headerlink" title="9.2 执行流程"></a>9.2 执行流程</h4><p>确认当前分支和工作区：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git branch --show-current</span><br><span class="line">git status</span><br></pre></td></tr></table></figure>
+
+<p>获取上游更新：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br></pre></td></tr></table></figure>
+
+<p>确保位于目标功能分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>执行变基：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>变基完成后应重新执行项目测试，因为功能代码现在基于更新后的上游代码：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm <span class="built_in">test</span></span><br><span class="line">npm run lint</span><br></pre></td></tr></table></figure>
+
+<h4 id="9-3-冲突处理"><a href="#9-3-冲突处理" class="headerlink" title="9.3 冲突处理"></a>9.3 冲突处理</h4><p>Git 会逐个重新应用功能提交。如果某个提交与上游修改了相同位置，rebase 会暂停。</p>
+<p>查看冲突状态：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br></pre></td></tr></table></figure>
+
+<p>冲突文件使用以 <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> 开始、以 <code>=======</code> 分隔、以 <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> 结束的标记划分两侧内容。处理流程如下：</p>
+<ol>
+<li>理解功能提交与上游修改的目的；</li>
+<li>编辑为最终正确内容；</li>
+<li>删除冲突标记；</li>
+<li>执行相关测试；</li>
+<li>暂存已经解决的文件；</li>
+<li>继续 rebase。</li>
+</ol>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add path/to/conflicted-file</span><br><span class="line">git rebase --<span class="built_in">continue</span></span><br></pre></td></tr></table></figure>
+
+<p>如果后续提交再次产生冲突，应重复上述步骤。</p>
+<p>取消本次变基：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase --abort</span><br></pre></td></tr></table></figure>
+
+<p>该命令会将分支恢复到 rebase 开始前的状态。</p>
+<p><code>git rebase --skip</code> 会跳过当前提交并可能丢失修改。只有确认该提交已经被上游完整替代时才应使用。</p>
+<h4 id="9-4-rebase-与-merge"><a href="#9-4-rebase-与-merge" class="headerlink" title="9.4 rebase 与 merge"></a>9.4 rebase 与 merge</h4><p>功能分支也可以通过 merge 同步上游：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git merge upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>两种策略的区别如下：</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>rebase</th>
+<th>merge</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>历史结构</td>
+<td>线性排列</td>
+<td>保留分叉，可能产生合并提交</td>
+</tr>
+<tr>
+<td>原提交哈希</td>
+<td>改变</td>
+<td>不变</td>
+</tr>
+<tr>
+<td>是否改写历史</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>尚未 Push 的个人分支</td>
+<td>适用</td>
+<td>适用</td>
+</tr>
+<tr>
+<td>已公开或多人协作的分支</td>
+<td>谨慎使用</td>
+<td>通常更稳妥</td>
+</tr>
+</tbody></table>
+<p>Git 官方并未规定 rebase 或 merge 在所有项目中具有绝对优先级。项目贡献规范和团队协作方式决定最终策略。</p>
+<h4 id="9-5-rebase-安全边界"><a href="#9-5-rebase-安全边界" class="headerlink" title="9.5 rebase 安全边界"></a>9.5 rebase 安全边界</h4><p>不应随意 rebase 以下分支或提交：</p>
+<ul>
+<li><code>main</code> 等公共分支；</li>
+<li>多人共同开发的分支；</li>
+<li>其他开发者已经基于其继续工作的提交；</li>
+<li>提交关系尚未确认、仅为了消除 Push 报错的分支。</li>
+</ul>
+<p>Git 官方《Pro Git》给出的核心原则是：不要对已经公开且其他人可能基于其继续工作的提交进行 rebase。</p>
+<hr>
+<h3 id="10-功能分支推送"><a href="#10-功能分支推送" class="headerlink" title="10. 功能分支推送"></a>10. 功能分支推送</h3><p>将本地功能分支推送到个人 Fork：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push -u origin fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>参数含义：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">origin                         目标远程仓库</span><br><span class="line">fix/issue-128-empty-title      目标功能分支</span><br><span class="line">-u                             建立远程跟踪关系</span><br></pre></td></tr></table></figure>
+
+<p><code>-u</code> 是 <code>--set-upstream</code> 的缩写，但它并不表示将代码推送到名为 <code>upstream</code> 的远程。该选项会使本地功能分支跟踪：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">origin/fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>后续 Push 可以简化为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push</span><br></pre></td></tr></table></figure>
+
+<p>查看跟踪关系：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -vv</span><br></pre></td></tr></table></figure>
+
+<p>Push 只会把功能分支上传到个人 Fork，不会修改原仓库的 <code>main</code>。</p>
+<hr>
+<h3 id="11-Pull-Request-创建"><a href="#11-Pull-Request-创建" class="headerlink" title="11. Pull Request 创建"></a>11. Pull Request 创建</h3><p>Push 成功后，可以从原仓库或个人 Fork 页面进入 Pull Request 创建界面。GitHub 通常会显示 <strong>Compare &amp; pull request</strong>；手工创建时需要选择 <strong>compare across forks</strong>。</p>
+<h4 id="11-1-Base-与-Compare-配置"><a href="#11-1-Base-与-Compare-配置" class="headerlink" title="11.1 Base 与 Compare 配置"></a>11.1 Base 与 Compare 配置</h4><p>正确配置如下：</p>
+<table>
+<thead>
+<tr>
+<th>GitHub 选项</th>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>base repository</td>
+<td><code>alice/task-board</code></td>
+<td>接收变更的原仓库</td>
+</tr>
+<tr>
+<td>base</td>
+<td><code>main</code></td>
+<td>原仓库目标分支</td>
+</tr>
+<tr>
+<td>head fork</td>
+<td><code>xiaoming/task-board</code></td>
+<td>提供变更的个人 Fork</td>
+</tr>
+<tr>
+<td>compare</td>
+<td><code>fix/issue-128-empty-title</code></td>
+<td>个人功能分支</td>
+</tr>
+</tbody></table>
+<p>合并方向为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">xiaoming/task-board:fix/issue-128-empty-title</span><br><span class="line">                         │</span><br><span class="line">                         │ Pull Request</span><br><span class="line">                         ↓</span><br><span class="line">alice/task-board:main</span><br></pre></td></tr></table></figure>
+
+<p>Base 与 Compare 选反会导致请求方向错误。</p>
+<h4 id="11-2-提交与文件审查"><a href="#11-2-提交与文件审查" class="headerlink" title="11.2 提交与文件审查"></a>11.2 提交与文件审查</h4><p>创建 Pull Request 前应检查 <strong>Commits</strong> 和 <strong>Files changed</strong>：</p>
+<ul>
+<li>提交是否只属于当前任务；</li>
+<li>文件是否与 Issue 相关；</li>
+<li>是否包含依赖目录、构建结果或无关格式化；</li>
+<li>是否包含凭据、私钥或个人配置；</li>
+<li>测试结果是否完整。</li>
+</ul>
+<p>旧任务提交出现在当前 Pull Request 中，通常说明功能分支不是从干净的目标分支创建，不能通过修改描述解决。</p>
+<h4 id="11-3-标题与描述"><a href="#11-3-标题与描述" class="headerlink" title="11.3 标题与描述"></a>11.3 标题与描述</h4><p>Pull Request 标题应概括最终变更：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fix: reject tasks with an empty title</span><br></pre></td></tr></table></figure>
+
+<p>描述示例：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">## 问题</span></span><br><span class="line"></span><br><span class="line">创建任务时，标题只包含空格也能通过校验，导致列表出现空任务。</span><br><span class="line"></span><br><span class="line"><span class="section">## 修改</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> 提交前对标题执行 trim</span><br><span class="line"><span class="bullet">-</span> 拒绝清理后为空的标题</span><br><span class="line"><span class="bullet">-</span> 增加空字符串和纯空格输入的测试</span><br><span class="line"></span><br><span class="line"><span class="section">## 验证</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> npm test</span><br><span class="line"><span class="bullet">-</span> npm run lint</span><br><span class="line"></span><br><span class="line">Fixes #128</span><br></pre></td></tr></table></figure>
+
+<p><code>Fixes #128</code> 可以关联对应 Issue，并在符合 GitHub 关闭规则时随 Pull Request 合并自动关闭 Issue。</p>
+<p>尚未完成但需要提前讨论的变更，可以创建 Draft Pull Request，完成后再标记为 Ready for review。</p>
+<h4 id="11-4-维护者编辑权限"><a href="#11-4-维护者编辑权限" class="headerlink" title="11.4 维护者编辑权限"></a>11.4 维护者编辑权限</h4><p><strong>Allow edits from maintainers</strong> 允许原仓库维护者直接修改 Pull Request 分支。如果 Fork 包含 GitHub Actions 工作流，GitHub 可能同时提示开放与 Secrets 相关的权限。</p>
+<p>是否启用该选项应根据页面显示的实际权限范围和项目协作要求决定。</p>
+<hr>
+<h3 id="12-代码审查与分支更新"><a href="#12-代码审查与分支更新" class="headerlink" title="12. 代码审查与分支更新"></a>12. 代码审查与分支更新</h3><h4 id="12-1-Review-修改"><a href="#12-1-Review-修改" class="headerlink" title="12.1 Review 修改"></a>12.1 Review 修改</h4><p>收到 Review 意见后，应继续在原功能分支修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>完成修改和测试后创建新提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git add tests/TaskForm.test.js</span><br><span class="line">git commit -m <span class="string">&quot;test: cover whitespace-only task titles&quot;</span></span><br><span class="line">git push</span><br></pre></td></tr></table></figure>
+
+<p>GitHub 会自动更新现有 Pull Request，无需重新 Fork、创建新分支或创建新 Pull Request。</p>
+<p>Review 讨论的处理应包含修改内容和验证结果。实现方案发生变化时，应同步更新 Pull Request 描述。</p>
+<h4 id="12-2-已公开分支的-merge-更新"><a href="#12-2-已公开分支的-merge-更新" class="headerlink" title="12.2 已公开分支的 merge 更新"></a>12.2 已公开分支的 merge 更新</h4><p>Review 期间 <code>upstream/main</code> 可能继续前进。先获取更新并切换到功能分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br><span class="line">git switch fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>对于已经公开并进入审查的分支，merge 不会改写已有提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git merge upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>解决冲突并完成测试后执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push</span><br></pre></td></tr></table></figure>
+
+<p>该方式可能产生合并提交，但不需要强制推送。</p>
+<h4 id="12-3-已公开分支的-rebase-更新"><a href="#12-3-已公开分支的-rebase-更新" class="headerlink" title="12.3 已公开分支的 rebase 更新"></a>12.3 已公开分支的 rebase 更新</h4><p>如果项目明确要求线性历史，并且功能分支没有被其他开发者使用，可以按照项目规范执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase upstream/main</span><br></pre></td></tr></table></figure>
+
+<p>由于提交哈希已经改变，普通 Push 会被拒绝。执行强制更新前，应获取个人 Fork 的最新状态并检查提交关系：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch origin</span><br><span class="line">git <span class="built_in">log</span> --oneline --graph --decorate --all -20</span><br></pre></td></tr></table></figure>
+
+<p>确认远程功能分支没有其他人的新增提交后，可以使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push --force-with-lease origin fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p><code>--force-with-lease</code> 会在远程分支与本地预期不一致时拒绝覆盖，比 <code>--force</code> 更安全。但它仍然会改写远程历史，可能使旧 Review 评论失去对应代码位置，也可能导致已有审批失效。</p>
+<p>多人共同使用的分支不应自行 rebase 后强制推送。</p>
+<hr>
+<h3 id="13-Pull-Request-合并后的同步与清理"><a href="#13-Pull-Request-合并后的同步与清理" class="headerlink" title="13. Pull Request 合并后的同步与清理"></a>13. Pull Request 合并后的同步与清理</h3><h4 id="13-1-更新默认分支"><a href="#13-1-更新默认分支" class="headerlink" title="13.1 更新默认分支"></a>13.1 更新默认分支</h4><p>Pull Request 合并后，变更已经进入 <code>alice/task-board:main</code>。本地和个人 Fork 需要再次同步：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git switch main</span><br><span class="line">git fetch upstream</span><br><span class="line">git merge --ff-only upstream/main</span><br><span class="line">git push origin main</span><br></pre></td></tr></table></figure>
+
+<h4 id="13-2-删除功能分支"><a href="#13-2-删除功能分支" class="headerlink" title="13.2 删除功能分支"></a>13.2 删除功能分支</h4><p>删除本地功能分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -d fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>删除个人 Fork 上的远程分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin --delete fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>如果已经在 GitHub Pull Request 页面删除远程分支，则不需要重复执行远程删除命令。</p>
+<h4 id="13-3-Squash-合并后的分支删除"><a href="#13-3-Squash-合并后的分支删除" class="headerlink" title="13.3 Squash 合并后的分支删除"></a>13.3 Squash 合并后的分支删除</h4><p>使用 Squash and merge 时，功能分支的多个提交会被压缩为一个新提交。原功能提交不再是 <code>main</code> 的直接祖先，因此 <code>git branch -d</code> 可能拒绝删除。</p>
+<p>执行强制删除前应确认：</p>
+<ul>
+<li>Pull Request 已经合并；</li>
+<li>最新 <code>upstream/main</code> 已包含目标修改；</li>
+<li>功能分支不存在尚未保存的额外工作。</li>
+</ul>
+<p>确认后可以执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -D fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p><code>-D</code> 会跳过未合并检查，不应在未确认分支内容时使用。</p>
+<h4 id="13-4-清理远程跟踪引用"><a href="#13-4-清理远程跟踪引用" class="headerlink" title="13.4 清理远程跟踪引用"></a>13.4 清理远程跟踪引用</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch --prune origin</span><br><span class="line">git fetch --prune upstream</span><br></pre></td></tr></table></figure>
+
+<p><code>--prune</code> 只清理本地保存的、远程已不存在的引用，不会删除仍存在的远程分支。</p>
+<hr>
+<h3 id="14-后续贡献流程"><a href="#14-后续贡献流程" class="headerlink" title="14. 后续贡献流程"></a>14. 后续贡献流程</h3><p>Fork、Clone 和 <code>upstream</code> 配置通常只需执行一次。后续任务从同步默认分支开始：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git switch main</span><br><span class="line">git fetch upstream</span><br><span class="line">git merge --ff-only upstream/main</span><br><span class="line">git push origin main</span><br><span class="line">git switch -c feature/new-task</span><br></pre></td></tr></table></figure>
+
+<p>标准循环为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">同步 main</span><br><span class="line">   ↓</span><br><span class="line">创建任务分支</span><br><span class="line">   ↓</span><br><span class="line">开发、测试和提交</span><br><span class="line">   ↓</span><br><span class="line">项目允许时，在首次 Push 前 rebase</span><br><span class="line">   ↓</span><br><span class="line">Push 到个人 Fork</span><br><span class="line">   ↓</span><br><span class="line">创建 Pull Request</span><br><span class="line">   ↓</span><br><span class="line">处理 Review</span><br><span class="line">   ↓</span><br><span class="line">合并后同步 main 并清理分支</span><br></pre></td></tr></table></figure>
+
+<p>每个任务都应从最新、干净的 <code>main</code> 创建新分支。复用已经合并的旧功能分支可能使新 Pull Request 混入旧提交。</p>
+<hr>
+<h3 id="15-常见故障排查"><a href="#15-常见故障排查" class="headerlink" title="15. 常见故障排查"></a>15. 常见故障排查</h3><h4 id="15-1-origin-指向原仓库"><a href="#15-1-origin-指向原仓库" class="headerlink" title="15.1 origin 指向原仓库"></a>15.1 <code>origin</code> 指向原仓库</h4><p>检查远程地址：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>如果 <code>origin</code> 指向 <code>alice/task-board</code>，将其修改为个人 Fork：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote set-url origin git@github.com:xiaoming/task-board.git</span><br></pre></td></tr></table></figure>
+
+<p>原仓库应配置为：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote add upstream git@github.com:alice/task-board.git</span><br></pre></td></tr></table></figure>
+
+<p>如果 <code>upstream</code> 已存在，应使用 <code>git remote set-url upstream ...</code> 修改，而不是重复添加。</p>
+<h4 id="15-2-在-main-上产生功能修改"><a href="#15-2-在-main-上产生功能修改" class="headerlink" title="15.2 在 main 上产生功能修改"></a>15.2 在 <code>main</code> 上产生功能修改</h4><p>如果修改尚未提交，可以从当前位置创建功能分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch -c fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>未提交修改通常会随工作区进入新分支。</p>
+<p>如果已经在 <code>main</code> 创建提交，应先创建分支保存当前提交，再分析如何恢复 <code>main</code>，不应直接执行 <code>reset --hard</code>。</p>
+<h4 id="15-3-Pull-Request-方向错误"><a href="#15-3-Pull-Request-方向错误" class="headerlink" title="15.3 Pull Request 方向错误"></a>15.3 Pull Request 方向错误</h4><p>正确方向为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">个人 Fork 的功能分支 → 原仓库的目标分支</span><br></pre></td></tr></table></figure>
+
+<p>创建时应核对 base repository、base、head fork 和 compare。</p>
+<h4 id="15-4-non-fast-forward"><a href="#15-4-non-fast-forward" class="headerlink" title="15.4 non-fast-forward"></a>15.4 <code>non-fast-forward</code></h4><p>Push 被拒绝并显示 <code>non-fast-forward</code>，表示远程分支包含本地没有的提交，或者本地历史已经被 rebase 等操作改写。</p>
+<p>先获取并查看关系：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch origin</span><br><span class="line">git <span class="built_in">log</span> --oneline --graph --decorate --all -20</span><br></pre></td></tr></table></figure>
+
+<p>在确认远程新增提交的来源和保留方式之前，不应直接强制 Push。</p>
+<h4 id="15-5-未提交修改阻止分支切换"><a href="#15-5-未提交修改阻止分支切换" class="headerlink" title="15.5 未提交修改阻止分支切换"></a>15.5 未提交修改阻止分支切换</h4><p>检查当前修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git diff</span><br></pre></td></tr></table></figure>
+
+<p>完整修改可以提交；临时修改可以使用 stash；确认不需要的修改可以使用 restore。处理方式取决于修改是否仍需保留。</p>
+<h4 id="15-6-GitHub-未显示本地提交"><a href="#15-6-GitHub-未显示本地提交" class="headerlink" title="15.6 GitHub 未显示本地提交"></a>15.6 GitHub 未显示本地提交</h4><p><code>git commit</code> 只创建本地提交，还需要执行 <code>git push</code>。可以检查当前分支和跟踪关系：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git branch -vv</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<h4 id="15-7-原仓库未出现已-Push-的修改"><a href="#15-7-原仓库未出现已-Push-的修改" class="headerlink" title="15.7 原仓库未出现已 Push 的修改"></a>15.7 原仓库未出现已 Push 的修改</h4><p>Push 到个人 Fork 后，还需要向原仓库创建 Pull Request。只有 Pull Request 被合并，变更才会进入原仓库目标分支。</p>
+<h4 id="15-8-Pull-Request-包含无关提交"><a href="#15-8-Pull-Request-包含无关提交" class="headerlink" title="15.8 Pull Request 包含无关提交"></a>15.8 Pull Request 包含无关提交</h4><p>常见原因包括：</p>
+<ul>
+<li>从旧功能分支创建新分支；</li>
+<li>在同一分支处理多个任务；</li>
+<li>本地 <code>main</code> 包含个人提交；</li>
+<li>Pull Request 的 base 分支错误。</li>
+</ul>
+<p>预防方式是先同步 <code>upstream/main</code>，再从干净的本地 <code>main</code> 创建独立任务分支。</p>
+<h4 id="15-9-SSH-公钥认证失败"><a href="#15-9-SSH-公钥认证失败" class="headerlink" title="15.9 SSH 公钥认证失败"></a>15.9 SSH 公钥认证失败</h4><p>出现 <code>Permission denied (publickey)</code> 时，检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ssh -T git@github.com</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>需要确认公钥已添加到正确的 GitHub 账号、SSH 使用了预期私钥，并且仓库地址与账号权限一致。</p>
+<hr>
+<h3 id="16-变更撤销与恢复"><a href="#16-变更撤销与恢复" class="headerlink" title="16. 变更撤销与恢复"></a>16. 变更撤销与恢复</h3><p>撤销操作前应先运行 <code>git status</code>，并确认目标变更是否已经提交或 Push。</p>
+<h4 id="16-1-取消暂存"><a href="#16-1-取消暂存" class="headerlink" title="16.1 取消暂存"></a>16.1 取消暂存</h4><p>取消暂存但保留工作区修改：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git restore --staged path/to/file</span><br></pre></td></tr></table></figure>
+
+<h4 id="16-2-丢弃工作区修改"><a href="#16-2-丢弃工作区修改" class="headerlink" title="16.2 丢弃工作区修改"></a>16.2 丢弃工作区修改</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git restore path/to/file</span><br></pre></td></tr></table></figure>
+
+<p>该命令会丢失目标文件中尚未提交的修改，执行前必须确认内容不再需要。</p>
+<h4 id="16-3-修改最近一次本地提交"><a href="#16-3-修改最近一次本地提交" class="headerlink" title="16.3 修改最近一次本地提交"></a>16.3 修改最近一次本地提交</h4><p>对于尚未 Push 的最近一次提交，可以补充文件或修改提交信息：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add forgotten-file</span><br><span class="line">git commit --amend</span><br></pre></td></tr></table></figure>
+
+<p><code>amend</code> 会生成新的提交哈希。提交已经公开后，不应在未评估影响时使用。</p>
+<h4 id="16-4-撤销已共享提交"><a href="#16-4-撤销已共享提交" class="headerlink" title="16.4 撤销已共享提交"></a>16.4 撤销已共享提交</h4><p>对于已经 Push 或合并的提交，通常使用反向提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git revert &lt;commit-id&gt;</span><br></pre></td></tr></table></figure>
+
+<p><code>revert</code> 保留原历史，适合公共分支。<code>reset</code> 会移动分支引用，不适合作为共享历史的常规撤销方式。</p>
+<h4 id="16-5-临时保存工作区"><a href="#16-5-临时保存工作区" class="headerlink" title="16.5 临时保存工作区"></a>16.5 临时保存工作区</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git stash push -u -m <span class="string">&quot;wip: issue 128&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>恢复暂存内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git stash pop</span><br></pre></td></tr></table></figure>
+
+<p>stash 适合短期切换任务，不应长期代替分支和提交。</p>
+<h4 id="16-6-使用-reflog-定位丢失提交"><a href="#16-6-使用-reflog-定位丢失提交" class="headerlink" title="16.6 使用 reflog 定位丢失提交"></a>16.6 使用 reflog 定位丢失提交</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git reflog</span><br></pre></td></tr></table></figure>
+
+<p>reflog 记录本地分支和 HEAD 最近移动过的位置。误删分支或错误 reset 后，提交可能仍可通过 reflog 找回。发生历史操作错误后，应停止继续改写历史并记录相关提交哈希，再制定恢复方案。</p>
+<hr>
+<h3 id="17-命令流程汇总"><a href="#17-命令流程汇总" class="headerlink" title="17. 命令流程汇总"></a>17. 命令流程汇总</h3><h4 id="17-1-首次建立协作仓库"><a href="#17-1-首次建立协作仓库" class="headerlink" title="17.1 首次建立协作仓库"></a>17.1 首次建立协作仓库</h4><p>在 GitHub 页面完成 Fork 后执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> git@github.com:xiaoming/task-board.git</span><br><span class="line"><span class="built_in">cd</span> task-board</span><br><span class="line">git remote add upstream git@github.com:alice/task-board.git</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<h4 id="17-2-创建任务分支"><a href="#17-2-创建任务分支" class="headerlink" title="17.2 创建任务分支"></a>17.2 创建任务分支</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git switch main</span><br><span class="line">git fetch upstream</span><br><span class="line">git merge --ff-only upstream/main</span><br><span class="line">git push origin main</span><br><span class="line">git switch -c fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<h4 id="17-3-开发与提交"><a href="#17-3-开发与提交" class="headerlink" title="17.3 开发与提交"></a>17.3 开发与提交</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git diff</span><br><span class="line"></span><br><span class="line"><span class="comment"># 修改代码并执行项目规定的测试</span></span><br><span class="line"></span><br><span class="line">git add src/components/TaskForm.js tests/TaskForm.test.js</span><br><span class="line">git diff --staged</span><br><span class="line">git commit -m <span class="string">&quot;fix: reject tasks with an empty title&quot;</span></span><br><span class="line">git status</span><br></pre></td></tr></table></figure>
+
+<h4 id="17-4-项目允许时执行变基"><a href="#17-4-项目允许时执行变基" class="headerlink" title="17.4 项目允许时执行变基"></a>17.4 项目允许时执行变基</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br><span class="line">git switch fix/issue-128-empty-title</span><br><span class="line">git rebase upstream/main</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重新执行测试</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="17-5-推送与-Pull-Request"><a href="#17-5-推送与-Pull-Request" class="headerlink" title="17.5 推送与 Pull Request"></a>17.5 推送与 Pull Request</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push -u origin fix/issue-128-empty-title</span><br></pre></td></tr></table></figure>
+
+<p>Pull Request 方向：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">xiaoming/task-board:fix/issue-128-empty-title</span><br><span class="line">                         ↓</span><br><span class="line">alice/task-board:main</span><br></pre></td></tr></table></figure>
+
+<h4 id="17-6-合并后同步与清理"><a href="#17-6-合并后同步与清理" class="headerlink" title="17.6 合并后同步与清理"></a>17.6 合并后同步与清理</h4><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">git switch main</span><br><span class="line">git fetch upstream</span><br><span class="line">git merge --ff-only upstream/main</span><br><span class="line">git push origin main</span><br><span class="line">git branch -d fix/issue-128-empty-title</span><br><span class="line">git push origin --delete fix/issue-128-empty-title</span><br><span class="line">git fetch --prune origin</span><br><span class="line">git fetch --prune upstream</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="18-总结"><a href="#18-总结" class="headerlink" title="18. 总结"></a>18. 总结</h3><p>Fork 模式下的远程协作由三份仓库构成：原仓库、个人 Fork 和本地仓库。<code>upstream</code> 用于获取原项目更新，<code>origin</code> 用于接收个人功能分支。</p>
+<p>默认分支和功能分支承担不同职责：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">main：使用 merge --ff-only 保持为 upstream/main 的干净镜像</span><br><span class="line">功能分支：承载单一任务，项目允许时可在首次 Push 前 rebase</span><br></pre></td></tr></table></figure>
+
+<p>完整流程包括：Fork 原仓库、Clone 个人 Fork、配置 <code>upstream</code>、同步 <code>main</code>、创建功能分支、开发和提交、推送个人分支、创建 Pull Request、处理 Review，以及合并后的同步与清理。</p>
+<p>在执行分支切换、历史整合和远程操作前，应持续检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git status</span><br><span class="line">git branch --show-current</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>这些状态信息能够明确当前操作对象，是避免分支污染、错误 Push 和历史误改的基础。</p>
+<hr>
+<h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><p>[1] <a target="_blank" rel="noopener" href="https://docs.github.com/zh/pull-requests/how-tos/work-with-forks/fork-a-repo">GitHub Docs：Fork 仓库</a></p>
+<p>[2] <a target="_blank" rel="noopener" href="https://docs.github.com/zh/pull-requests/how-tos/work-with-forks/configuring-a-remote-repository-for-a-fork">GitHub Docs：为 Fork 配置远程仓库</a></p>
+<p>[3] <a target="_blank" rel="noopener" href="https://docs.github.com/zh/pull-requests/how-tos/work-with-forks/syncing-a-fork">GitHub Docs：同步 Fork</a></p>
+<p>[4] <a target="_blank" rel="noopener" href="https://docs.github.com/zh/pull-requests/how-tos/create-pull-requests/creating-a-pull-request-from-a-fork">GitHub Docs：从 Fork 创建 Pull Request</a></p>
+<p>[5] <a target="_blank" rel="noopener" href="https://docs.github.com/zh/authentication/connecting-to-github-with-ssh">GitHub Docs：通过 SSH 连接 GitHub</a></p>
+<p>[6] <a target="_blank" rel="noopener" href="https://git-scm.com/book/zh/v2/Git-%E5%88%86%E6%94%AF-%E5%8F%98%E5%9F%BA">Pro Git：变基</a></p>
+<p>[7] <a target="_blank" rel="noopener" href="https://git-scm.com/doc">Git 官方文档</a></p>
+<p>[8] <a target="_blank" rel="noopener" href="https://git-scm.com/docs/git-status">Git 官方文档：git status</a></p>
+<p>[9] <a target="_blank" rel="noopener" href="https://git-scm.com/docs/git-switch">Git 官方文档：git switch</a></p>
+<p>[10] <a target="_blank" rel="noopener" href="https://git-scm.com/docs/git-restore">Git 官方文档：git restore</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2026/07/20/%E4%BD%BF%E7%94%A8Git%E4%B8%8EGitHub%E8%BF%9B%E8%A1%8C%E8%BF%9C%E7%A8%8B%E5%8D%8F%E4%BD%9C/">https://lx-cel.github.io/2026/07/20/使用Git与GitHub进行远程协作/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a><a class="post-meta__tags" href="/tags/Git/">Git</a><a class="post-meta__tags" href="/tags/GitHub/">GitHub</a></div><div class="post-share"><div class="social-share" data-image="/img/04.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E5%AE%89%E8%A3%85%E3%80%81%E8%AE%A4%E8%AF%81%E4%B8%8E%E9%A6%96%E6%AC%A1%E4%BC%9A%E8%AF%9D/" title="Claude Code终端使用指南（一）—安装、认证与首次会话"><img class="cover" src="/img/53.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Claude Code终端使用指南（一）—安装、认证与首次会话</div></div><div class="info-2"><div class="info-item-1">Claude Code 是 Anthropic 提供的智能编程代理。它可以在终端中读取项目文件、搜索代码、编辑文件、运行命令，并围绕测试或构建结果继续迭代。它与 claude.ai 的普通聊天界面、Claude Desktop 以及 IDE 插件并不是同一个使用入口。本系列只讨论在本地终端中通过 claude 命令启动的 Claude Code CLI。 本文是系列的第一篇，介绍系统要求、安装方式、认证、版本更新、首次启动和基础交互。后续文章依次讨论：  核心工作流与提示策略； 项目记忆、配置、权限与沙箱； 会话、上下文、Git 与并行开发； Skills、子代理、Hooks、MCP 与插件； 非交互自动化、成本控制与故障排查。  系列以“能够独立、可靠地在终端中使用 Claude Code 完成真实项目工作”为范围，覆盖安装认证、交互工作流、项目配置、安全边界、状态管理、并行开发、扩展机制、脚本化和排障。Claude Desktop、IDE 插件和 Claude Code on the web...</div></div></div></a><a class="pagination-related" href="/2026/07/19/Linux%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%AF%A6%E8%A7%A3/" title="Linux文件系统目录结构详解"><img class="cover" src="/img/46.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Linux文件系统目录结构详解</div></div><div class="info-2"><div class="info-item-1">刚接触 Linux 时，打开根目录往往会看到 bin、etc、usr、var 等许多名称简短的目录。它们看起来有些抽象，但并不是随意摆放的：Linux 会按照文件的用途组织系统，而不是像 Windows 那样主要按照磁盘分区组织文件。 理解这些目录之后，我们就能更快地找到配置文件、程序、日志和用户数据，也能避免误删系统中的重要内容。  1. 从根目录 / 开始Linux 文件系统只有一棵目录树，最顶层是根目录 /。其他磁盘分区、U 盘和网络存储也会被挂载到这棵树中的某个目录下。 需要注意的是：  / 表示整个文件系统的根目录。 /root 是超级用户 root 的家目录，两者不是同一个概念。 /home/alice/file.txt 是从根目录开始的绝对路径。 ./file.txt 是相对于当前工作目录的相对路径。  一套常见的 Linux 根目录结构如下： 12345678910111213141516171819/├── bin       常用命令├── boot      启动文件├── dev       设备文件├── etc       系统配置├── home ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E5%AE%89%E8%A3%85%E3%80%81%E8%AE%A4%E8%AF%81%E4%B8%8E%E9%A6%96%E6%AC%A1%E4%BC%9A%E8%AF%9D/" title="Claude Code终端使用指南（一）—安装、认证与首次会话"><img class="cover" src="/img/53.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（一）—安装、认证与首次会话</div></div><div class="info-2"><div class="info-item-1">Claude Code 是 Anthropic 提供的智能编程代理。它可以在终端中读取项目文件、搜索代码、编辑文件、运行命令，并围绕测试或构建结果继续迭代。它与 claude.ai 的普通聊天界面、Claude Desktop 以及 IDE 插件并不是同一个使用入口。本系列只讨论在本地终端中通过 claude 命令启动的 Claude Code CLI。 本文是系列的第一篇，介绍系统要求、安装方式、认证、版本更新、首次启动和基础交互。后续文章依次讨论：  核心工作流与提示策略； 项目记忆、配置、权限与沙箱； 会话、上下文、Git 与并行开发； Skills、子代理、Hooks、MCP 与插件； 非交互自动化、成本控制与故障排查。  系列以“能够独立、可靠地在终端中使用 Claude Code 完成真实项目工作”为范围，覆盖安装认证、交互工作流、项目配置、安全边界、状态管理、并行开发、扩展机制、脚本化和排障。Claude Desktop、IDE 插件和 Claude Code on the web...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/" title="Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱"><img class="cover" src="/img/55.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱</div></div><div class="info-2"><div class="info-item-1">Claude Code 的项目定制包含两类本质不同的机制：  CLAUDE.md、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断； 设置、权限规则、Hooks 和沙箱限制工具实际能做什么。  前者是指导，后者才是执行边界。把“不要读取 .env”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。 本文继续使用虚构的 TypeScript 项目 task-board，建立一套可提交给团队的 Claude Code 项目配置。内容包括项目记忆、自动记忆、设置作用域、权限模式、规则语法、敏感文件保护、沙箱和提示注入防护。  0. 配置决策速查   需求 应使用的机制    每个会话都应知道构建命令和架构约定 CLAUDE.md   只处理特定路径时才需要的规则 .claude/rules/*.md 的...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E6%8F%90%E7%A4%BA%E7%AD%96%E7%95%A5/" title="Claude Code终端使用指南（二）—核心工作流与提示策略"><img class="cover" src="/img/54.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（二）—核心工作流与提示策略</div></div><div class="info-2"><div class="info-item-1">Claude Code 的效果并不只取决于模型能力。启动位置、任务边界、提供的上下文、验证信号和会话中的纠偏方式，都会影响最终结果。官方最佳实践将上下文窗口视为最重要的有限资源，并推荐为 Claude 提供可以自行执行的验证手段。 本文延续第一篇中的虚构 TypeScript 项目 task-board，以“为创建任务接口增加幂等性”为端到端场景，介绍如何让 Claude Code 从理解代码开始，经过规划、实现、测试和审查，最终产出可验证的修改。 本文讨论的是终端 CLI。文中的项目名、接口和文件路径均为虚构示例，不代表真实可访问的仓库。  0. 推荐工作流速查0.1 复杂任务12cd /path/to/task-boardclaude --permission-mode plan --name task-idempotency  在规划模式中： 123只读分析 POST /tasks 的调用链、数据库写入位置、错误处理和现有测试。找出项目中是否已有幂等键、唯一约束或请求去重模式。暂时不要修改文件。  继续要求规划： 1234目标：支持 Idempotency-Key...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/" title="Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</div></div><div class="info-2"><div class="info-item-1">Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 /fix-issue Skill； 创建只读 security-reviewer 子代理； 配置编辑后格式化和保护迁移文件的 Hooks； 连接 Claude Code 官方文档 MCP； 说明何时使用插件与代码智能插件。   0....</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" title="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查"><img class="cover" src="/img/52.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</div></div><div class="info-2"><div class="info-item-1">Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。  0. 自动化与排障速查0.1 一次性查询1claude -p &quot;概括这个项目的模块和入口&quot;  推荐的可复现脚本模式： 12claude --bare -p &quot;只读审查当前差异&quot; \  --allowedTools &quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;  0.2 JSON 输出123claude --bare -p &quot;列出所有 HTTP 端点&quot; \  --output-format json |  jq...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#0-Git-%E4%B8%8E-GitHub-%E8%BF%9C%E7%A8%8B%E5%8D%8F%E4%BD%9C%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5"><span class="toc-text">0. Git 与 GitHub 远程协作命令速查</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#0-1-Fork-%E9%A1%B9%E7%9B%AE"><span class="toc-text">0.1 Fork 项目</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#0-2-SSH-%E9%85%8D%E7%BD%AE%EF%BC%88%E6%AF%8F%E5%8F%B0%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%89%A7%E8%A1%8C%E4%B8%80%E6%AC%A1%EF%BC%89"><span class="toc-text">0.2 SSH 配置（每台计算机执行一次）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#0-3-%E9%A6%96%E6%AC%A1%E5%85%8B%E9%9A%86-Fork-%E5%B9%B6%E9%85%8D%E7%BD%AE%E4%B8%8A%E6%B8%B8%E4%BB%93%E5%BA%93"><span class="toc-text">0.3 首次克隆 Fork 并配置上游仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#0-4-%E6%AF%8F%E6%AC%A1%E5%BC%80%E5%A7%8B%E6%96%B0%E4%BB%BB%E5%8A%A1"><span class="toc-text">0.4 每次开始新任务</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#0-5-Review-%E5%90%8E%E7%BB%A7%E7%BB%AD%E4%BF%AE%E6%94%B9"><span class="toc-text">0.5 Review 后继续修改</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#0-6-Pull-Request-%E5%90%88%E5%B9%B6%E5%90%8E"><span class="toc-text">0.6 Pull Request 合并后</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#0-7-%E5%B8%B8%E7%94%A8%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5"><span class="toc-text">0.7 常用状态检查</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%8D%8F%E4%BD%9C%E5%9C%BA%E6%99%AF%E4%B8%8E%E7%9B%AE%E6%A0%87"><span class="toc-text">1. 协作场景与目标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Git-%E8%BF%9C%E7%A8%8B%E5%8D%8F%E4%BD%9C%E6%A8%A1%E5%9E%8B"><span class="toc-text">2. Git 远程协作模型</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#2-1-%E5%B7%A5%E4%BD%9C%E5%8C%BA%E3%80%81%E6%9A%82%E5%AD%98%E5%8C%BA%E4%B8%8E%E6%9C%AC%E5%9C%B0%E4%BB%93%E5%BA%93"><span class="toc-text">2.1 工作区、暂存区与本地仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-2-Git-%E4%B8%8E-GitHub"><span class="toc-text">2.2 Git 与 GitHub</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-3-Fork-%E4%B8%8E-Clone"><span class="toc-text">2.3 Fork 与 Clone</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-4-%E5%88%86%E6%94%AF%E4%B8%8E%E6%8F%90%E4%BA%A4"><span class="toc-text">2.4 分支与提交</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-5-origin-%E4%B8%8E-upstream"><span class="toc-text">2.5 origin 与 upstream</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Git-%E7%8E%AF%E5%A2%83%E4%B8%8E-GitHub-%E8%AE%A4%E8%AF%81"><span class="toc-text">3. Git 环境与 GitHub 认证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#3-1-Git-%E5%AE%89%E8%A3%85%E4%B8%8E%E8%BA%AB%E4%BB%BD%E9%85%8D%E7%BD%AE"><span class="toc-text">3.1 Git 安装与身份配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-2-SSH-%E8%AE%A4%E8%AF%81"><span class="toc-text">3.2 SSH 认证</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-3-HTTPS-%E8%AE%A4%E8%AF%81"><span class="toc-text">3.3 HTTPS 认证</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E8%B4%A1%E7%8C%AE%E8%A7%84%E8%8C%83%E4%B8%8E%E4%BB%93%E5%BA%93%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5"><span class="toc-text">4. 贡献规范与仓库状态检查</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-%E9%A1%B9%E7%9B%AE%E8%B4%A1%E7%8C%AE%E8%A7%84%E8%8C%83"><span class="toc-text">4.1 项目贡献规范</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-2-%E4%BB%93%E5%BA%93%E6%A0%B9%E7%9B%AE%E5%BD%95"><span class="toc-text">4.2 仓库根目录</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-%E5%BD%93%E5%89%8D%E5%88%86%E6%94%AF"><span class="toc-text">4.3 当前分支</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-%E5%B7%A5%E4%BD%9C%E5%8C%BA%E7%8A%B6%E6%80%81"><span class="toc-text">4.4 工作区状态</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-5-%E8%BF%9C%E7%A8%8B%E4%BB%93%E5%BA%93%E9%85%8D%E7%BD%AE"><span class="toc-text">4.5 远程仓库配置</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-Fork%E3%80%81Clone-%E4%B8%8E%E8%BF%9C%E7%A8%8B%E4%BB%93%E5%BA%93%E9%85%8D%E7%BD%AE"><span class="toc-text">5. Fork、Clone 与远程仓库配置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#5-1-Fork-%E5%8E%9F%E4%BB%93%E5%BA%93"><span class="toc-text">5.1 Fork 原仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-2-Clone-%E4%B8%AA%E4%BA%BA-Fork"><span class="toc-text">5.2 Clone 个人 Fork</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-3-%E6%B7%BB%E5%8A%A0-upstream"><span class="toc-text">5.3 添加 upstream</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E9%BB%98%E8%AE%A4%E5%88%86%E6%94%AF%E5%90%8C%E6%AD%A5"><span class="toc-text">6. 默认分支同步</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#6-1-%E5%90%8C%E6%AD%A5%E6%B5%81%E7%A8%8B"><span class="toc-text">6.1 同步流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-2-upstream-%E4%B8%8E-origin-%E7%9A%84%E5%90%8C%E6%AD%A5%E8%81%8C%E8%B4%A3"><span class="toc-text">6.2 upstream 与 origin 的同步职责</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-3-merge-ff-only-%E7%9A%84%E4%BD%BF%E7%94%A8%E4%BE%9D%E6%8D%AE"><span class="toc-text">6.3 merge --ff-only 的使用依据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#6-4-%E9%BB%98%E8%AE%A4%E5%88%86%E6%94%AF%E4%B8%8E-rebase-%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-text">6.4 默认分支与 rebase 的边界</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E5%8A%9F%E8%83%BD%E5%88%86%E6%94%AF%E5%88%9B%E5%BB%BA"><span class="toc-text">7. 功能分支创建</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E6%9C%AC%E5%9C%B0%E5%BC%80%E5%8F%91%E4%B8%8E%E6%8F%90%E4%BA%A4"><span class="toc-text">8. 本地开发与提交</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#8-1-%E5%8F%98%E6%9B%B4%E6%A3%80%E6%9F%A5%E4%B8%8E%E6%B5%8B%E8%AF%95"><span class="toc-text">8.1 变更检查与测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-2-%E6%8F%90%E4%BA%A4%E5%86%85%E5%AE%B9%E8%BE%B9%E7%95%8C"><span class="toc-text">8.2 提交内容边界</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#8-3-%E6%9A%82%E5%AD%98%E4%B8%8E%E6%8F%90%E4%BA%A4"><span class="toc-text">8.3 暂存与提交</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-%E5%8A%9F%E8%83%BD%E5%88%86%E6%94%AF%E5%8F%98%E5%9F%BA"><span class="toc-text">9. 功能分支变基</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#9-1-rebase-%E5%8E%9F%E7%90%86"><span class="toc-text">9.1 rebase 原理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-2-%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B"><span class="toc-text">9.2 执行流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-3-%E5%86%B2%E7%AA%81%E5%A4%84%E7%90%86"><span class="toc-text">9.3 冲突处理</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-4-rebase-%E4%B8%8E-merge"><span class="toc-text">9.4 rebase 与 merge</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#9-5-rebase-%E5%AE%89%E5%85%A8%E8%BE%B9%E7%95%8C"><span class="toc-text">9.5 rebase 安全边界</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-%E5%8A%9F%E8%83%BD%E5%88%86%E6%94%AF%E6%8E%A8%E9%80%81"><span class="toc-text">10. 功能分支推送</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-Pull-Request-%E5%88%9B%E5%BB%BA"><span class="toc-text">11. Pull Request 创建</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#11-1-Base-%E4%B8%8E-Compare-%E9%85%8D%E7%BD%AE"><span class="toc-text">11.1 Base 与 Compare 配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#11-2-%E6%8F%90%E4%BA%A4%E4%B8%8E%E6%96%87%E4%BB%B6%E5%AE%A1%E6%9F%A5"><span class="toc-text">11.2 提交与文件审查</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#11-3-%E6%A0%87%E9%A2%98%E4%B8%8E%E6%8F%8F%E8%BF%B0"><span class="toc-text">11.3 标题与描述</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#11-4-%E7%BB%B4%E6%8A%A4%E8%80%85%E7%BC%96%E8%BE%91%E6%9D%83%E9%99%90"><span class="toc-text">11.4 维护者编辑权限</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-%E4%BB%A3%E7%A0%81%E5%AE%A1%E6%9F%A5%E4%B8%8E%E5%88%86%E6%94%AF%E6%9B%B4%E6%96%B0"><span class="toc-text">12. 代码审查与分支更新</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#12-1-Review-%E4%BF%AE%E6%94%B9"><span class="toc-text">12.1 Review 修改</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#12-2-%E5%B7%B2%E5%85%AC%E5%BC%80%E5%88%86%E6%94%AF%E7%9A%84-merge-%E6%9B%B4%E6%96%B0"><span class="toc-text">12.2 已公开分支的 merge 更新</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#12-3-%E5%B7%B2%E5%85%AC%E5%BC%80%E5%88%86%E6%94%AF%E7%9A%84-rebase-%E6%9B%B4%E6%96%B0"><span class="toc-text">12.3 已公开分支的 rebase 更新</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#13-Pull-Request-%E5%90%88%E5%B9%B6%E5%90%8E%E7%9A%84%E5%90%8C%E6%AD%A5%E4%B8%8E%E6%B8%85%E7%90%86"><span class="toc-text">13. Pull Request 合并后的同步与清理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#13-1-%E6%9B%B4%E6%96%B0%E9%BB%98%E8%AE%A4%E5%88%86%E6%94%AF"><span class="toc-text">13.1 更新默认分支</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#13-2-%E5%88%A0%E9%99%A4%E5%8A%9F%E8%83%BD%E5%88%86%E6%94%AF"><span class="toc-text">13.2 删除功能分支</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#13-3-Squash-%E5%90%88%E5%B9%B6%E5%90%8E%E7%9A%84%E5%88%86%E6%94%AF%E5%88%A0%E9%99%A4"><span class="toc-text">13.3 Squash 合并后的分支删除</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#13-4-%E6%B8%85%E7%90%86%E8%BF%9C%E7%A8%8B%E8%B7%9F%E8%B8%AA%E5%BC%95%E7%94%A8"><span class="toc-text">13.4 清理远程跟踪引用</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#14-%E5%90%8E%E7%BB%AD%E8%B4%A1%E7%8C%AE%E6%B5%81%E7%A8%8B"><span class="toc-text">14. 后续贡献流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#15-%E5%B8%B8%E8%A7%81%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5"><span class="toc-text">15. 常见故障排查</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#15-1-origin-%E6%8C%87%E5%90%91%E5%8E%9F%E4%BB%93%E5%BA%93"><span class="toc-text">15.1 origin 指向原仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-2-%E5%9C%A8-main-%E4%B8%8A%E4%BA%A7%E7%94%9F%E5%8A%9F%E8%83%BD%E4%BF%AE%E6%94%B9"><span class="toc-text">15.2 在 main 上产生功能修改</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-3-Pull-Request-%E6%96%B9%E5%90%91%E9%94%99%E8%AF%AF"><span class="toc-text">15.3 Pull Request 方向错误</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-4-non-fast-forward"><span class="toc-text">15.4 non-fast-forward</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-5-%E6%9C%AA%E6%8F%90%E4%BA%A4%E4%BF%AE%E6%94%B9%E9%98%BB%E6%AD%A2%E5%88%86%E6%94%AF%E5%88%87%E6%8D%A2"><span class="toc-text">15.5 未提交修改阻止分支切换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-6-GitHub-%E6%9C%AA%E6%98%BE%E7%A4%BA%E6%9C%AC%E5%9C%B0%E6%8F%90%E4%BA%A4"><span class="toc-text">15.6 GitHub 未显示本地提交</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-7-%E5%8E%9F%E4%BB%93%E5%BA%93%E6%9C%AA%E5%87%BA%E7%8E%B0%E5%B7%B2-Push-%E7%9A%84%E4%BF%AE%E6%94%B9"><span class="toc-text">15.7 原仓库未出现已 Push 的修改</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-8-Pull-Request-%E5%8C%85%E5%90%AB%E6%97%A0%E5%85%B3%E6%8F%90%E4%BA%A4"><span class="toc-text">15.8 Pull Request 包含无关提交</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#15-9-SSH-%E5%85%AC%E9%92%A5%E8%AE%A4%E8%AF%81%E5%A4%B1%E8%B4%A5"><span class="toc-text">15.9 SSH 公钥认证失败</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#16-%E5%8F%98%E6%9B%B4%E6%92%A4%E9%94%80%E4%B8%8E%E6%81%A2%E5%A4%8D"><span class="toc-text">16. 变更撤销与恢复</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#16-1-%E5%8F%96%E6%B6%88%E6%9A%82%E5%AD%98"><span class="toc-text">16.1 取消暂存</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#16-2-%E4%B8%A2%E5%BC%83%E5%B7%A5%E4%BD%9C%E5%8C%BA%E4%BF%AE%E6%94%B9"><span class="toc-text">16.2 丢弃工作区修改</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#16-3-%E4%BF%AE%E6%94%B9%E6%9C%80%E8%BF%91%E4%B8%80%E6%AC%A1%E6%9C%AC%E5%9C%B0%E6%8F%90%E4%BA%A4"><span class="toc-text">16.3 修改最近一次本地提交</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#16-4-%E6%92%A4%E9%94%80%E5%B7%B2%E5%85%B1%E4%BA%AB%E6%8F%90%E4%BA%A4"><span class="toc-text">16.4 撤销已共享提交</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#16-5-%E4%B8%B4%E6%97%B6%E4%BF%9D%E5%AD%98%E5%B7%A5%E4%BD%9C%E5%8C%BA"><span class="toc-text">16.5 临时保存工作区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#16-6-%E4%BD%BF%E7%94%A8-reflog-%E5%AE%9A%E4%BD%8D%E4%B8%A2%E5%A4%B1%E6%8F%90%E4%BA%A4"><span class="toc-text">16.6 使用 reflog 定位丢失提交</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#17-%E5%91%BD%E4%BB%A4%E6%B5%81%E7%A8%8B%E6%B1%87%E6%80%BB"><span class="toc-text">17. 命令流程汇总</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#17-1-%E9%A6%96%E6%AC%A1%E5%BB%BA%E7%AB%8B%E5%8D%8F%E4%BD%9C%E4%BB%93%E5%BA%93"><span class="toc-text">17.1 首次建立协作仓库</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#17-2-%E5%88%9B%E5%BB%BA%E4%BB%BB%E5%8A%A1%E5%88%86%E6%94%AF"><span class="toc-text">17.2 创建任务分支</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#17-3-%E5%BC%80%E5%8F%91%E4%B8%8E%E6%8F%90%E4%BA%A4"><span class="toc-text">17.3 开发与提交</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#17-4-%E9%A1%B9%E7%9B%AE%E5%85%81%E8%AE%B8%E6%97%B6%E6%89%A7%E8%A1%8C%E5%8F%98%E5%9F%BA"><span class="toc-text">17.4 项目允许时执行变基</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#17-5-%E6%8E%A8%E9%80%81%E4%B8%8E-Pull-Request"><span class="toc-text">17.5 推送与 Pull Request</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#17-6-%E5%90%88%E5%B9%B6%E5%90%8E%E5%90%8C%E6%AD%A5%E4%B8%8E%E6%B8%85%E7%90%86"><span class="toc-text">17.6 合并后同步与清理</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#18-%E6%80%BB%E7%BB%93"><span class="toc-text">18. 总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战">C++上机考试冲刺（六）—设计题、业务模拟与三题实战</a><time datetime="2026-08-08T09:02:00.000Z" title="发表于 2026-08-08 17:02:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式">C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式</a><time datetime="2026-08-08T09:01:00.000Z" title="发表于 2026-08-08 17:01:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（四）—排序、查找与二分模板"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板">C++上机考试冲刺（四）—排序、查找与二分模板</a><time datetime="2026-08-08T09:00:00.000Z" title="发表于 2026-08-08 17:00:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（三）—STL容器与常用数据结构"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构">C++上机考试冲刺（三）—STL容器与常用数据结构</a><time datetime="2026-08-08T08:59:00.000Z" title="发表于 2026-08-08 16:59:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流">C++上机考试冲刺（二）—字符串、进制、位运算与字节流</a><time datetime="2026-08-08T08:58:00.000Z" title="发表于 2026-08-08 16:58:00">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2026 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="输入要搜索的文章..." type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,982 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Claude Code终端使用指南（六）—非交互自动化、成本与故障排查 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hoo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查">
+<meta property="og:url" content="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hoo">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/52.jpg">
+<meta property="article:published_time" content="2026-07-25T01:50:00.000Z">
+<meta property="article:modified_time" content="2026-07-24T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="开发工具">
+<meta property="article:tag" content="自动化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/52.jpg"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Claude Code终端使用指南（六）—非交互自动化、成本与故障排查',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 8.1.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/52.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-07-25T01:50:00.000Z" title="发表于 2026-07-25 09:50:00">2026-07-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-07-24T16:00:00.000Z" title="更新于 2026-07-25 00:00:00">2026-07-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">5.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>20分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。</p>
+<p>本文是系列最后一篇，介绍非交互 <code>-p</code>、官方推荐的 <code>--bare</code>、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。</p>
+<hr>
+<h2 id="0-自动化与排障速查"><a href="#0-自动化与排障速查" class="headerlink" title="0. 自动化与排障速查"></a>0. 自动化与排障速查</h2><h3 id="0-1-一次性查询"><a href="#0-1-一次性查询" class="headerlink" title="0.1 一次性查询"></a>0.1 一次性查询</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude -p <span class="string">&quot;概括这个项目的模块和入口&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>推荐的可复现脚本模式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;只读审查当前差异&quot;</span> \</span><br><span class="line">  --allowedTools <span class="string">&quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="0-2-JSON-输出"><a href="#0-2-JSON-输出" class="headerlink" title="0.2 JSON 输出"></a>0.2 JSON 输出</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;列出所有 HTTP 端点&quot;</span> \</span><br><span class="line">  --output-format json |</span><br><span class="line">  jq -r <span class="string">&#x27;.result&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="0-3-JSON-Schema"><a href="#0-3-JSON-Schema" class="headerlink" title="0.3 JSON Schema"></a>0.3 JSON Schema</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;提取 src/routes 中的端点&quot;</span> \</span><br><span class="line">  --output-format json \</span><br><span class="line">  --json-schema <span class="string">&#x27;&#123;&quot;type&quot;:&quot;object&quot;,&quot;properties&quot;:&#123;&quot;endpoints&quot;:&#123;&quot;type&quot;:&quot;array&quot;,&quot;items&quot;:&#123;&quot;type&quot;:&quot;string&quot;&#125;&#125;&#125;,&quot;required&quot;:[&quot;endpoints&quot;]&#125;&#x27;</span> |</span><br><span class="line">  jq <span class="string">&#x27;.structured_output&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="0-4-流式输出"><a href="#0-4-流式输出" class="headerlink" title="0.4 流式输出"></a>0.4 流式输出</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;审查当前差异&quot;</span> \</span><br><span class="line">  --output-format stream-json \</span><br><span class="line">  --verbose \</span><br><span class="line">  --include-partial-messages</span><br></pre></td></tr></table></figure>
+
+<h3 id="0-5-诊断"><a href="#0-5-诊断" class="headerlink" title="0.5 诊断"></a>0.5 诊断</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">claude --version</span><br><span class="line">claude doctor</span><br><span class="line">claude --safe-mode</span><br><span class="line">claude --debug hooks</span><br><span class="line">claude --debug mcp</span><br></pre></td></tr></table></figure>
+
+<p>会话内：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">/doctor</span><br><span class="line">/status</span><br><span class="line">/context</span><br><span class="line">/permissions</span><br><span class="line">/hooks</span><br><span class="line">/mcp</span><br><span class="line">/skills</span><br><span class="line">/usage</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="1-交互模式与非交互模式"><a href="#1-交互模式与非交互模式" class="headerlink" title="1. 交互模式与非交互模式"></a>1. 交互模式与非交互模式</h2><h3 id="1-1-交互模式"><a href="#1-1-交互模式" class="headerlink" title="1.1 交互模式"></a>1.1 交互模式</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude</span><br></pre></td></tr></table></figure>
+
+<p>适合：</p>
+<ul>
+<li>需求尚未完全明确；</li>
+<li>需要人工回答问题；</li>
+<li>需要逐步审批；</li>
+<li>复杂任务要持续纠偏；</li>
+<li>需要 Plan、检查点和多轮讨论。</li>
+</ul>
+<h3 id="1-2-非交互模式"><a href="#1-2-非交互模式" class="headerlink" title="1.2 非交互模式"></a>1.2 非交互模式</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude -p <span class="string">&quot;分析任务&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>-p</code> 或 <code>--print</code> 执行后输出并退出，适合：</p>
+<ul>
+<li>CI；</li>
+<li>构建脚本；</li>
+<li>批量只读分析；</li>
+<li>结构化数据提取；</li>
+<li>预提交审查；</li>
+<li>由其他程序消费结果。</li>
+</ul>
+<p>非交互模式跳过工作区信任对话。只能在已审查并信任的目录中运行，尤其是默认模式仍会加载项目 <code>CLAUDE.md</code>、Hooks、MCP 和插件。</p>
+<h2 id="2-bare：脚本的推荐起点"><a href="#2-bare：脚本的推荐起点" class="headerlink" title="2. --bare：脚本的推荐起点"></a>2. <code>--bare</code>：脚本的推荐起点</h2><h3 id="2-1-为什么使用"><a href="#2-1-为什么使用" class="headerlink" title="2.1 为什么使用"></a>2.1 为什么使用</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;Summarize this file&quot;</span> --allowedTools <span class="string">&quot;Read&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>官方当前文档推荐在脚本和 SDK 调用中使用 Bare mode，并说明它未来可能成为 <code>-p</code> 默认行为。</p>
+<p>Bare mode 跳过：</p>
+<ul>
+<li>Hooks；</li>
+<li>LSP；</li>
+<li>插件同步；</li>
+<li>Attribution；</li>
+<li>Auto memory；</li>
+<li>后台预取；</li>
+<li>Keychain 读取；</li>
+<li><code>CLAUDE.md</code> 自动发现；</li>
+<li>大部分常规定制自动发现。</li>
+</ul>
+<p>优点：</p>
+<ul>
+<li>启动更快；</li>
+<li>不受同事 <code>~/.claude</code> 私人配置影响；</li>
+<li>CI 行为更可复现；</li>
+<li>减少隐式外部连接和 Hook 副作用。</li>
+</ul>
+<h3 id="2-2-显式提供需要的内容"><a href="#2-2-显式提供需要的内容" class="headerlink" title="2.2 显式提供需要的内容"></a>2.2 显式提供需要的内容</h3><table>
+<thead>
+<tr>
+<th>需要</th>
+<th>参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>追加系统提示</td>
+<td><code>--append-system-prompt</code></td>
+</tr>
+<tr>
+<td>从文件追加系统提示</td>
+<td><code>--append-system-prompt-file</code></td>
+</tr>
+<tr>
+<td>设置</td>
+<td><code>--settings</code></td>
+</tr>
+<tr>
+<td>MCP</td>
+<td><code>--mcp-config</code></td>
+</tr>
+<tr>
+<td>Agent</td>
+<td><code>--agents</code></td>
+</tr>
+<tr>
+<td>插件</td>
+<td><code>--plugin-dir</code> 或 <code>--plugin-url</code></td>
+</tr>
+<tr>
+<td>额外目录</td>
+<td><code>--add-dir</code></td>
+</tr>
+</tbody></table>
+<p>示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;审查当前分支&quot;</span> \</span><br><span class="line">  --append-system-prompt-file ./ci/review-policy.md \</span><br><span class="line">  --settings ./ci/claude-settings.json \</span><br><span class="line">  --allowedTools <span class="string">&quot;Read,Grep,Glob,Bash(git diff *)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>这些输入应固定版本并受代码审查。</p>
+<h3 id="2-3-Bare-mode-的认证差异"><a href="#2-3-Bare-mode-的认证差异" class="headerlink" title="2.3 Bare mode 的认证差异"></a>2.3 Bare mode 的认证差异</h3><p>Bare mode 不读取 OAuth 和系统 Keychain。Anthropic 直连认证需使用：</p>
+<ul>
+<li><code>ANTHROPIC_API_KEY</code>；</li>
+<li>或通过 <code>--settings</code> 显式提供 <code>apiKeyHelper</code>。</li>
+</ul>
+<p>它不读取 <code>CLAUDE_CODE_OAUTH_TOKEN</code>。Bedrock、Agent Platform 和 Foundry 仍使用各自提供商凭据。</p>
+<p>不要为了让 Bare mode 工作而把 API Key 写入命令行、仓库或日志。使用 CI Secret 注入环境。</p>
+<h3 id="2-4-safe-mode-不是-bare"><a href="#2-4-safe-mode-不是-bare" class="headerlink" title="2.4 --safe-mode 不是 --bare"></a>2.4 <code>--safe-mode</code> 不是 <code>--bare</code></h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">--bare</span><br><span class="line">  面向可复现脚本，最小启动并要求显式提供配置。</span><br><span class="line"></span><br><span class="line">--safe-mode</span><br><span class="line">  面向故障排查，关闭自定义内容但保留认证、模型、内置工具和权限。</span><br></pre></td></tr></table></figure>
+
+<p>Safe mode 仍受组织 Managed policy 约束。不要用它规避组织设置。</p>
+<h2 id="3-输入与管道"><a href="#3-输入与管道" class="headerlink" title="3. 输入与管道"></a>3. 输入与管道</h2><h3 id="3-1-标准输入"><a href="#3-1-标准输入" class="headerlink" title="3.1 标准输入"></a>3.1 标准输入</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cat</span> build-error.txt |</span><br><span class="line">  claude --bare -p <span class="string">&quot;区分首个根因和后续连锁错误&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>标准输入适合临时数据。官方当前限制管道输入为 10 MB。超出时应把数据保存为文件，让 Claude 按路径和范围读取，而不是把完整内容塞进上下文。</p>
+<h3 id="3-2-预处理数据"><a href="#3-2-预处理数据" class="headerlink" title="3.2 预处理数据"></a>3.2 预处理数据</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">rg -n <span class="string">&quot;ERROR|FATAL|Caused by&quot;</span> server.log |</span><br><span class="line">  <span class="built_in">head</span> -n 500 |</span><br><span class="line">  claude --bare -p <span class="string">&quot;按时间顺序归纳故障链&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>预处理应保持关键上下文。过度筛选可能删除根因，脚本应保存原始日志位置供后续按需读取。</p>
+<h3 id="3-3-重定向输出"><a href="#3-3-重定向输出" class="headerlink" title="3.3 重定向输出"></a>3.3 重定向输出</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;生成当前模块架构摘要&quot;</span> &gt; architecture.txt</span><br></pre></td></tr></table></figure>
+
+<p>重定向会覆盖目标文件。脚本应写入明确的构建输出目录，并避免覆盖人工维护文件。</p>
+<h2 id="4-输出格式"><a href="#4-输出格式" class="headerlink" title="4. 输出格式"></a>4. 输出格式</h2><h3 id="4-1-Text"><a href="#4-1-Text" class="headerlink" title="4.1 Text"></a>4.1 Text</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;解释认证模块&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>适合人读，不适合作为稳定解析协议。</p>
+<h3 id="4-2-JSON"><a href="#4-2-JSON" class="headerlink" title="4.2 JSON"></a>4.2 JSON</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;概括项目&quot;</span> --output-format json</span><br></pre></td></tr></table></figure>
+
+<p>返回单个 JSON 对象，包含结果、session ID、用量和成本等元数据。文本结果在 <code>result</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;概括项目&quot;</span> --output-format json |</span><br><span class="line">  jq -r <span class="string">&#x27;.result&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>脚本应检查：</p>
+<ul>
+<li><code>claude</code> 退出码；</li>
+<li>JSON 是否可解析；</li>
+<li>结果字段是否存在；</li>
+<li>是否达到预算或发生模型回退；</li>
+<li>stderr 是否有告警。</li>
+</ul>
+<h3 id="4-3-JSON-Schema"><a href="#4-3-JSON-Schema" class="headerlink" title="4.3 JSON Schema"></a>4.3 JSON Schema</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;列出 src/routes 中的端点&quot;</span> \</span><br><span class="line">  --output-format json \</span><br><span class="line">  --json-schema <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;type&quot;: &quot;object&quot;,</span></span><br><span class="line"><span class="string">    &quot;properties&quot;: &#123;</span></span><br><span class="line"><span class="string">      &quot;endpoints&quot;: &#123;</span></span><br><span class="line"><span class="string">        &quot;type&quot;: &quot;array&quot;,</span></span><br><span class="line"><span class="string">        &quot;items&quot;: &#123;</span></span><br><span class="line"><span class="string">          &quot;type&quot;: &quot;object&quot;,</span></span><br><span class="line"><span class="string">          &quot;properties&quot;: &#123;</span></span><br><span class="line"><span class="string">            &quot;method&quot;: &#123;&quot;type&quot;: &quot;string&quot;&#125;,</span></span><br><span class="line"><span class="string">            &quot;path&quot;: &#123;&quot;type&quot;: &quot;string&quot;&#125;,</span></span><br><span class="line"><span class="string">            &quot;file&quot;: &#123;&quot;type&quot;: &quot;string&quot;&#125;</span></span><br><span class="line"><span class="string">          &#125;,</span></span><br><span class="line"><span class="string">          &quot;required&quot;: [&quot;method&quot;, &quot;path&quot;, &quot;file&quot;]</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">      &#125;</span></span><br><span class="line"><span class="string">    &#125;,</span></span><br><span class="line"><span class="string">    &quot;required&quot;: [&quot;endpoints&quot;]</span></span><br><span class="line"><span class="string">  &#125;&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>结构化结果位于 <code>structured_output</code>。Schema 应：</p>
+<ul>
+<li>只要求下游真正需要的字段；</li>
+<li>明确 required；</li>
+<li>用 enum 限制有限值；</li>
+<li>为数组项定义结构；</li>
+<li>在 CI 中加入解析测试；</li>
+<li>不依赖自然语言字段。</li>
+</ul>
+<h3 id="4-4-Stream-JSON"><a href="#4-4-Stream-JSON" class="headerlink" title="4.4 Stream JSON"></a>4.4 Stream JSON</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;分析大型差异&quot;</span> \</span><br><span class="line">  --output-format stream-json \</span><br><span class="line">  --verbose \</span><br><span class="line">  --include-partial-messages</span><br></pre></td></tr></table></figure>
+
+<p>每行一个 JSON 事件，最后是 result。适合实时 UI、日志和长任务。</p>
+<p>使用 <code>jq</code> 只显示文本增量：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;解释递归&quot;</span> \</span><br><span class="line">  --output-format stream-json \</span><br><span class="line">  --verbose \</span><br><span class="line">  --include-partial-messages |</span><br><span class="line">  jq -rj <span class="string">&#x27;select(.type == &quot;stream_event&quot; and .event.delta.type? == &quot;text_delta&quot;) | .event.delta.text&#x27;</span></span><br></pre></td></tr></table></figure>
+
+<p>生产消费者应忽略未知事件，以 capability 字段进行特性探测，而不是只比较版本号。</p>
+<h2 id="5-自动化中的工具权限"><a href="#5-自动化中的工具权限" class="headerlink" title="5. 自动化中的工具权限"></a>5. 自动化中的工具权限</h2><h3 id="5-1-allowedTools"><a href="#5-1-allowedTools" class="headerlink" title="5.1 --allowedTools"></a>5.1 <code>--allowedTools</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;运行测试并修复失败&quot;</span> \</span><br><span class="line">  --allowedTools <span class="string">&quot;Read,Edit,Bash(npm test *)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>应使用最小工具：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">只读审查：</span><br><span class="line">Read,Grep,Glob,Bash(git diff *),Bash(git status *)</span><br><span class="line"></span><br><span class="line">生成文档：</span><br><span class="line">Read,Grep,Glob,Edit</span><br><span class="line"></span><br><span class="line">测试修复：</span><br><span class="line">Read,Grep,Glob,Edit,Bash(npm test *),Bash(npm run typecheck)</span><br></pre></td></tr></table></figure>
+
+<p>不要为了省事使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Bash</span><br><span class="line">Edit</span><br><span class="line">mcp__*</span><br></pre></td></tr></table></figure>
+
+<p>宽泛允许会使无人值守任务难以审计。</p>
+<h3 id="5-2-dontAsk"><a href="#5-2-dontAsk" class="headerlink" title="5.2 dontAsk"></a>5.2 <code>dontAsk</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;只读检查当前差异&quot;</span> \</span><br><span class="line">  --permission-mode dontAsk \</span><br><span class="line">  --allowedTools <span class="string">&quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>dontAsk</code> 不会显示无法回答的权限提示，未允许操作会直接拒绝，适合 CI。提示中应告诉 Claude 在权限不足时报告缺口，而不是不断尝试替代路径。</p>
+<h3 id="5-3-acceptEdits"><a href="#5-3-acceptEdits" class="headerlink" title="5.3 acceptEdits"></a>5.3 <code>acceptEdits</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;应用 lint 自动修复&quot;</span> \</span><br><span class="line">  --permission-mode acceptEdits \</span><br><span class="line">  --allowedTools <span class="string">&quot;Bash(npm run lint -- --fix)&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>它允许文件编辑和部分常见文件命令，其他 shell 与网络仍需规则。</p>
+<h3 id="5-4-auto"><a href="#5-4-auto" class="headerlink" title="5.4 auto"></a>5.4 <code>auto</code></h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude -p <span class="string">&quot;修复全部 lint 错误&quot;</span> --permission-mode auto</span><br></pre></td></tr></table></figure>
+
+<p>Auto mode 只有账号、模型和组织策略满足条件时可用。非交互模式中如果分类器反复阻止，任务会中止，因为没有用户接管。</p>
+<h3 id="5-5-bypassPermissions"><a href="#5-5-bypassPermissions" class="headerlink" title="5.5 bypassPermissions"></a>5.5 <code>bypassPermissions</code></h3><p>官方只建议在额外隔离的环境中使用。一个最低要求包括：</p>
+<ul>
+<li>临时容器或 VM；</li>
+<li>仅挂载本任务目录；</li>
+<li>无个人主目录；</li>
+<li>无 SSH、云、包发布和生产凭据；</li>
+<li>网络默认关闭或严格 allowlist；</li>
+<li>运行后丢弃；</li>
+<li>输出和差异仍需审查。</li>
+</ul>
+<p>即使满足，也应优先尝试 <code>dontAsk</code> + 精确 Allow。</p>
+<h2 id="6-预算、超时与退出"><a href="#6-预算、超时与退出" class="headerlink" title="6. 预算、超时与退出"></a>6. 预算、超时与退出</h2><h3 id="6-1-限制-API-预算"><a href="#6-1-限制-API-预算" class="headerlink" title="6.1 限制 API 预算"></a>6.1 限制 API 预算</h3><p>API 计费场景可使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude --bare -p <span class="string">&quot;审查当前差异&quot;</span> \</span><br><span class="line">  --max-budget-usd 2.00 \</span><br><span class="line">  --output-format json</span><br></pre></td></tr></table></figure>
+
+<p>预算值应根据任务和组织策略确定。达到预算时任务可能未完成，下游不能把“进程有输出”当作成功。</p>
+<h3 id="6-2-外层超时"><a href="#6-2-外层超时" class="headerlink" title="6.2 外层超时"></a>6.2 外层超时</h3><p>除了 Claude Code 内部超时，CI 应设置 Job 级超时。需要区分：</p>
+<ul>
+<li>API 重试；</li>
+<li>MCP 启动；</li>
+<li>测试命令；</li>
+<li>后台子代理；</li>
+<li>整体任务。</li>
+</ul>
+<p>超时后保留 stderr、结构化结果、session ID 和差异，便于恢复。</p>
+<h3 id="6-3-后台任务"><a href="#6-3-后台任务" class="headerlink" title="6.3 后台任务"></a>6.3 后台任务</h3><p>在 <code>-p</code> 中启动的后台 Bash 进程会在最终结果后获得短暂宽限，然后被终止。不要用一次性 <code>-p</code> 长期托管开发服务器。</p>
+<p>后台子代理和 Workflow 会等待结果，但官方当前有默认等待上限。需要长时间常驻任务时使用合适的进程管理器，而不是依赖 Claude Code 子进程。</p>
+<h2 id="7-在脚本中继续会话"><a href="#7-在脚本中继续会话" class="headerlink" title="7. 在脚本中继续会话"></a>7. 在脚本中继续会话</h2><p>第一次运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">result_json=$(claude -p <span class="string">&quot;分析失败测试&quot;</span> --output-format json)</span><br><span class="line">session_id=$(<span class="built_in">printf</span> <span class="string">&#x27;%s&#x27;</span> <span class="string">&quot;<span class="variable">$result_json</span>&quot;</span> | jq -r <span class="string">&#x27;.session_id&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>继续：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude -p --resume <span class="string">&quot;<span class="variable">$session_id</span>&quot;</span> \</span><br><span class="line">  <span class="string">&quot;根据刚才的分析给出最小修复方案&quot;</span> \</span><br><span class="line">  --output-format json</span><br></pre></td></tr></table></figure>
+
+<p>注意：</p>
+<ul>
+<li><code>-p</code> 会话不一定出现在交互选择器中，但可用 session ID 恢复；</li>
+<li>从原任务目录运行；</li>
+<li>恢复时重新传入必要 <code>--settings</code>、MCP、插件和额外目录；</li>
+<li>自动化应保存 session ID，但不要解析内部 JSONL 转录格式；</li>
+<li>并行分支使用 <code>--fork-session</code>，避免消息交错。</li>
+</ul>
+<h2 id="8-CI-审查示例"><a href="#8-CI-审查示例" class="headerlink" title="8. CI 审查示例"></a>8. CI 审查示例</h2><p>目标：只读检查相对 <code>origin/main</code> 的差异，并输出结构化缺陷。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">git fetch origin main</span><br><span class="line"></span><br><span class="line">git diff --unified=80 origin/main...HEAD |</span><br><span class="line">  claude --bare -p \</span><br><span class="line">  <span class="string">&quot;你是 task-board 的只读审查器。</span></span><br><span class="line"><span class="string">   只报告会影响正确性、安全性、数据一致性或明确需求的问题。</span></span><br><span class="line"><span class="string">   每项必须包含文件、行、严重度、触发条件和影响。</span></span><br><span class="line"><span class="string">   不报告纯风格偏好。&quot;</span> \</span><br><span class="line">  --permission-mode dontAsk \</span><br><span class="line">  --output-format json \</span><br><span class="line">  --json-schema <span class="string">&#x27;&#123;</span></span><br><span class="line"><span class="string">    &quot;type&quot;:&quot;object&quot;,</span></span><br><span class="line"><span class="string">    &quot;properties&quot;:&#123;</span></span><br><span class="line"><span class="string">      &quot;findings&quot;:&#123;</span></span><br><span class="line"><span class="string">        &quot;type&quot;:&quot;array&quot;,</span></span><br><span class="line"><span class="string">        &quot;items&quot;:&#123;</span></span><br><span class="line"><span class="string">          &quot;type&quot;:&quot;object&quot;,</span></span><br><span class="line"><span class="string">          &quot;properties&quot;:&#123;</span></span><br><span class="line"><span class="string">            &quot;severity&quot;:&#123;&quot;type&quot;:&quot;string&quot;,&quot;enum&quot;:[&quot;high&quot;,&quot;medium&quot;,&quot;low&quot;]&#125;,</span></span><br><span class="line"><span class="string">            &quot;file&quot;:&#123;&quot;type&quot;:&quot;string&quot;&#125;,</span></span><br><span class="line"><span class="string">            &quot;line&quot;:&#123;&quot;type&quot;:&quot;integer&quot;&#125;,</span></span><br><span class="line"><span class="string">            &quot;summary&quot;:&#123;&quot;type&quot;:&quot;string&quot;&#125;,</span></span><br><span class="line"><span class="string">            &quot;impact&quot;:&#123;&quot;type&quot;:&quot;string&quot;&#125;</span></span><br><span class="line"><span class="string">          &#125;,</span></span><br><span class="line"><span class="string">          &quot;required&quot;:[&quot;severity&quot;,&quot;file&quot;,&quot;line&quot;,&quot;summary&quot;,&quot;impact&quot;]</span></span><br><span class="line"><span class="string">        &#125;</span></span><br><span class="line"><span class="string">      &#125;</span></span><br><span class="line"><span class="string">    &#125;,</span></span><br><span class="line"><span class="string">    &quot;required&quot;:[&quot;findings&quot;]</span></span><br><span class="line"><span class="string">  &#125;&#x27;</span> &gt; claude-review.json</span><br></pre></td></tr></table></figure>
+
+<p>安全设计：</p>
+<ul>
+<li>差异通过 stdin 提供，不授予 Bash；</li>
+<li>Bare mode 不加载开发者私人插件与 Hooks；</li>
+<li><code>dontAsk</code> 防止无人回答的提示；</li>
+<li>不授予 Edit；</li>
+<li>不提供 GitHub Token；</li>
+<li>结构化输出供后续程序处理；</li>
+<li>CI 仍需检查退出码和 JSON；</li>
+<li>AI 审查不是静态分析、测试和人工评审的替代品。</li>
+</ul>
+<h2 id="9-模型选择"><a href="#9-模型选择" class="headerlink" title="9. 模型选择"></a>9. 模型选择</h2><h3 id="9-1-使用别名"><a href="#9-1-使用别名" class="headerlink" title="9.1 使用别名"></a>9.1 使用别名</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --model sonnet</span><br></pre></td></tr></table></figure>
+
+<p>会话内：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/model</span><br><span class="line">/model opus</span><br></pre></td></tr></table></figure>
+
+<p>官方当前提供的常见选择包括：</p>
+<table>
+<thead>
+<tr>
+<th>别名</th>
+<th>典型用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>default</code></td>
+<td>账号或组织推荐默认</td>
+</tr>
+<tr>
+<td><code>best</code></td>
+<td>可用时选择最强推荐模型</td>
+</tr>
+<tr>
+<td><code>fable</code></td>
+<td>最长、最难的自主任务</td>
+</tr>
+<tr>
+<td><code>sonnet</code></td>
+<td>日常编码</td>
+</tr>
+<tr>
+<td><code>opus</code></td>
+<td>复杂推理</td>
+</tr>
+<tr>
+<td><code>haiku</code></td>
+<td>简单、快速、低成本任务</td>
+</tr>
+<tr>
+<td><code>opusplan</code></td>
+<td>Plan 使用 Opus，执行切换 Sonnet</td>
+</tr>
+</tbody></table>
+<p>别名解析会随提供商和时间变化。需要可重复性时使用组织批准的完整模型名，但同时建立退役和升级流程。</p>
+<h3 id="9-2-设置优先级"><a href="#9-2-设置优先级" class="headerlink" title="9.2 设置优先级"></a>9.2 设置优先级</h3><p>常见顺序：</p>
+<ol>
+<li>会话内 <code>/model</code>；</li>
+<li>启动参数 <code>--model</code>；</li>
+<li><code>ANTHROPIC_MODEL</code>；</li>
+<li>设置文件 <code>model</code>。</li>
+</ol>
+<p>恢复会话可能继续原模型，但命令行覆盖、模型退役、组织允许列表和第三方部署名会影响结果。</p>
+<h3 id="9-3-Effort"><a href="#9-3-Effort" class="headerlink" title="9.3 Effort"></a>9.3 Effort</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --model sonnet --effort high</span><br></pre></td></tr></table></figure>
+
+<p>会话内：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/effort</span><br></pre></td></tr></table></figure>
+
+<p>官方当前层级包括 <code>low</code>、<code>medium</code>、<code>high</code>、<code>xhigh</code> 和 <code>max</code>，具体取决于模型：</p>
+<ul>
+<li><code>low</code>：短小、明确、对智能不敏感；</li>
+<li><code>medium</code>：成本敏感且可接受能力折中；</li>
+<li><code>high</code>：多数复杂编码的平衡选择；</li>
+<li><code>xhigh</code>：更深推理、更高 token；</li>
+<li><code>max</code>：最难任务，可能出现收益递减和过度思考。</li>
+</ul>
+<p>不要把所有任务永久设为最高。通过实际正确率、延迟和成本评估。</p>
+<h2 id="10-成本与上下文"><a href="#10-成本与上下文" class="headerlink" title="10. 成本与上下文"></a>10. 成本与上下文</h2><h3 id="10-1-查看用量"><a href="#10-1-查看用量" class="headerlink" title="10.1 查看用量"></a>10.1 查看用量</h3><p>会话内：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/usage</span><br></pre></td></tr></table></figure>
+
+<p>API 计费时，JSON 输出还包含 <code>total_cost_usd</code> 和模型用量信息。订阅和组织环境的显示与计费方式可能不同。</p>
+<h3 id="10-2-降低消耗"><a href="#10-2-降低消耗" class="headerlink" title="10.2 降低消耗"></a>10.2 降低消耗</h3><p>官方建议的主要方向：</p>
+<ul>
+<li><code>/clear</code> 分隔无关任务；</li>
+<li><code>/compact</code> 压缩长会话；</li>
+<li>为提示限定目录和验证；</li>
+<li>用子代理承接高输出调查；</li>
+<li>把偶尔使用的说明从 <code>CLAUDE.md</code> 移到 Skill；</li>
+<li>断开不使用的 MCP；</li>
+<li>安装合适 LSP，减少粗放文件读取；</li>
+<li>让 Hook 预处理大日志；</li>
+<li>小任务选择合适模型和 Effort；</li>
+<li>并行 Agent 只用于可并行且收益足够的任务；</li>
+<li>为复杂任务提供验证，减少人工来回纠正。</li>
+</ul>
+<h3 id="10-3-为什么长会话越来越贵"><a href="#10-3-为什么长会话越来越贵" class="headerlink" title="10.3 为什么长会话越来越贵"></a>10.3 为什么长会话越来越贵</h3><p>每轮请求需要携带可见上下文。随着文件、命令输出和对话累积：</p>
+<ul>
+<li>输入 token 上升；</li>
+<li>压缩频率上升；</li>
+<li>无关内容降低判断质量；</li>
+<li>切换模型可能失去 Prompt Cache 命中；</li>
+<li>MCP 与扩展增加常驻描述。</li>
+</ul>
+<p>成本优化首先是上下文设计，不只是换更便宜模型。</p>
+<h2 id="11-系统排障顺序"><a href="#11-系统排障顺序" class="headerlink" title="11. 系统排障顺序"></a>11. 系统排障顺序</h2><h3 id="11-1-第一步：分类"><a href="#11-1-第一步：分类" class="headerlink" title="11.1 第一步：分类"></a>11.1 第一步：分类</h3><table>
+<thead>
+<tr>
+<th>症状</th>
+<th>首选入口</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>命令不存在、PATH、TLS、安装权限</td>
+<td>安装与登录排障</td>
+</tr>
+<tr>
+<td>OAuth、403、组织或云凭据</td>
+<td>认证排障</td>
+</tr>
+<tr>
+<td>设置、Hook、MCP、Skill 不生效</td>
+<td>配置调试</td>
+</tr>
+<tr>
+<td>429、5xx、模型不存在</td>
+<td>Error reference</td>
+</tr>
+<tr>
+<td>高 CPU、内存、卡住、搜索问题</td>
+<td>Troubleshooting</td>
+</tr>
+</tbody></table>
+<h3 id="11-2-第二步：版本与只读诊断"><a href="#11-2-第二步：版本与只读诊断" class="headerlink" title="11.2 第二步：版本与只读诊断"></a>11.2 第二步：版本与只读诊断</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --version</span><br><span class="line">claude doctor</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<ul>
+<li>是否多重安装；</li>
+<li>设置 JSON 是否有效；</li>
+<li>搜索工具是否工作；</li>
+<li>更新是否失败；</li>
+<li>PATH 指向哪一个二进制。</li>
+</ul>
+<h3 id="11-3-第三步：会话内可观察性"><a href="#11-3-第三步：会话内可观察性" class="headerlink" title="11.3 第三步：会话内可观察性"></a>11.3 第三步：会话内可观察性</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">/status</span><br><span class="line">/context</span><br><span class="line">/permissions</span><br><span class="line">/hooks</span><br><span class="line">/mcp</span><br><span class="line">/skills</span><br><span class="line">/doctor</span><br></pre></td></tr></table></figure>
+
+<p>不要直接删除配置。先确认“是否加载”和“从哪里加载”。</p>
+<h2 id="12-配置问题"><a href="#12-配置问题" class="headerlink" title="12. 配置问题"></a>12. 配置问题</h2><h3 id="12-1-设置优先级"><a href="#12-1-设置优先级" class="headerlink" title="12.1 设置优先级"></a>12.1 设置优先级</h3><p><code>settings.local.json</code> 会覆盖项目和用户标量。使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/status</span><br></pre></td></tr></table></figure>
+
+<p>查看 Setting sources。数组可能跨作用域合并，不能只看一个文件。</p>
+<h3 id="12-2-CLAUDE-md-未遵守"><a href="#12-2-CLAUDE-md-未遵守" class="headerlink" title="12.2 CLAUDE.md 未遵守"></a>12.2 <code>CLAUDE.md</code> 未遵守</h3><p>先看：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/context</span><br></pre></td></tr></table></figure>
+
+<p>若未出现：</p>
+<ul>
+<li>路径不正确；</li>
+<li>在子目录中，尚未读取匹配文件；</li>
+<li><code>--setting-sources</code> 排除了项目；</li>
+<li>Safe 或 Bare mode 关闭了自动加载。</li>
+</ul>
+<p>若已出现但未遵守：</p>
+<ul>
+<li>指令过长；</li>
+<li>表述含糊；</li>
+<li>多个文件冲突；</li>
+<li>内容属于偶发流程，应移到 Skill；</li>
+<li>需要硬性保证，应改用权限或 Hook。</li>
+</ul>
+<h3 id="12-3-Skill-不出现"><a href="#12-3-Skill-不出现" class="headerlink" title="12.3 Skill 不出现"></a>12.3 Skill 不出现</h3><p>正确路径：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">.claude/skills/&lt;name&gt;/SKILL.md</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>/skills</code> 检查。<code>disable-model-invocation: true</code> 的 Skill 不会自动触发。</p>
+<h3 id="12-4-Hook-不触发"><a href="#12-4-Hook-不触发" class="headerlink" title="12.4 Hook 不触发"></a>12.4 Hook 不触发</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --debug hooks</span><br></pre></td></tr></table></figure>
+
+<p>检查 matcher 是单个字符串、工具名大小写、脚本权限、JSON stdout 和设置文件位置。</p>
+<h3 id="12-5-MCP-不加载"><a href="#12-5-MCP-不加载" class="headerlink" title="12.5 MCP 不加载"></a>12.5 MCP 不加载</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/mcp</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">claude mcp list</span><br><span class="line">claude mcp get &lt;name&gt;</span><br><span class="line">claude --debug mcp</span><br></pre></td></tr></table></figure>
+
+<p>常见原因：</p>
+<ul>
+<li><code>.mcp.json</code> 放进 <code>.claude/</code>；</li>
+<li>写进 <code>settings.json</code>；</li>
+<li>local Server 在另一个项目注册；</li>
+<li>Project Server 未批准；</li>
+<li>stdio 使用相对脚本路径；</li>
+<li>OAuth 未完成；<br>-环境变量放错位置；</li>
+<li>启动超过默认超时。</li>
+</ul>
+<h2 id="13-使用-Safe-mode-定位定制问题"><a href="#13-使用-Safe-mode-定位定制问题" class="headerlink" title="13. 使用 Safe mode 定位定制问题"></a>13. 使用 Safe mode 定位定制问题</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --safe-mode</span><br></pre></td></tr></table></figure>
+
+<p>它会关闭 <code>CLAUDE.md</code>、Skills、插件、Hooks、MCP、自定义 Agent、输出风格和其他定制，但保留：</p>
+<ul>
+<li>认证；</li>
+<li>模型选择；</li>
+<li>内置工具；</li>
+<li>权限；</li>
+<li>Managed policy。</li>
+</ul>
+<p>如果问题消失，逐项检查：</p>
+<ol>
+<li><code>/context</code>；</li>
+<li><code>/hooks</code>；</li>
+<li><code>/mcp</code>；</li>
+<li><code>/skills</code>；</li>
+<li>插件；</li>
+<li>项目与本地设置。</li>
+</ol>
+<h3 id="13-1-完全独立配置目录"><a href="#13-1-完全独立配置目录" class="headerlink" title="13.1 完全独立配置目录"></a>13.1 完全独立配置目录</h3><p>macOS、Linux 或 WSL：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> -p /tmp/claude-clean</span><br><span class="line"><span class="built_in">cd</span> /tmp</span><br><span class="line">CLAUDE_CONFIG_DIR=/tmp/claude-clean claude</span><br></pre></td></tr></table></figure>
+
+<p>Windows PowerShell：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$cleanDir</span> = <span class="built_in">Join-Path</span> <span class="variable">$env:TEMP</span> <span class="string">&quot;claude-clean&quot;</span></span><br><span class="line"><span class="built_in">New-Item</span> <span class="literal">-ItemType</span> Directory <span class="literal">-Path</span> <span class="variable">$cleanDir</span> <span class="literal">-Force</span> | <span class="built_in">Out-Null</span></span><br><span class="line"><span class="variable">$env:CLAUDE_CONFIG_DIR</span> = <span class="variable">$cleanDir</span></span><br><span class="line"><span class="built_in">Set-Location</span> <span class="variable">$env:TEMP</span></span><br><span class="line">claude</span><br></pre></td></tr></table></figure>
+
+<p>该方式会绕开通常的用户配置；Linux 和 Windows 可能需要重新登录。Managed policy 仍可生效。测试结束后不要把临时配置当作长期主配置。</p>
+<h2 id="14-性能、卡住与搜索"><a href="#14-性能、卡住与搜索" class="headerlink" title="14. 性能、卡住与搜索"></a>14. 性能、卡住与搜索</h2><h3 id="14-1-高-CPU-或内存"><a href="#14-1-高-CPU-或内存" class="headerlink" title="14.1 高 CPU 或内存"></a>14.1 高 CPU 或内存</h3><p>依次尝试：</p>
+<ol>
+<li><code>/compact</code>；</li>
+<li>在主要任务之间重启；</li>
+<li>忽略大型生成目录；</li>
+<li><code>claude --safe-mode</code> 排除扩展；</li>
+<li><code>/doctor</code>。</li>
+</ol>
+<p>必要时 <code>/heapdump</code> 会生成堆快照。官方警告堆快照包含进程中的所有字符串，可能包括对话和凭据，不得公开上传；报告问题时优先分享不含内容的 diagnostics JSON。</p>
+<h3 id="14-2-命令卡住"><a href="#14-2-命令卡住" class="headerlink" title="14.2 命令卡住"></a>14.2 命令卡住</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Ctrl+C</span><br></pre></td></tr></table></figure>
+
+<p>关闭后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --resume</span><br></pre></td></tr></table></figure>
+
+<p>如果反复卡在同一 Hook、MCP 或工具，使用 Debug 和 Safe mode 定位，而不是无限重试。</p>
+<h3 id="14-3-搜索不到文件"><a href="#14-3-搜索不到文件" class="headerlink" title="14.3 搜索不到文件"></a>14.3 搜索不到文件</h3><p>Claude Code 通常自带 ripgrep。内置版本异常时安装系统版：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Ubuntu/Debian</span></span><br><span class="line"><span class="built_in">sudo</span> apt install ripgrep</span><br><span class="line"></span><br><span class="line"><span class="comment"># macOS</span></span><br><span class="line">brew install ripgrep</span><br></pre></td></tr></table></figure>
+
+<p>Windows：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">winget install BurntSushi.ripgrep.MSVC</span><br></pre></td></tr></table></figure>
+
+<p>设置：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> USE_BUILTIN_RIPGREP=0</span><br></pre></td></tr></table></figure>
+
+<p>再运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude doctor</span><br></pre></td></tr></table></figure>
+
+<p>确认 Search 指向系统 ripgrep。</p>
+<p>WSL 项目位于 <code>/mnt/c</code> 时可能搜索较慢或结果不完整，优先移动到 <code>/home</code> 或使用 Windows 原生 Claude Code。</p>
+<h3 id="14-4-自动压缩抖动"><a href="#14-4-自动压缩抖动" class="headerlink" title="14.4 自动压缩抖动"></a>14.4 自动压缩抖动</h3><p>错误表明压缩后又立即被超大文件或输出填满。处理：</p>
+<ul>
+<li>分段读文件；</li>
+<li>只保留需要的日志；</li>
+<li>使用子代理；</li>
+<li><code>/compact</code> 指定保留内容；</li>
+<li>无需历史时 <code>/clear</code>。</li>
+</ul>
+<h2 id="15-日常维护清单"><a href="#15-日常维护清单" class="headerlink" title="15. 日常维护清单"></a>15. 日常维护清单</h2><p>每周或版本升级后：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --version</span><br><span class="line">claude doctor</span><br></pre></td></tr></table></figure>
+
+<p>会话内：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/doctor</span><br><span class="line">/usage</span><br><span class="line">/context</span><br><span class="line">/plugin</span><br><span class="line">/mcp</span><br></pre></td></tr></table></figure>
+
+<p>检查：</p>
+<ul>
+<li>是否需要更新；</li>
+<li>是否存在无效设置；</li>
+<li>是否有未使用插件；</li>
+<li>MCP 是否仍必要；</li>
+<li><code>CLAUDE.md</code> 是否过长；</li>
+<li>Skills 是否重复；</li>
+<li>Allow 规则是否过宽；</li>
+<li>Auto memory 是否含过期或敏感内容；</li>
+<li>工作树是否残留重要未提交工作；</li>
+<li>CI 模型、预算和结构化输出是否仍符合当前版本。</li>
+</ul>
+<h2 id="16-系列总结"><a href="#16-系列总结" class="headerlink" title="16. 系列总结"></a>16. 系列总结</h2><p>完整掌握 Claude Code CLI，核心不是记住所有命令，而是建立一套稳定操作模型：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">正确目录与可信配置</span><br><span class="line">        ↓</span><br><span class="line">明确目标、范围和验证</span><br><span class="line">        ↓</span><br><span class="line">探索—规划—实现—验证</span><br><span class="line">        ↓</span><br><span class="line">用 CLAUDE.md 和 Rules 提供项目上下文</span><br><span class="line">        ↓</span><br><span class="line">用权限、Hook 与沙箱落实边界</span><br><span class="line">        ↓</span><br><span class="line">用会话、检查点、Git 和 worktree 管理状态</span><br><span class="line">        ↓</span><br><span class="line">用 Skill、子代理、MCP 和插件按需扩展</span><br><span class="line">        ↓</span><br><span class="line">用 Bare、结构化输出和最小权限进行自动化</span><br><span class="line">        ↓</span><br><span class="line">用 /context、/doctor、Safe mode 和 Debug 排障</span><br></pre></td></tr></table></figure>
+
+<p>随着版本更新，应优先查阅官方文档、当前 <code>claude --help</code>、会话内 <code>/help</code> 和 Changelog。第三方教程适合提供经验，但不应替代官方命令语义、权限边界和安全说明。</p>
+<h2 id="17-CLI-命令索引"><a href="#17-CLI-命令索引" class="headerlink" title="17. CLI 命令索引"></a>17. CLI 命令索引</h2><p>Claude Code 的命令面会随版本、平台、套餐和登录方式变化。下面不是替代 <code>--help</code> 的静态全量清单，而是按用途整理的检索入口。遇到本文未列出的参数时，应依次运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">claude --<span class="built_in">help</span></span><br><span class="line">claude &lt;subcommand&gt; --<span class="built_in">help</span></span><br></pre></td></tr></table></figure>
+
+<p>进入会话后，输入 <code>/</code> 可以浏览当前环境实际可用的全部命令，输入 <code>/help</code> 查看帮助。官方 Commands 页面同时标注了版本差异与可用性条件。</p>
+<h3 id="17-1-Shell-子命令"><a href="#17-1-Shell-子命令" class="headerlink" title="17.1 Shell 子命令"></a>17.1 Shell 子命令</h3><table>
+<thead>
+<tr>
+<th>子命令</th>
+<th>主要用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>claude [prompt]</code></td>
+<td>启动交互会话，可附带第一条任务</td>
+</tr>
+<tr>
+<td><code>claude auth</code></td>
+<td>管理登录与认证</td>
+</tr>
+<tr>
+<td><code>claude doctor</code></td>
+<td>检查安装和当前目录配置；会话内 <code>/doctor</code> 还能引导修复</td>
+</tr>
+<tr>
+<td><code>claude install [target]</code></td>
+<td>安装原生构建，可指定稳定版、最新版或具体版本</td>
+</tr>
+<tr>
+<td><code>claude update</code></td>
+<td>检查并安装可用更新</td>
+</tr>
+<tr>
+<td><code>claude mcp</code></td>
+<td>配置和管理 MCP 服务器</td>
+</tr>
+<tr>
+<td><code>claude plugin</code></td>
+<td>管理插件</td>
+</tr>
+<tr>
+<td><code>claude project</code></td>
+<td>管理 Claude Code 项目状态</td>
+</tr>
+<tr>
+<td><code>claude agents</code></td>
+<td>查看和管理后台代理会话</td>
+</tr>
+<tr>
+<td><code>claude setup-token</code></td>
+<td>为支持的 Claude 订阅配置长期认证令牌</td>
+</tr>
+<tr>
+<td><code>claude auto-mode</code></td>
+<td>查看或重置 Auto mode 分类器配置</td>
+</tr>
+<tr>
+<td><code>claude gateway</code></td>
+<td>运行企业认证或遥测网关；只适用于相应的组织部署</td>
+</tr>
+<tr>
+<td><code>claude ultrareview</code></td>
+<td>发起云端多代理代码审查；是否可用取决于账户、套餐和当前版本</td>
+</tr>
+</tbody></table>
+<p>例如，查询 MCP 子命令的精确参数：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude mcp --<span class="built_in">help</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="17-2-启动参数分组"><a href="#17-2-启动参数分组" class="headerlink" title="17.2 启动参数分组"></a>17.2 启动参数分组</h3><table>
+<thead>
+<tr>
+<th>目标</th>
+<th>主要参数</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>增加工作目录</td>
+<td><code>--add-dir</code></td>
+</tr>
+<tr>
+<td>选择代理</td>
+<td><code>--agent</code>、<code>--agents</code></td>
+</tr>
+<tr>
+<td>控制内置工具</td>
+<td><code>--tools</code>、<code>--allowedTools</code>、<code>--disallowedTools</code></td>
+</tr>
+<tr>
+<td>选择权限模式</td>
+<td><code>--permission-mode</code></td>
+</tr>
+<tr>
+<td>非交互调用</td>
+<td><code>-p</code>、<code>--input-format</code>、<code>--output-format</code>、<code>--json-schema</code></td>
+</tr>
+<tr>
+<td>流式事件</td>
+<td><code>--include-partial-messages</code>、<code>--include-hook-events</code>、<code>--forward-subagent-text</code></td>
+</tr>
+<tr>
+<td>会话恢复与分支</td>
+<td><code>--continue</code>、<code>--resume</code>、<code>--fork-session</code>、<code>--session-id</code>、<code>--from-pr</code>、<code>--name</code></td>
+</tr>
+<tr>
+<td>会话持久化</td>
+<td><code>--no-session-persistence</code></td>
+</tr>
+<tr>
+<td>选择模型与推理强度</td>
+<td><code>--model</code>、<code>--effort</code>、<code>--fallback-model</code></td>
+</tr>
+<tr>
+<td>成本上限</td>
+<td><code>--max-budget-usd</code></td>
+</tr>
+<tr>
+<td>临时配置</td>
+<td><code>--settings</code>、<code>--setting-sources</code></td>
+</tr>
+<tr>
+<td>临时系统指令</td>
+<td><code>--system-prompt</code>、<code>--append-system-prompt</code></td>
+</tr>
+<tr>
+<td>诊断</td>
+<td><code>--debug</code>、<code>--debug-file</code>、<code>--verbose</code>、<code>--safe-mode</code></td>
+</tr>
+<tr>
+<td>最小化脚本环境</td>
+<td><code>--bare</code></td>
+</tr>
+<tr>
+<td>MCP 隔离</td>
+<td><code>--mcp-config</code>、<code>--strict-mcp-config</code></td>
+</tr>
+<tr>
+<td>临时插件</td>
+<td><code>--plugin-dir</code>、<code>--plugin-url</code></td>
+</tr>
+<tr>
+<td>Git 隔离</td>
+<td><code>--worktree</code>，以及配套的 <code>--tmux</code></td>
+</tr>
+<tr>
+<td>后台运行</td>
+<td><code>--background</code></td>
+</tr>
+<tr>
+<td>可访问性</td>
+<td><code>--ax-screen-reader</code></td>
+</tr>
+<tr>
+<td>可选外部集成</td>
+<td><code>--ide</code>、<code>--chrome</code>、<code>--remote-control</code></td>
+</tr>
+</tbody></table>
+<p>以下两个参数会解除权限保护，不能仅为减少确认次数而使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">--allow-dangerously-skip-permissions</span><br><span class="line">--dangerously-skip-permissions</span><br></pre></td></tr></table></figure>
+
+<p>官方帮助只建议在<strong>无互联网访问的隔离沙箱</strong>中考虑它们。即使在 CI 中，也应优先使用 <code>dontAsk</code>、精确的 Allow&#x2F;Deny 规则和系统级沙箱。</p>
+<h3 id="17-3-会话内命令分组"><a href="#17-3-会话内命令分组" class="headerlink" title="17.3 会话内命令分组"></a>17.3 会话内命令分组</h3><table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>常用命令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>初始化与状态</td>
+<td><code>/init</code>、<code>/status</code>、<code>/doctor</code>、<code>/help</code></td>
+</tr>
+<tr>
+<td>工作边界</td>
+<td><code>/permissions</code>、<code>/config</code>、<code>/add-dir</code>、<code>/cd</code></td>
+</tr>
+<tr>
+<td>规划与执行</td>
+<td><code>/plan</code>、<code>/model</code>、<code>/effort</code>、<code>/tasks</code></td>
+</tr>
+<tr>
+<td>上下文管理</td>
+<td><code>/context</code>、<code>/compact</code>、<code>/clear</code>、<code>/btw</code></td>
+</tr>
+<tr>
+<td>会话管理</td>
+<td><code>/resume</code>、<code>/branch</code>、<code>/fork</code>、<code>/rename</code>、<code>/rewind</code></td>
+</tr>
+<tr>
+<td>查看与验证</td>
+<td><code>/diff</code>、<code>/verify</code>、<code>/review</code>、<code>/security-review</code></td>
+</tr>
+<tr>
+<td>扩展</td>
+<td><code>/memory</code>、<code>/mcp</code>、<code>/plugin</code>、<code>/hooks</code></td>
+</tr>
+<tr>
+<td>监控与成本</td>
+<td><code>/usage</code>、<code>/background</code>、<code>/tasks</code></td>
+</tr>
+<tr>
+<td>认证与反馈</td>
+<td><code>/login</code>、<code>/logout</code>、<code>/bug</code></td>
+</tr>
+</tbody></table>
+<p><code>/agents</code> 的当前行为尤其需要注意：从 Claude Code <code>2.1.198</code> 起，它不再打开子代理创建向导，而是提示用户直接要求 Claude 创建或管理子代理，或编辑 <code>.claude/agents/</code>、<code>~/.claude/agents/</code>。这类版本敏感行为应以当前 Commands 页面为准。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/headless">Run Claude Code programmatically</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/cli-reference">Claude Code CLI reference</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/commands">Claude Code Commands</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/model-config">Model configuration</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/costs">Manage costs effectively</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/debug-your-config">Debug your configuration</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/troubleshooting">Troubleshooting</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/troubleshoot-install">Troubleshoot installation and login</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/env-vars">Environment variables</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/changelog">Claude Code changelog</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/">https://lx-cel.github.io/2026/07/25/Claude-Code终端使用指南（六）—非交互自动化、成本与故障排查/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/Claude-Code/">Claude Code</a><a class="post-meta__tags" href="/tags/AI%E7%BC%96%E7%A8%8B/">AI编程</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a><a class="post-meta__tags" href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/">自动化</a></div><div class="post-share"><div class="social-share" data-image="/img/52.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/" title="mattpocock/skills—面向真实工程的AI编程工作流"><img class="cover" src="/img/51.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">mattpocock/skills—面向真实工程的AI编程工作流</div></div><div class="info-2"><div class="info-item-1">mattpocock/skills 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。 如果是第一次接触这个项目，可以先记住三个答案：  它解决什么问题？ 它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任务拆得无法独立验收、实现偏离规格，以及复杂缺陷只能靠猜。  第一次应该安装哪些 Skill？ 使用 Claude Code 原生插件时直接安装整个插件即可。真正需要先学会的，是本文重点介绍的 10 个高频入口；grilling、domain-modeling、tdd 和 code-review 会由主流程在内部调用。  面对一个任务应该从哪个 Skill 开始？ 第一次在仓库中使用先运行 /setup-matt-pocock-skills；不知道如何选择流程时运行 /ask-matt；如果需求本身还不清楚，通常从 /grill-with-docs 开始，而不是直接...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/" title="Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件"><img class="cover" src="/img/51.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</div></div><div class="info-2"><div class="info-item-1">Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 /fix-issue Skill； 创建只读 security-reviewer 子代理； 配置编辑后格式化和保护迁移文件的 Hooks； 连接 Claude Code 官方文档 MCP； 说明何时使用插件与代码智能插件。   0....</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E5%AE%89%E8%A3%85%E3%80%81%E8%AE%A4%E8%AF%81%E4%B8%8E%E9%A6%96%E6%AC%A1%E4%BC%9A%E8%AF%9D/" title="Claude Code终端使用指南（一）—安装、认证与首次会话"><img class="cover" src="/img/53.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（一）—安装、认证与首次会话</div></div><div class="info-2"><div class="info-item-1">Claude Code 是 Anthropic 提供的智能编程代理。它可以在终端中读取项目文件、搜索代码、编辑文件、运行命令，并围绕测试或构建结果继续迭代。它与 claude.ai 的普通聊天界面、Claude Desktop 以及 IDE 插件并不是同一个使用入口。本系列只讨论在本地终端中通过 claude 命令启动的 Claude Code CLI。 本文是系列的第一篇，介绍系统要求、安装方式、认证、版本更新、首次启动和基础交互。后续文章依次讨论：  核心工作流与提示策略； 项目记忆、配置、权限与沙箱； 会话、上下文、Git 与并行开发； Skills、子代理、Hooks、MCP 与插件； 非交互自动化、成本控制与故障排查。  系列以“能够独立、可靠地在终端中使用 Claude Code 完成真实项目工作”为范围，覆盖安装认证、交互工作流、项目配置、安全边界、状态管理、并行开发、扩展机制、脚本化和排障。Claude Desktop、IDE 插件和 Claude Code on the web...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/" title="Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱"><img class="cover" src="/img/55.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱</div></div><div class="info-2"><div class="info-item-1">Claude Code 的项目定制包含两类本质不同的机制：  CLAUDE.md、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断； 设置、权限规则、Hooks 和沙箱限制工具实际能做什么。  前者是指导，后者才是执行边界。把“不要读取 .env”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。 本文继续使用虚构的 TypeScript 项目 task-board，建立一套可提交给团队的 Claude Code 项目配置。内容包括项目记忆、自动记忆、设置作用域、权限模式、规则语法、敏感文件保护、沙箱和提示注入防护。  0. 配置决策速查   需求 应使用的机制    每个会话都应知道构建命令和架构约定 CLAUDE.md   只处理特定路径时才需要的规则 .claude/rules/*.md 的...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E6%8F%90%E7%A4%BA%E7%AD%96%E7%95%A5/" title="Claude Code终端使用指南（二）—核心工作流与提示策略"><img class="cover" src="/img/54.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（二）—核心工作流与提示策略</div></div><div class="info-2"><div class="info-item-1">Claude Code 的效果并不只取决于模型能力。启动位置、任务边界、提供的上下文、验证信号和会话中的纠偏方式，都会影响最终结果。官方最佳实践将上下文窗口视为最重要的有限资源，并推荐为 Claude 提供可以自行执行的验证手段。 本文延续第一篇中的虚构 TypeScript 项目 task-board，以“为创建任务接口增加幂等性”为端到端场景，介绍如何让 Claude Code 从理解代码开始，经过规划、实现、测试和审查，最终产出可验证的修改。 本文讨论的是终端 CLI。文中的项目名、接口和文件路径均为虚构示例，不代表真实可访问的仓库。  0. 推荐工作流速查0.1 复杂任务12cd /path/to/task-boardclaude --permission-mode plan --name task-idempotency  在规划模式中： 123只读分析 POST /tasks 的调用链、数据库写入位置、错误处理和现有测试。找出项目中是否已有幂等键、唯一约束或请求去重模式。暂时不要修改文件。  继续要求规划： 1234目标：支持 Idempotency-Key...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/" title="Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</div></div><div class="info-2"><div class="info-item-1">Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 /fix-issue Skill； 创建只读 security-reviewer 子代理； 配置编辑后格式化和保护迁移文件的 Hooks； 连接 Claude Code 官方文档 MCP； 说明何时使用插件与代码智能插件。   0....</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a><a class="pagination-related" href="/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/" title="mattpocock&#x2F;skills—面向真实工程的AI编程工作流"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-26</div><div class="info-item-2">mattpocock&#x2F;skills—面向真实工程的AI编程工作流</div></div><div class="info-2"><div class="info-item-1">mattpocock/skills 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。 如果是第一次接触这个项目，可以先记住三个答案：  它解决什么问题？ 它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任务拆得无法独立验收、实现偏离规格，以及复杂缺陷只能靠猜。  第一次应该安装哪些 Skill？ 使用 Claude Code 原生插件时直接安装整个插件即可。真正需要先学会的，是本文重点介绍的 10 个高频入口；grilling、domain-modeling、tdd 和 code-review 会由主流程在内部调用。  面对一个任务应该从哪个 Skill 开始？ 第一次在仓库中使用先运行 /setup-matt-pocock-skills；不知道如何选择流程时运行 /ask-matt；如果需求本身还不清楚，通常从 /grill-with-docs 开始，而不是直接...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0-%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%8E%E6%8E%92%E9%9A%9C%E9%80%9F%E6%9F%A5"><span class="toc-text">0. 自动化与排障速查</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0-1-%E4%B8%80%E6%AC%A1%E6%80%A7%E6%9F%A5%E8%AF%A2"><span class="toc-text">0.1 一次性查询</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0-2-JSON-%E8%BE%93%E5%87%BA"><span class="toc-text">0.2 JSON 输出</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0-3-JSON-Schema"><span class="toc-text">0.3 JSON Schema</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0-4-%E6%B5%81%E5%BC%8F%E8%BE%93%E5%87%BA"><span class="toc-text">0.4 流式输出</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0-5-%E8%AF%8A%E6%96%AD"><span class="toc-text">0.5 诊断</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E4%BA%A4%E4%BA%92%E6%A8%A1%E5%BC%8F%E4%B8%8E%E9%9D%9E%E4%BA%A4%E4%BA%92%E6%A8%A1%E5%BC%8F"><span class="toc-text">1. 交互模式与非交互模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%BA%A4%E4%BA%92%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.1 交互模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E9%9D%9E%E4%BA%A4%E4%BA%92%E6%A8%A1%E5%BC%8F"><span class="toc-text">1.2 非交互模式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-bare%EF%BC%9A%E8%84%9A%E6%9C%AC%E7%9A%84%E6%8E%A8%E8%8D%90%E8%B5%B7%E7%82%B9"><span class="toc-text">2. --bare：脚本的推荐起点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8"><span class="toc-text">2.1 为什么使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%98%BE%E5%BC%8F%E6%8F%90%E4%BE%9B%E9%9C%80%E8%A6%81%E7%9A%84%E5%86%85%E5%AE%B9"><span class="toc-text">2.2 显式提供需要的内容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-Bare-mode-%E7%9A%84%E8%AE%A4%E8%AF%81%E5%B7%AE%E5%BC%82"><span class="toc-text">2.3 Bare mode 的认证差异</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-safe-mode-%E4%B8%8D%E6%98%AF-bare"><span class="toc-text">2.4 --safe-mode 不是 --bare</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E8%BE%93%E5%85%A5%E4%B8%8E%E7%AE%A1%E9%81%93"><span class="toc-text">3. 输入与管道</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E6%A0%87%E5%87%86%E8%BE%93%E5%85%A5"><span class="toc-text">3.1 标准输入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%A2%84%E5%A4%84%E7%90%86%E6%95%B0%E6%8D%AE"><span class="toc-text">3.2 预处理数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E9%87%8D%E5%AE%9A%E5%90%91%E8%BE%93%E5%87%BA"><span class="toc-text">3.3 重定向输出</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E8%BE%93%E5%87%BA%E6%A0%BC%E5%BC%8F"><span class="toc-text">4. 输出格式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-Text"><span class="toc-text">4.1 Text</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-JSON"><span class="toc-text">4.2 JSON</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-JSON-Schema"><span class="toc-text">4.3 JSON Schema</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-Stream-JSON"><span class="toc-text">4.4 Stream JSON</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E8%87%AA%E5%8A%A8%E5%8C%96%E4%B8%AD%E7%9A%84%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90"><span class="toc-text">5. 自动化中的工具权限</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-allowedTools"><span class="toc-text">5.1 --allowedTools</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-dontAsk"><span class="toc-text">5.2 dontAsk</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-acceptEdits"><span class="toc-text">5.3 acceptEdits</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-auto"><span class="toc-text">5.4 auto</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-bypassPermissions"><span class="toc-text">5.5 bypassPermissions</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E9%A2%84%E7%AE%97%E3%80%81%E8%B6%85%E6%97%B6%E4%B8%8E%E9%80%80%E5%87%BA"><span class="toc-text">6. 预算、超时与退出</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E9%99%90%E5%88%B6-API-%E9%A2%84%E7%AE%97"><span class="toc-text">6.1 限制 API 预算</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E5%A4%96%E5%B1%82%E8%B6%85%E6%97%B6"><span class="toc-text">6.2 外层超时</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E5%90%8E%E5%8F%B0%E4%BB%BB%E5%8A%A1"><span class="toc-text">6.3 后台任务</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E5%9C%A8%E8%84%9A%E6%9C%AC%E4%B8%AD%E7%BB%A7%E7%BB%AD%E4%BC%9A%E8%AF%9D"><span class="toc-text">7. 在脚本中继续会话</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-CI-%E5%AE%A1%E6%9F%A5%E7%A4%BA%E4%BE%8B"><span class="toc-text">8. CI 审查示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-%E6%A8%A1%E5%9E%8B%E9%80%89%E6%8B%A9"><span class="toc-text">9. 模型选择</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-%E4%BD%BF%E7%94%A8%E5%88%AB%E5%90%8D"><span class="toc-text">9.1 使用别名</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E8%AE%BE%E7%BD%AE%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">9.2 设置优先级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-3-Effort"><span class="toc-text">9.3 Effort</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#10-%E6%88%90%E6%9C%AC%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87"><span class="toc-text">10. 成本与上下文</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#10-1-%E6%9F%A5%E7%9C%8B%E7%94%A8%E9%87%8F"><span class="toc-text">10.1 查看用量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-2-%E9%99%8D%E4%BD%8E%E6%B6%88%E8%80%97"><span class="toc-text">10.2 降低消耗</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-3-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%95%BF%E4%BC%9A%E8%AF%9D%E8%B6%8A%E6%9D%A5%E8%B6%8A%E8%B4%B5"><span class="toc-text">10.3 为什么长会话越来越贵</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#11-%E7%B3%BB%E7%BB%9F%E6%8E%92%E9%9A%9C%E9%A1%BA%E5%BA%8F"><span class="toc-text">11. 系统排障顺序</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#11-1-%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E5%88%86%E7%B1%BB"><span class="toc-text">11.1 第一步：分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-2-%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E7%89%88%E6%9C%AC%E4%B8%8E%E5%8F%AA%E8%AF%BB%E8%AF%8A%E6%96%AD"><span class="toc-text">11.2 第二步：版本与只读诊断</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#11-3-%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E4%BC%9A%E8%AF%9D%E5%86%85%E5%8F%AF%E8%A7%82%E5%AF%9F%E6%80%A7"><span class="toc-text">11.3 第三步：会话内可观察性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#12-%E9%85%8D%E7%BD%AE%E9%97%AE%E9%A2%98"><span class="toc-text">12. 配置问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#12-1-%E8%AE%BE%E7%BD%AE%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">12.1 设置优先级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-2-CLAUDE-md-%E6%9C%AA%E9%81%B5%E5%AE%88"><span class="toc-text">12.2 CLAUDE.md 未遵守</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-3-Skill-%E4%B8%8D%E5%87%BA%E7%8E%B0"><span class="toc-text">12.3 Skill 不出现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-4-Hook-%E4%B8%8D%E8%A7%A6%E5%8F%91"><span class="toc-text">12.4 Hook 不触发</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#12-5-MCP-%E4%B8%8D%E5%8A%A0%E8%BD%BD"><span class="toc-text">12.5 MCP 不加载</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#13-%E4%BD%BF%E7%94%A8-Safe-mode-%E5%AE%9A%E4%BD%8D%E5%AE%9A%E5%88%B6%E9%97%AE%E9%A2%98"><span class="toc-text">13. 使用 Safe mode 定位定制问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#13-1-%E5%AE%8C%E5%85%A8%E7%8B%AC%E7%AB%8B%E9%85%8D%E7%BD%AE%E7%9B%AE%E5%BD%95"><span class="toc-text">13.1 完全独立配置目录</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#14-%E6%80%A7%E8%83%BD%E3%80%81%E5%8D%A1%E4%BD%8F%E4%B8%8E%E6%90%9C%E7%B4%A2"><span class="toc-text">14. 性能、卡住与搜索</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#14-1-%E9%AB%98-CPU-%E6%88%96%E5%86%85%E5%AD%98"><span class="toc-text">14.1 高 CPU 或内存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#14-2-%E5%91%BD%E4%BB%A4%E5%8D%A1%E4%BD%8F"><span class="toc-text">14.2 命令卡住</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#14-3-%E6%90%9C%E7%B4%A2%E4%B8%8D%E5%88%B0%E6%96%87%E4%BB%B6"><span class="toc-text">14.3 搜索不到文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#14-4-%E8%87%AA%E5%8A%A8%E5%8E%8B%E7%BC%A9%E6%8A%96%E5%8A%A8"><span class="toc-text">14.4 自动压缩抖动</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#15-%E6%97%A5%E5%B8%B8%E7%BB%B4%E6%8A%A4%E6%B8%85%E5%8D%95"><span class="toc-text">15. 日常维护清单</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#16-%E7%B3%BB%E5%88%97%E6%80%BB%E7%BB%93"><span class="toc-text">16. 系列总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#17-CLI-%E5%91%BD%E4%BB%A4%E7%B4%A2%E5%BC%95"><span class="toc-text">17. CLI 命令索引</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#17-1-Shell-%E5%AD%90%E5%91%BD%E4%BB%A4"><span class="toc-text">17.1 Shell 子命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#17-2-%E5%90%AF%E5%8A%A8%E5%8F%82%E6%95%B0%E5%88%86%E7%BB%84"><span class="toc-text">17.2 启动参数分组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#17-3-%E4%BC%9A%E8%AF%9D%E5%86%85%E5%91%BD%E4%BB%A4%E5%88%86%E7%BB%84"><span class="toc-text">17.3 会话内命令分组</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战">C++上机考试冲刺（六）—设计题、业务模拟与三题实战</a><time datetime="2026-08-08T09:02:00.000Z" title="发表于 2026-08-08 17:02:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式">C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式</a><time datetime="2026-08-08T09:01:00.000Z" title="发表于 2026-08-08 17:01:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（四）—排序、查找与二分模板"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板">C++上机考试冲刺（四）—排序、查找与二分模板</a><time datetime="2026-08-08T09:00:00.000Z" title="发表于 2026-08-08 17:00:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（三）—STL容器与常用数据结构"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构">C++上机考试冲刺（三）—STL容器与常用数据结构</a><time datetime="2026-08-08T08:59:00.000Z" title="发表于 2026-08-08 16:59:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流">C++上机考试冲刺（二）—字符串、进制、位运算与字节流</a><time datetime="2026-08-08T08:58:00.000Z" title="发表于 2026-08-08 16:58:00">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2026 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="输入要搜索的文章..." type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>

@@ -1,0 +1,848 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱 | 星海流光</title><meta name="author" content="秋风、萧瑟"><meta name="copyright" content="秋风、萧瑟"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Claude Code 的项目定制包含两类本质不同的机制：  CLAUDE.md、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断； 设置、权限规则、Hooks 和沙箱限制工具实际能做什么。  前者是指导，后者才是执行边界。把“不要读取 .env”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。 本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱">
+<meta property="og:url" content="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/index.html">
+<meta property="og:site_name" content="星海流光">
+<meta property="og:description" content="Claude Code 的项目定制包含两类本质不同的机制：  CLAUDE.md、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断； 设置、权限规则、Hooks 和沙箱限制工具实际能做什么。  前者是指导，后者才是执行边界。把“不要读取 .env”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。 本">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://lx-cel.github.io/img/55.png">
+<meta property="article:published_time" content="2026-07-25T01:20:00.000Z">
+<meta property="article:modified_time" content="2026-07-24T16:00:00.000Z">
+<meta property="article:author" content="秋风、萧瑟">
+<meta property="article:tag" content="AI编程">
+<meta property="article:tag" content="Claude Code">
+<meta property="article:tag" content="学习笔记">
+<meta property="article:tag" content="开发工具">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://lx-cel.github.io/img/55.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  isShuoshuo: false
+}</script><meta name="generator" content="Hexo 8.1.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/Cecilia.jpeg" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/55.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">星海流光</span></a><a class="nav-page-title" href="/"><span class="site-name">Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> Home</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> List</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> Music</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> Movie</span></a></li></ul></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Claude Code终端使用指南（三）—项目记忆、配置、权限与沙箱</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-07-25T01:20:00.000Z" title="发表于 2026-07-25 09:20:00">2026-07-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-07-24T16:00:00.000Z" title="更新于 2026-07-25 00:00:00">2026-07-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">5.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>19分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>Claude Code 的项目定制包含两类本质不同的机制：</p>
+<ul>
+<li><code>CLAUDE.md</code>、Rules 和 Skills 向模型提供上下文，帮助它作出正确判断；</li>
+<li>设置、权限规则、Hooks 和沙箱限制工具实际能做什么。</li>
+</ul>
+<p>前者是指导，后者才是执行边界。把“不要读取 <code>.env</code>”写进自然语言指令并不能形成安全保证；需要使用 Read deny 规则、PreToolUse Hook 或操作系统级沙箱执行限制。</p>
+<p>本文继续使用虚构的 TypeScript 项目 <code>task-board</code>，建立一套可提交给团队的 Claude Code 项目配置。内容包括项目记忆、自动记忆、设置作用域、权限模式、规则语法、敏感文件保护、沙箱和提示注入防护。</p>
+<hr>
+<h2 id="0-配置决策速查"><a href="#0-配置决策速查" class="headerlink" title="0. 配置决策速查"></a>0. 配置决策速查</h2><table>
+<thead>
+<tr>
+<th>需求</th>
+<th>应使用的机制</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>每个会话都应知道构建命令和架构约定</td>
+<td><code>CLAUDE.md</code></td>
+</tr>
+<tr>
+<td>只处理特定路径时才需要的规则</td>
+<td><code>.claude/rules/*.md</code> 的 <code>paths</code></td>
+</tr>
+<tr>
+<td>偶尔才使用的操作手册</td>
+<td>Skill</td>
+</tr>
+<tr>
+<td>个人跨项目偏好</td>
+<td><code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td>团队共享设置</td>
+<td><code>.claude/settings.json</code></td>
+</tr>
+<tr>
+<td>个人在当前项目的设置</td>
+<td><code>.claude/settings.local.json</code></td>
+</tr>
+<tr>
+<td>跨项目个人设置</td>
+<td><code>~/.claude/settings.json</code></td>
+</tr>
+<tr>
+<td>预先允许或拒绝具体工具</td>
+<td><code>permissions.allow</code>、<code>ask</code>、<code>deny</code></td>
+</tr>
+<tr>
+<td>限制 Bash 子进程的文件和网络范围</td>
+<td><code>sandbox</code></td>
+</tr>
+<tr>
+<td>每次都必须执行或拦截的动作</td>
+<td>Hook</td>
+</tr>
+<tr>
+<td>组织不可被覆盖的策略</td>
+<td>Managed settings</td>
+</tr>
+</tbody></table>
+<p>推荐从最小配置开始：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">task-board/</span><br><span class="line">├── CLAUDE.md</span><br><span class="line">└── .claude/</span><br><span class="line">    ├── settings.json</span><br><span class="line">    └── rules/</span><br><span class="line">        ├── api.md</span><br><span class="line">        └── migrations.md</span><br></pre></td></tr></table></figure>
+
+<p>进入会话后验证：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">/context</span><br><span class="line">/status</span><br><span class="line">/permissions</span><br><span class="line">/doctor</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="1-指导与执行边界"><a href="#1-指导与执行边界" class="headerlink" title="1. 指导与执行边界"></a>1. 指导与执行边界</h2><p>不同机制的保证强度如下：</p>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>作用</th>
+<th>是否由模型解释</th>
+<th>能否形成硬边界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLAUDE.md</code></td>
+<td>提供长期项目上下文</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td><code>.claude/rules/</code></td>
+<td>提供全局或按路径加载的规则</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>提供按需知识或流程</td>
+<td>是</td>
+<td>否</td>
+</tr>
+<tr>
+<td>权限规则</td>
+<td>允许、询问或拒绝工具调用</td>
+<td>否，由 Claude Code 执行</td>
+<td>是</td>
+</tr>
+<tr>
+<td>Hook</td>
+<td>在生命周期事件上运行程序并可阻止操作</td>
+<td>否，触发是确定的</td>
+<td>是</td>
+</tr>
+<tr>
+<td>沙箱</td>
+<td>以 OS 机制限制 Bash 子进程文件与网络访问</td>
+<td>否</td>
+<td>是</td>
+</tr>
+<tr>
+<td>Managed settings</td>
+<td>组织级不可覆盖策略</td>
+<td>否</td>
+<td>是</td>
+</tr>
+</tbody></table>
+<p>应把“项目如何工作”写成指令，把“无论模型怎么判断都不能发生”写成权限、Hook 或沙箱规则。</p>
+<p>错误做法：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># CLAUDE.md</span></span><br><span class="line"></span><br><span class="line">永远不要读取任何密钥，也绝对不要运行危险命令。</span><br></pre></td></tr></table></figure>
+
+<p>这只能影响模型意图，不能阻止被允许的任意脚本间接读取文件。</p>
+<p>更可靠的组合是：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;deny&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Read(./.env)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./.env.*)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./secrets/**)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./.env)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./.env.*)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Bash(git push *)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;sandbox&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;credentials&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;files&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span> <span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;~/.ssh&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span> <span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;~/.aws/credentials&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span> <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;envVars&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span> <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;GITHUB_TOKEN&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span> <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;NPM_TOKEN&quot;</span><span class="punctuation">,</span> <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span> <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>沙箱只在支持的平台上生效，具体限制见后文。</p>
+<h2 id="2-使用-CLAUDE-md-描述项目"><a href="#2-使用-CLAUDE-md-描述项目" class="headerlink" title="2. 使用 CLAUDE.md 描述项目"></a>2. 使用 <code>CLAUDE.md</code> 描述项目</h2><h3 id="2-1-CLAUDE-md-与自动记忆"><a href="#2-1-CLAUDE-md-与自动记忆" class="headerlink" title="2.1 CLAUDE.md 与自动记忆"></a>2.1 <code>CLAUDE.md</code> 与自动记忆</h3><p>Claude Code 有两套互补记忆：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th><code>CLAUDE.md</code></th>
+<th>Auto memory</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>谁编写</td>
+<td>用户或团队</td>
+<td>Claude</td>
+</tr>
+<tr>
+<td>内容</td>
+<td>指令、约定、架构事实</td>
+<td>Claude 在工作中积累的经验</td>
+</tr>
+<tr>
+<td>范围</td>
+<td>组织、用户、项目或目录</td>
+<td>按仓库，工作树之间共享</td>
+</tr>
+<tr>
+<td>加载</td>
+<td>每个会话</td>
+<td>每个会话，受大小限制</td>
+</tr>
+<tr>
+<td>适合</td>
+<td>构建命令、编码规范、工作流</td>
+<td>调试发现、非显然模式、个人偏好</td>
+</tr>
+</tbody></table>
+<p>两者都会作为上下文提供给模型，不是强制策略。</p>
+<h3 id="2-2-文件位置"><a href="#2-2-文件位置" class="headerlink" title="2.2 文件位置"></a>2.2 文件位置</h3><table>
+<thead>
+<tr>
+<th>作用域</th>
+<th>位置</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>组织</td>
+<td>系统级 Managed <code>CLAUDE.md</code></td>
+<td>公司规范和合规要求</td>
+</tr>
+<tr>
+<td>用户</td>
+<td><code>~/.claude/CLAUDE.md</code></td>
+<td>个人跨项目偏好</td>
+</tr>
+<tr>
+<td>项目</td>
+<td><code>./CLAUDE.md</code> 或 <code>./.claude/CLAUDE.md</code></td>
+<td>团队共享项目指令</td>
+</tr>
+<tr>
+<td>本地项目</td>
+<td><code>./CLAUDE.local.md</code></td>
+<td>不提交的个人项目备注</td>
+</tr>
+</tbody></table>
+<p>项目 <code>CLAUDE.md</code> 应加入版本控制；<code>CLAUDE.local.md</code> 应加入 <code>.gitignore</code>。</p>
+<h3 id="2-3-为示例项目创建最小文件"><a href="#2-3-为示例项目创建最小文件" class="headerlink" title="2.3 为示例项目创建最小文件"></a>2.3 为示例项目创建最小文件</h3><figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># task-board 项目约定</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 环境与命令</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> 使用 Node.js 22 和 npm；安装依赖运行 <span class="code">`npm ci`</span>。</span><br><span class="line"><span class="bullet">-</span> 单元测试运行 <span class="code">`npm test -- &lt;test-file&gt;`</span>。</span><br><span class="line"><span class="bullet">-</span> 完整检查依次运行 <span class="code">`npm test`</span>、<span class="code">`npm run typecheck`</span>、<span class="code">`npm run build`</span>。</span><br><span class="line"></span><br><span class="line"><span class="section">## 架构</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> HTTP 路由位于 <span class="code">`src/routes/`</span>，不得直接访问数据库。</span><br><span class="line"><span class="bullet">-</span> 业务逻辑位于 <span class="code">`src/services/`</span>。</span><br><span class="line"><span class="bullet">-</span> 数据访问位于 <span class="code">`src/repositories/`</span>。</span><br><span class="line"><span class="bullet">-</span> 数据库迁移位于 <span class="code">`migrations/`</span>，已应用迁移不得修改。</span><br><span class="line"></span><br><span class="line"><span class="section">## 工作流</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> 修改行为前先添加失败测试。</span><br><span class="line"><span class="bullet">-</span> 优先运行最小相关测试，完成后再运行完整检查。</span><br><span class="line"><span class="bullet">-</span> 不得通过跳过测试、降低断言或吞掉异常制造通过。</span><br><span class="line"><span class="bullet">-</span> 未经明确要求，不执行 <span class="code">`git push`</span>、部署或生产数据库操作。</span><br><span class="line"></span><br><span class="line"><span class="section">## 代码风格</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> 使用项目现有 ESLint 和 Prettier 配置，不手工引入另一套格式规则。</span><br><span class="line"><span class="bullet">-</span> 公共函数需要显式返回类型。</span><br></pre></td></tr></table></figure>
+
+<p>这类内容满足三个条件：</p>
+<ol>
+<li>每个会话都适用；</li>
+<li>Claude 无法仅靠读取单个源文件稳定推断；</li>
+<li>足够具体，可以验证是否遵守。</li>
+</ol>
+<p>不应放入：</p>
+<ul>
+<li>可从 <code>package.json</code> 直接看出的长篇依赖清单；</li>
+<li>每个文件的逐一介绍；</li>
+<li>框架完整文档；</li>
+<li>只在发布时需要的多页操作手册；</li>
+<li>经常变化的临时状态；</li>
+<li>“写高质量代码”一类无法验证的空泛要求。</li>
+</ul>
+<p>官方建议把单个 <code>CLAUDE.md</code> 控制在 200 行以内。文件越长，持续占用的上下文越多，个别规则越容易被噪声淹没。</p>
+<h3 id="2-4-使用-init"><a href="#2-4-使用-init" class="headerlink" title="2.4 使用 /init"></a>2.4 使用 <code>/init</code></h3><p>在项目根目录启动 Claude 后：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/init</span><br></pre></td></tr></table></figure>
+
+<p>Claude 会分析构建系统、测试框架和项目模式，生成起始 <code>CLAUDE.md</code>；如果文件已存在，则提出改进而不是直接覆盖。生成内容必须人工审查，因为自动分析可能把可推断事实写得过多，也可能遗漏团队真正关心的非显然约束。</p>
+<p>完成后检查：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/context</span><br></pre></td></tr></table></figure>
+
+<p>确认 Memory files 中出现预期文件。</p>
+<h3 id="2-5-导入其他文件"><a href="#2-5-导入其他文件" class="headerlink" title="2.5 导入其他文件"></a>2.5 导入其他文件</h3><p><code>CLAUDE.md</code> 可使用 <code>@路径</code> 导入：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">项目概览见 @README.md。</span><br><span class="line">提交规范见 @docs/contributing.md。</span><br></pre></td></tr></table></figure>
+
+<p>相对路径相对于包含导入语句的文件解析。导入可以递归，但官方限制最大深度。导入内容仍会在启动时进入上下文，因此拆文件只改善维护性，不会自动降低 token 占用。</p>
+<p>若只是想在文字中提及 <code>@README.md</code> 而不导入，应放入代码格式：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">不要修改 <span class="code">`@README.md`</span> 中的示例版本号。</span><br></pre></td></tr></table></figure>
+
+<p>项目指令导入工作目录外的文件时，首次会要求批准。该机制防止恶意仓库通过 <code>@~/.claude/...</code> 静默读取个人文件。</p>
+<h3 id="2-6-与-AGENTS-md-共存"><a href="#2-6-与-AGENTS-md-共存" class="headerlink" title="2.6 与 AGENTS.md 共存"></a>2.6 与 <code>AGENTS.md</code> 共存</h3><p>Claude Code 原生读取 <code>CLAUDE.md</code>，不是 <code>AGENTS.md</code>。已有 <code>AGENTS.md</code> 的项目可创建：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">@AGENTS.md</span><br><span class="line"></span><br><span class="line"><span class="section">## Claude Code</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> 修改 <span class="code">`src/billing/`</span> 前必须使用 Plan 模式。</span><br></pre></td></tr></table></figure>
+
+<p>Windows 上创建符号链接需要额外权限，使用导入通常更可移植。</p>
+<h2 id="3-按路径组织-claude-rules"><a href="#3-按路径组织-claude-rules" class="headerlink" title="3. 按路径组织 .claude/rules/"></a>3. 按路径组织 <code>.claude/rules/</code></h2><p>当不同目录有不同规范时，不要继续扩张根 <code>CLAUDE.md</code>。创建：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">.claude/rules/</span><br><span class="line">├── api.md</span><br><span class="line">├── tests.md</span><br><span class="line">└── migrations.md</span><br></pre></td></tr></table></figure>
+
+<p>没有 front matter 的 Rule 每个会话都会加载。按路径规则只在 Claude 读取匹配文件时加载：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">paths:</span><br><span class="line"><span class="bullet">  -</span> &quot;src/routes/<span class="strong">**/<span class="emphasis">*.ts&quot;</span></span></span><br><span class="line"><span class="emphasis"><span class="strong">  - &quot;src/services/*</span><span class="emphasis">*/*</span>.ts&quot;</span></span><br><span class="line"><span class="strong">---</span></span><br><span class="line"><span class="strong"></span></span><br><span class="line"><span class="strong"># API 规则</span></span><br><span class="line"><span class="strong"></span></span><br><span class="line"><span class="strong">- 所有外部输入必须在路由边界校验。</span></span><br><span class="line"><span class="strong">- 服务层返回领域错误，由路由统一映射 HTTP 状态码。</span></span><br><span class="line"><span class="strong">- 列表接口必须使用项目现有分页结构。</span></span><br></pre></td></tr></table></figure>
+
+<p>迁移规则：</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">---</span><br><span class="line">paths:</span><br><span class="line"><span class="section">  - &quot;migrations/<span class="strong">**/<span class="emphasis">*.sql&quot;</span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section">---</span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section"></span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section"># 数据库迁移规则</span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section"></span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section">- 不得修改已经在主分支发布的迁移。</span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section">- 新迁移必须包含前向操作和经人工确认的回滚说明。</span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section">- 添加非空列前先说明存量数据处理策略。</span></span></span></span><br><span class="line"><span class="emphasis"><span class="strong"><span class="section">- 运行项目的迁移 dry-run 和相关集成测试。</span></span></span></span><br></pre></td></tr></table></figure>
+
+<p>常用 glob：</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>匹配</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>**/*.ts</code></td>
+<td>任意目录的 TypeScript 文件</td>
+</tr>
+<tr>
+<td><code>src/**/*</code></td>
+<td><code>src</code> 下所有文件</td>
+</tr>
+<tr>
+<td><code>*.md</code></td>
+<td>项目根目录的 Markdown</td>
+</tr>
+<tr>
+<td><code>src/**/*.{ts,tsx}</code></td>
+<td><code>src</code> 下 TypeScript 与 TSX</td>
+</tr>
+</tbody></table>
+<p>按路径 Rule 在 Claude 读取匹配文件时触发，不应依赖它来拦截写入。硬性保护仍需 Edit deny 或 Hook。</p>
+<h2 id="4-自动记忆"><a href="#4-自动记忆" class="headerlink" title="4. 自动记忆"></a>4. 自动记忆</h2><p>Auto memory 允许 Claude 保存工作中发现的模式。适合保存：</p>
+<ul>
+<li>实际可用的构建或调试命令；</li>
+<li>经验证的故障原因；</li>
+<li>仓库中特殊工具的行为；</li>
+<li>用户反复纠正后形成的偏好。</li>
+</ul>
+<p>不应把 Auto memory 视为团队规范来源，因为内容由 Claude 产生并按本地仓库存储。使用：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/memory</span><br></pre></td></tr></table></figure>
+
+<p>可以查看记忆文件位置、打开编辑并切换自动记忆。应定期审查并删除：</p>
+<ul>
+<li>已过期结论；</li>
+<li>推测而非事实；</li>
+<li>敏感信息；</li>
+<li>与 <code>CLAUDE.md</code> 冲突的内容；</li>
+<li>只适用于一次故障的临时状态。</li>
+</ul>
+<h2 id="5-设置文件与作用域"><a href="#5-设置文件与作用域" class="headerlink" title="5. 设置文件与作用域"></a>5. 设置文件与作用域</h2><h3 id="5-1-文件位置"><a href="#5-1-文件位置" class="headerlink" title="5.1 文件位置"></a>5.1 文件位置</h3><table>
+<thead>
+<tr>
+<th>作用域</th>
+<th>设置位置</th>
+<th>是否共享</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户</td>
+<td><code>~/.claude/settings.json</code></td>
+<td>否，跨项目</td>
+</tr>
+<tr>
+<td>项目</td>
+<td><code>.claude/settings.json</code></td>
+<td>是，应提交</td>
+</tr>
+<tr>
+<td>本地项目</td>
+<td><code>.claude/settings.local.json</code></td>
+<td>否，应忽略</td>
+</tr>
+<tr>
+<td>Managed</td>
+<td>系统、MDM、注册表、远程策略等</td>
+<td>由组织控制</td>
+</tr>
+</tbody></table>
+<p>不要混淆：</p>
+<ul>
+<li><code>~/.claude/settings.json</code>：权限、Hooks、环境变量和行为设置；</li>
+<li><code>~/.claude.json</code>：应用状态，以及 local&#x2F;user 作用域 MCP 等其他状态。</li>
+</ul>
+<p>把 <code>permissions</code> 或 <code>hooks</code> 写进 <code>~/.claude.json</code> 不会按预期生效。</p>
+<h3 id="5-2-优先级"><a href="#5-2-优先级" class="headerlink" title="5.2 优先级"></a>5.2 优先级</h3><p>当前官方优先级从高到低为：</p>
+<ol>
+<li>Managed settings；</li>
+<li>命令行参数与 <code>--settings</code>；</li>
+<li><code>.claude/settings.local.json</code>；</li>
+<li><code>.claude/settings.json</code>；</li>
+<li><code>~/.claude/settings.json</code>。</li>
+</ol>
+<p>标量值由高优先级覆盖。多数数组设置会跨作用域合并、去重，而不是整体替换，因此低优先级中的 allow 规则可能仍然存在。组织要形成不可放宽的边界，应使用 Managed settings 的专用锁定项，而不是只依赖普通数组覆盖。</p>
+<p>检查实际加载来源：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/status</span><br></pre></td></tr></table></figure>
+
+<p>检查 JSON 或 schema 错误：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude doctor</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-3-设置变更"><a href="#5-3-设置变更" class="headerlink" title="5.3 设置变更"></a>5.3 设置变更</h3><p>Claude Code 会监视多数设置文件，权限、Hooks 和凭据助手等修改通常可在当前会话重新加载。仍应通过 <code>/status</code>、<code>/permissions</code> 或 <code>/hooks</code> 验证，不要假设保存文件等于成功应用。</p>
+<h3 id="5-4-官方-JSON-Schema"><a href="#5-4-官方-JSON-Schema" class="headerlink" title="5.4 官方 JSON Schema"></a>5.4 官方 JSON Schema</h3><p>可在设置中加入官方 schema：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://json.schemastore.org/claude-code-settings.json&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaultMode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;default&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>编辑器可以提供补全和校验。官方提醒：schema 更新可能略晚于最新 CLI，因此新字段出现校验警告时，还应与当前文档和 <code>claude doctor</code> 交叉确认。</p>
+<h2 id="6-权限模式"><a href="#6-权限模式" class="headerlink" title="6. 权限模式"></a>6. 权限模式</h2><h3 id="6-1-模式对比"><a href="#6-1-模式对比" class="headerlink" title="6.1 模式对比"></a>6.1 模式对比</h3><table>
+<thead>
+<tr>
+<th>配置值</th>
+<th>CLI 显示</th>
+<th>无需询问的主要行为</th>
+<th>推荐用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>default</code></td>
+<td>Manual</td>
+<td>读取</td>
+<td>初次使用、敏感项目</td>
+</tr>
+<tr>
+<td><code>acceptEdits</code></td>
+<td>Accept edits</td>
+<td>读取、编辑、部分常见文件命令</td>
+<td>人工持续审查差异</td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>Plan</td>
+<td>只读探索与规划</td>
+<td>复杂或陌生任务</td>
+</tr>
+<tr>
+<td><code>auto</code></td>
+<td>Auto</td>
+<td>通过后台安全分类器的操作</td>
+<td>支持该模式的长任务</td>
+</tr>
+<tr>
+<td><code>dontAsk</code></td>
+<td>Don’t ask</td>
+<td>仅预先允许的工具</td>
+<td>CI 和受限脚本</td>
+</tr>
+<tr>
+<td><code>bypassPermissions</code></td>
+<td>Bypass permissions</td>
+<td>几乎所有操作</td>
+<td>仅额外隔离环境</td>
+</tr>
+</tbody></table>
+<p><code>manual</code> 是 <code>default</code> 的 CLI 别名。配置文件中优先使用文档给出的稳定值。</p>
+<p>会话启动：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --permission-mode plan</span><br></pre></td></tr></table></figure>
+
+<p>设置默认模式：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaultMode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;acceptEdits&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="6-2-模式不是授权范围"><a href="#6-2-模式不是授权范围" class="headerlink" title="6.2 模式不是授权范围"></a>6.2 模式不是授权范围</h3><p>模式决定基线审批行为，权限规则在其上继续生效。Deny 与 Ask 规则仍可能阻止操作；<code>bypassPermissions</code> 也不是“忽略所有组织策略”。</p>
+<p><code>auto</code> 使用独立分类器判断操作是否超出请求范围、访问未知基础设施或受到不可信内容驱动。它减少提示，但官方明确说明不能保证安全。</p>
+<p><code>dontAsk</code> 对未预先批准的操作直接拒绝，适合没有人可以回答提示的自动化。</p>
+<p><code>bypassPermissions</code> 跳过保护最多。只有在容器或虚拟机已经限制文件、网络和凭据，且运行内容受信任时才考虑使用。</p>
+<h2 id="7-权限规则"><a href="#7-权限规则" class="headerlink" title="7. 权限规则"></a>7. 权限规则</h2><h3 id="7-1-Allow、Ask-与-Deny"><a href="#7-1-Allow、Ask-与-Deny" class="headerlink" title="7.1 Allow、Ask 与 Deny"></a>7.1 Allow、Ask 与 Deny</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;allow&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Bash(npm test *)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Bash(npm run typecheck)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Bash(npm run build)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ask&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Bash(git commit *)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;deny&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Bash(git push *)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./.env)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./.env.*)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./.env)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./.env.*)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>匹配顺序固定为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Deny → Ask → Allow</span><br></pre></td></tr></table></figure>
+
+<p>更具体的 Allow 不能覆盖宽泛 Deny。例如 <code>Bash(aws *)</code> 被拒绝后，<code>Bash(aws s3 ls)</code> Allow 也不会成为例外。</p>
+<h3 id="7-2-基础语法"><a href="#7-2-基础语法" class="headerlink" title="7.2 基础语法"></a>7.2 基础语法</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Tool</span><br><span class="line">Tool(specifier)</span><br></pre></td></tr></table></figure>
+
+<p>示例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Bash</span><br><span class="line">Bash(npm run build)</span><br><span class="line">Read(./.env)</span><br><span class="line">Edit(./docs/**)</span><br><span class="line">WebFetch(domain:code.claude.com)</span><br><span class="line">mcp__github__get_issue</span><br></pre></td></tr></table></figure>
+
+<p>裸工具名匹配该工具的全部调用。作为 Deny 时，通常会把工具从 Claude 可见的工具列表移除。需要只阻止特定命令时，应使用带限定符的规则。</p>
+<h3 id="7-3-Bash-通配符"><a href="#7-3-Bash-通配符" class="headerlink" title="7.3 Bash 通配符"></a>7.3 Bash 通配符</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Bash(npm run build)   精确匹配</span><br><span class="line">Bash(npm run test *)  匹配 npm run test 及其参数</span><br><span class="line">Bash(git *)           匹配 git 后的任意内容</span><br><span class="line">Bash(* --version)     匹配以 --version 结束的命令</span><br></pre></td></tr></table></figure>
+
+<p><code>Bash(ls *)</code> 中空格很重要：它匹配 <code>ls</code> 和 <code>ls -la</code>，不匹配 <code>lsof</code>；<code>Bash(ls*)</code> 会匹配两者。</p>
+<p>Claude Code 会拆分 <code>&amp;&amp;</code>、<code>||</code>、<code>;</code>、管道和换行等复合命令，要求每个子命令分别满足权限。即便如此，不应尝试用宽泛命令前缀构建复杂安全策略：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Bash(devbox run *)</span><br><span class="line">Bash(docker exec *)</span><br><span class="line">Bash(curl *)</span><br></pre></td></tr></table></figure>
+
+<p>这些包装器后面可以执行任意内容。应把内层命令写得具体，或使用 Hook 与沙箱形成更可靠边界。</p>
+<h3 id="7-4-文件路径规则"><a href="#7-4-文件路径规则" class="headerlink" title="7.4 文件路径规则"></a>7.4 文件路径规则</h3><p>Read 与 Edit 路径使用 gitignore 风格：</p>
+<table>
+<thead>
+<tr>
+<th>形式</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>//path</code></td>
+<td>文件系统绝对路径</td>
+</tr>
+<tr>
+<td><code>~/path</code></td>
+<td>用户主目录相对路径</td>
+</tr>
+<tr>
+<td><code>/path</code></td>
+<td>相对设置来源锚点</td>
+</tr>
+<tr>
+<td><code>path</code> 或 <code>./path</code></td>
+<td>相对当前工作目录</td>
+</tr>
+</tbody></table>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Read(.env)              当前目录下任意深度的 .env</span><br><span class="line">Read(//**/.env)         文件系统任意位置的 .env</span><br><span class="line">Edit(/src/**/*.ts)      项目设置中表示项目根 src</span><br><span class="line">Read(~/.ssh/**)         用户 SSH 目录</span><br></pre></td></tr></table></figure>
+
+<p>单个 <code>/</code> 不是文件系统根。<code>Read(/Users/alice/file)</code> 在项目设置中是项目相对路径；绝对路径要写 <code>Read(//Users/alice/file)</code>。</p>
+<p>Windows 路径会归一化为 POSIX 形式。跨盘匹配应谨慎，避免无意阻止所有项目。</p>
+<p>当前文件权限检查应使用 <code>Read(path)</code> 和 <code>Edit(path)</code>。不要用 <code>Write(path)</code> 或 <code>Glob(path)</code> 代替路径规则；官方当前版本会对这些不匹配的形式发出警告。</p>
+<p>Read deny 会阻止对应路径的内置读取工具，并在当前版本中同时影响 Edit，但任意 Python 或 Node 子进程仍可能自行打开文件。需要覆盖所有子进程时必须使用沙箱。</p>
+<h3 id="7-5-WebFetch-与-MCP"><a href="#7-5-WebFetch-与-MCP" class="headerlink" title="7.5 WebFetch 与 MCP"></a>7.5 WebFetch 与 MCP</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">WebFetch(domain:code.claude.com)</span><br><span class="line">WebFetch(domain:*.example.com)</span><br><span class="line">mcp__github</span><br><span class="line">mcp__github__get_issue</span><br><span class="line">mcp__github__*</span><br></pre></td></tr></table></figure>
+
+<p><code>*.example.com</code> 匹配子域，不匹配根域 <code>example.com</code>。允许 WebFetch 并不能阻止 Bash 使用 <code>curl</code> 或其他网络工具，因此网络隔离还需沙箱。</p>
+<h2 id="8-推荐的项目权限配置"><a href="#8-推荐的项目权限配置" class="headerlink" title="8. 推荐的项目权限配置"></a>8. 推荐的项目权限配置</h2><p><code>.claude/settings.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span><span class="punctuation">:</span> <span class="string">&quot;https://json.schemastore.org/claude-code-settings.json&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;defaultMode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;default&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;allow&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Bash(npm test *)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Bash(npm run typecheck)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Bash(npm run build)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;WebFetch(domain:code.claude.com)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;ask&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Bash(git commit *)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;deny&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Bash(git push *)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Bash(npm publish *)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./.env)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./.env.*)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(./secrets/**)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./.env)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./.env.*)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Edit(./secrets/**)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>该配置表达的是示例项目约定，不是通用最佳规则。团队需要根据实际命令、目录和发布流程调整。</p>
+<p>项目配置中的 Allow 会影响所有信任该仓库的协作者。应只预先允许范围窄、可重复、影响明确的命令，不要提交 <code>Bash(*)</code>、<code>WebFetch(domain:*)</code> 或广泛云 CLI 写权限。</p>
+<p>个人机器上的附加保护可以放入 <code>~/.claude/settings.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;deny&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;Read(~/.ssh/**)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(~/.aws/**)&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="string">&quot;Read(~/.kube/**)&quot;</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="9-沙箱"><a href="#9-沙箱" class="headerlink" title="9. 沙箱"></a>9. 沙箱</h2><h3 id="9-1-沙箱解决什么问题"><a href="#9-1-沙箱解决什么问题" class="headerlink" title="9.1 沙箱解决什么问题"></a>9.1 沙箱解决什么问题</h3><p>权限规则在工具运行前判断是否允许；沙箱在命令运行后由操作系统限制其实际文件和网络访问。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">权限规则：Claude 可不可以调用这个工具？</span><br><span class="line">沙箱：这个 Bash 子进程即使运行，实际能访问什么？</span><br></pre></td></tr></table></figure>
+
+<p>当前支持：</p>
+<ul>
+<li>macOS：Seatbelt；</li>
+<li>Linux：bubblewrap；</li>
+<li>WSL 2：bubblewrap；</li>
+<li>Windows 原生和 WSL 1：不支持 Claude Code 的 Bash 沙箱。</li>
+</ul>
+<h3 id="9-2-启用"><a href="#9-2-启用" class="headerlink" title="9.2 启用"></a>9.2 启用</h3><p>会话内：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/sandbox</span><br></pre></td></tr></table></figure>
+
+<p>或在设置中：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;sandbox&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;autoAllowBashIfSandboxed&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>默认文件系统行为主要是：</p>
+<ul>
+<li>当前工作目录及会话临时目录可写；</li>
+<li>默认可读取较广泛的系统路径；</li>
+<li>工作目录外写入被限制；</li>
+<li>网络通过沙箱外代理控制。</li>
+</ul>
+<p>默认可读不等于凭据安全。官方文档明确指出，应单独配置凭据文件和环境变量。</p>
+<h3 id="9-3-文件与网络限制"><a href="#9-3-文件与网络限制" class="headerlink" title="9.3 文件与网络限制"></a>9.3 文件与网络限制</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;sandbox&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;autoAllowBashIfSandboxed&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;excludedCommands&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="string">&quot;docker *&quot;</span></span><br><span class="line">    <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;filesystem&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;allowWrite&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;/tmp/task-board-build&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;denyRead&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;~/.ssh&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="string">&quot;~/.aws&quot;</span></span><br><span class="line">      <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;network&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;allowedDomains&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;registry.npmjs.org&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="string">&quot;github.com&quot;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="string">&quot;*.github.com&quot;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;deniedDomains&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="string">&quot;uploads.github.com&quot;</span></span><br><span class="line">      <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>沙箱路径使用常规路径语义：</p>
+<ul>
+<li><code>/tmp/build</code> 是绝对路径；</li>
+<li><code>~/...</code> 相对用户主目录；</li>
+<li><code>./...</code> 在项目设置中相对项目根。</li>
+</ul>
+<p>这与 Read&#x2F;Edit 权限的单斜杠规则不同，配置时不要混用。</p>
+<p><code>docker</code>、<code>kubectl</code> 和能够访问宿主服务的 Unix Socket 可能扩大沙箱外影响。不要因为命令本身在沙箱中运行，就默认容器守护进程、云 API 或数据库也受到相同隔离。</p>
+<h3 id="9-4-保护凭据"><a href="#9-4-保护凭据" class="headerlink" title="9.4 保护凭据"></a>9.4 保护凭据</h3><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;sandbox&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;enabled&quot;</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">true</span></span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;credentials&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;files&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;~/.aws/credentials&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;path&quot;</span><span class="punctuation">:</span> <span class="string">&quot;~/.ssh&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;envVars&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;GITHUB_TOKEN&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">&#123;</span></span><br><span class="line">          <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;NPM_TOKEN&quot;</span><span class="punctuation">,</span></span><br><span class="line">          <span class="attr">&quot;mode&quot;</span><span class="punctuation">:</span> <span class="string">&quot;deny&quot;</span></span><br><span class="line">        <span class="punctuation">&#125;</span></span><br><span class="line">      <span class="punctuation">]</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p><code>deny</code> 会让沙箱内命令无法读取文件或取得环境变量。官方还提供 <code>mask</code> 模式，通过 TLS 终止代理向指定主机注入真实凭据；该能力涉及证书、域名和代理安全，只应依据官方沙箱文档在受控环境中配置，不能从不可信项目设置中启用。</p>
+<h3 id="9-5-沙箱不是完整安全容器"><a href="#9-5-沙箱不是完整安全容器" class="headerlink" title="9.5 沙箱不是完整安全容器"></a>9.5 沙箱不是完整安全容器</h3><p>官方列出的限制包括：</p>
+<ul>
+<li>主要约束 Bash 及其子进程，不替代所有工具权限；</li>
+<li>通过允许的 Unix Socket、守护进程或网络服务仍可能产生外部影响；</li>
+<li>默认网络代理按主机名控制，不一定检查 TLS 内容；</li>
+<li>平台和工具兼容性有限；</li>
+<li>文件系统隔离可被用户设置关闭，组织应使用 Managed settings 锁定；</li>
+<li>Windows 原生不支持该沙箱。</li>
+</ul>
+<p>高风险或不可信代码应在容器、虚拟机或专用沙箱环境中运行 Claude Code，而不是只依赖 CLI 内置规则。</p>
+<h2 id="10-提示注入与不可信内容"><a href="#10-提示注入与不可信内容" class="headerlink" title="10. 提示注入与不可信内容"></a>10. 提示注入与不可信内容</h2><p>Claude 读取的以下内容都可能包含恶意指令：</p>
+<ul>
+<li>刚克隆仓库中的注释和文档；</li>
+<li>Issue、Pull Request 和聊天消息；</li>
+<li>网页；</li>
+<li>日志和数据库字段；</li>
+<li>MCP 工具返回值；</li>
+<li>依赖包中的文件。</li>
+</ul>
+<p>防护原则：</p>
+<ol>
+<li>把外部内容视为数据，不授予其改变任务或权限的权力；</li>
+<li>不因网页或日志中的文字下载并执行代码；</li>
+<li>对上传、Push、部署、云资源写入和凭据访问保留人工确认；</li>
+<li>用 Deny、Ask、Hook 和沙箱落实边界；</li>
+<li>限制 Claude 只读取本次任务需要的目录；</li>
+<li>审查仓库中的 <code>.claude/</code>、<code>CLAUDE.md</code> 和 <code>.mcp.json</code> 后再信任；</li>
+<li>不在同一环境中同时暴露不可信输入、高价值凭据和宽泛执行权限。</li>
+</ol>
+<p>Auto 模式的安全分类器可以降低部分风险，但官方明确不把它描述为绝对安全保证。</p>
+<h2 id="11-配置验证流程"><a href="#11-配置验证流程" class="headerlink" title="11. 配置验证流程"></a>11. 配置验证流程</h2><p>修改设置后依次检查：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude doctor</span><br></pre></td></tr></table></figure>
+
+<p>进入会话：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">/status</span><br><span class="line">/context</span><br><span class="line">/permissions</span><br><span class="line">/hooks</span><br><span class="line">/mcp</span><br></pre></td></tr></table></figure>
+
+<p>验证内容：</p>
+<ul>
+<li><code>/status</code> 中出现预期 Setting sources；</li>
+<li><code>/context</code> 中出现正确的 <code>CLAUDE.md</code> 与 Rules；</li>
+<li><code>/permissions</code> 显示 Allow、Ask、Deny 来源；</li>
+<li>尝试读取一个测试用敏感路径时被拒绝；</li>
+<li>允许的测试和构建命令不再反复询问；</li>
+<li><code>git push</code> 等外部写操作仍被拒绝或询问；</li>
+<li>沙箱只允许预期目录和域名；</li>
+<li><code>git status --short</code> 中没有意外生成或修改的配置。</li>
+</ul>
+<p>配置调试时可使用：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">claude --safe-mode</span><br></pre></td></tr></table></figure>
+
+<p>Safe mode 会关闭大多数自定义内容，但保留认证、模型、内置工具、权限和组织 Managed policy，用于判断问题是否来自项目定制。</p>
+<h2 id="12-团队提交前检查"><a href="#12-团队提交前检查" class="headerlink" title="12. 团队提交前检查"></a>12. 团队提交前检查</h2><p>准备提交 <code>.claude/</code> 配置时：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git status --short</span><br><span class="line">git diff -- CLAUDE.md .claude</span><br><span class="line">git diff --check</span><br></pre></td></tr></table></figure>
+
+<p>重点审查：</p>
+<ul>
+<li>是否包含个人路径、邮箱、内部 URL 或 Secret；</li>
+<li>是否把临时 Allow 误提交到团队设置；</li>
+<li>是否允许 Push、发布、云资源写入或生产命令；</li>
+<li>是否出现 <code>Bash(*)</code>、<code>WebFetch(domain:*)</code> 等宽泛规则；</li>
+<li>是否把个人设置写入 <code>.claude/settings.json</code>；</li>
+<li>是否让 <code>CLAUDE.md</code> 重复代码可直接推断的信息；</li>
+<li>Rule 路径是否准确；</li>
+<li>是否有互相冲突的指令；</li>
+<li>新成员信任仓库后会加载哪些 Hooks、MCP 和插件。</li>
+</ul>
+<p>下一篇将讲解如何保存、恢复和分支会话，如何使用检查点与 Git，如何通过 <code>--worktree</code> 隔离并行修改，以及如何在子代理、Agent view 和实验性 Agent teams 之间选择。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/memory">How Claude remembers your project</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/settings">Claude Code settings</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/permission-modes">Choose a permission mode</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/permissions">Configure permissions</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/sandboxing">Configure the sandboxed Bash tool</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/security">Claude Code Security</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/debug-your-config">Debug your configuration</a></li>
+<li><a target="_blank" rel="noopener" href="https://code.claude.com/docs/en/tools-reference">Tools reference</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io">秋风、萧瑟</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://lx-cel.github.io/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94%E9%A1%B9%E7%9B%AE%E8%AE%B0%E5%BF%86%E3%80%81%E9%85%8D%E7%BD%AE%E3%80%81%E6%9D%83%E9%99%90%E4%B8%8E%E6%B2%99%E7%AE%B1/">https://lx-cel.github.io/2026/07/25/Claude-Code终端使用指南（三）—项目记忆、配置、权限与沙箱/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://lx-cel.github.io" target="_blank">星海流光</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/">学习笔记</a><a class="post-meta__tags" href="/tags/Claude-Code/">Claude Code</a><a class="post-meta__tags" href="/tags/AI%E7%BC%96%E7%A8%8B/">AI编程</a><a class="post-meta__tags" href="/tags/%E5%BC%80%E5%8F%91%E5%B7%A5%E5%85%B7/">开发工具</a></div><div class="post-share"><div class="social-share" data-image="/img/55.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E6%8F%90%E7%A4%BA%E7%AD%96%E7%95%A5/" title="Claude Code终端使用指南（二）—核心工作流与提示策略"><img class="cover" src="/img/54.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Claude Code终端使用指南（二）—核心工作流与提示策略</div></div><div class="info-2"><div class="info-item-1">Claude Code 的效果并不只取决于模型能力。启动位置、任务边界、提供的上下文、验证信号和会话中的纠偏方式，都会影响最终结果。官方最佳实践将上下文窗口视为最重要的有限资源，并推荐为 Claude 提供可以自行执行的验证手段。 本文延续第一篇中的虚构 TypeScript 项目 task-board，以“为创建任务接口增加幂等性”为端到端场景，介绍如何让 Claude Code 从理解代码开始，经过规划、实现、测试和审查，最终产出可验证的修改。 本文讨论的是终端 CLI。文中的项目名、接口和文件路径均为虚构示例，不代表真实可访问的仓库。  0. 推荐工作流速查0.1 复杂任务12cd /path/to/task-boardclaude --permission-mode plan --name task-idempotency  在规划模式中： 123只读分析 POST /tasks 的调用链、数据库写入位置、错误处理和现有测试。找出项目中是否已有幂等键、唯一约束或请求去重模式。暂时不要修改文件。  继续要求规划： 1234目标：支持 Idempotency-Key...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%B8%80%EF%BC%89%E2%80%94%E5%AE%89%E8%A3%85%E3%80%81%E8%AE%A4%E8%AF%81%E4%B8%8E%E9%A6%96%E6%AC%A1%E4%BC%9A%E8%AF%9D/" title="Claude Code终端使用指南（一）—安装、认证与首次会话"><img class="cover" src="/img/53.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（一）—安装、认证与首次会话</div></div><div class="info-2"><div class="info-item-1">Claude Code 是 Anthropic 提供的智能编程代理。它可以在终端中读取项目文件、搜索代码、编辑文件、运行命令，并围绕测试或构建结果继续迭代。它与 claude.ai 的普通聊天界面、Claude Desktop 以及 IDE 插件并不是同一个使用入口。本系列只讨论在本地终端中通过 claude 命令启动的 Claude Code CLI。 本文是系列的第一篇，介绍系统要求、安装方式、认证、版本更新、首次启动和基础交互。后续文章依次讨论：  核心工作流与提示策略； 项目记忆、配置、权限与沙箱； 会话、上下文、Git 与并行开发； Skills、子代理、Hooks、MCP 与插件； 非交互自动化、成本控制与故障排查。  系列以“能够独立、可靠地在终端中使用 Claude Code 完成真实项目工作”为范围，覆盖安装认证、交互工作流、项目配置、安全边界、状态管理、并行开发、扩展机制、脚本化和排障。Claude Desktop、IDE 插件和 Claude Code on the web...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E6%A0%B8%E5%BF%83%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%8E%E6%8F%90%E7%A4%BA%E7%AD%96%E7%95%A5/" title="Claude Code终端使用指南（二）—核心工作流与提示策略"><img class="cover" src="/img/54.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（二）—核心工作流与提示策略</div></div><div class="info-2"><div class="info-item-1">Claude Code 的效果并不只取决于模型能力。启动位置、任务边界、提供的上下文、验证信号和会话中的纠偏方式，都会影响最终结果。官方最佳实践将上下文窗口视为最重要的有限资源，并推荐为 Claude 提供可以自行执行的验证手段。 本文延续第一篇中的虚构 TypeScript 项目 task-board，以“为创建任务接口增加幂等性”为端到端场景，介绍如何让 Claude Code 从理解代码开始，经过规划、实现、测试和审查，最终产出可验证的修改。 本文讨论的是终端 CLI。文中的项目名、接口和文件路径均为虚构示例，不代表真实可访问的仓库。  0. 推荐工作流速查0.1 复杂任务12cd /path/to/task-boardclaude --permission-mode plan --name task-idempotency  在规划模式中： 123只读分析 POST /tasks 的调用链、数据库写入位置、错误处理和现有测试。找出项目中是否已有幂等键、唯一约束或请求去重模式。暂时不要修改文件。  继续要求规划： 1234目标：支持 Idempotency-Key...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94Skills%E3%80%81%E5%AD%90%E4%BB%A3%E7%90%86%E3%80%81Hooks%E3%80%81MCP%E4%B8%8E%E6%8F%92%E4%BB%B6/" title="Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（五）—Skills、子代理、Hooks、MCP与插件</div></div><div class="info-2"><div class="info-item-1">Claude Code 内置的读取、搜索、编辑、命令执行和网络工具已经能够完成多数开发任务。扩展机制解决的是更具体的问题：让 Claude 记住按需知识、复用工作流、把调查放进独立上下文、确定性执行检查、连接外部系统，并把这些能力分发给团队。 本文继续使用虚构的 task-board 项目，完成以下扩展：  创建 /fix-issue Skill； 创建只读 security-reviewer 子代理； 配置编辑后格式化和保护迁移文件的 Hooks； 连接 Claude Code 官方文档 MCP； 说明何时使用插件与代码智能插件。   0....</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E4%BC%9A%E8%AF%9D%E3%80%81%E4%B8%8A%E4%B8%8B%E6%96%87%E3%80%81Git%E4%B8%8E%E5%B9%B6%E8%A1%8C%E5%BC%80%E5%8F%91/" title="Claude Code终端使用指南（四）—会话、上下文、Git与并行开发"><img class="cover" src="/img/56.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（四）—会话、上下文、Git与并行开发</div></div><div class="info-2"><div class="info-item-1">Claude Code 会持续保存终端会话。一个任务可以跨多次启动继续，也可以从同一个历史节点分支尝试不同方案。文件检查点适合短期撤销，Git 负责长期历史；Git worktree 则让多个 Claude Code 会话拥有相互隔离的工作目录。 本文继续使用虚构的 task-board 项目，假设团队同时进行三项工作：  为 POST /tasks 增加幂等性； 修复任务列表的分页缺陷； 独立审查幂等性实现。  文章将用命名会话、上下文管理、检查点、Git 和 worktree 组织这些工作，并说明子代理、Agent view 与实验性 Agent teams 的适用边界。  0. 会话与并行命令速查0.1 命名与恢复1234claude --name task-idempotencyclaude --continueclaude --resumeclaude --resume task-idempotency  会话内： 1234/rename task-idempotency/resume/branch alternative-schema/export...</div></div></div></a><a class="pagination-related" href="/2026/07/25/Claude-Code%E7%BB%88%E7%AB%AF%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E9%9D%9E%E4%BA%A4%E4%BA%92%E8%87%AA%E5%8A%A8%E5%8C%96%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5/" title="Claude Code终端使用指南（六）—非交互自动化、成本与故障排查"><img class="cover" src="/img/52.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-25</div><div class="info-item-2">Claude Code终端使用指南（六）—非交互自动化、成本与故障排查</div></div><div class="info-2"><div class="info-item-1">Claude Code 不只可以作为交互式终端应用，也可以像普通 Unix 工具一样读取标准输入、输出文本或 JSON，并在脚本与 CI 中运行。自动化没有人实时审查权限提示和错误方向，因此需要比交互会话更明确的工具范围、预算、输出协议、超时和隔离。 本文是系列最后一篇，介绍非交互 -p、官方推荐的 --bare、结构化输出、会话续接、模型与 Effort、成本控制，以及安装、配置、MCP、Hooks、搜索和性能问题的系统排查流程。  0. 自动化与排障速查0.1 一次性查询1claude -p &quot;概括这个项目的模块和入口&quot;  推荐的可复现脚本模式： 12claude --bare -p &quot;只读审查当前差异&quot; \  --allowedTools &quot;Read,Grep,Glob,Bash(git diff *),Bash(git status *)&quot;  0.2 JSON 输出123claude --bare -p &quot;列出所有 HTTP 端点&quot; \  --output-format json |  jq...</div></div></div></a><a class="pagination-related" href="/2026/07/26/mattpocock-skills%E2%80%94%E9%9D%A2%E5%90%91%E7%9C%9F%E5%AE%9E%E5%B7%A5%E7%A8%8B%E7%9A%84AI%E7%BC%96%E7%A8%8B%E5%B7%A5%E4%BD%9C%E6%B5%81/" title="mattpocock&#x2F;skills—面向真实工程的AI编程工作流"><img class="cover" src="/img/51.png" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-07-26</div><div class="info-item-2">mattpocock&#x2F;skills—面向真实工程的AI编程工作流</div></div><div class="info-2"><div class="info-item-1">mattpocock/skills 不是一组“让 AI 把代码写得更漂亮”的提示词，而是一套面向真实软件工程的工作流。它把需求澄清、外部调研、原型验证、规格沉淀、任务拆分、实现、审查和故障诊断连接起来，让一个复杂功能可以跨越多个会话继续推进。 如果是第一次接触这个项目，可以先记住三个答案：  它解决什么问题？ 它主要解决 AI 编程中最容易失控的部分：需求没有说清就开始写代码、长对话丢失上下文、任务拆得无法独立验收、实现偏离规格，以及复杂缺陷只能靠猜。  第一次应该安装哪些 Skill？ 使用 Claude Code 原生插件时直接安装整个插件即可。真正需要先学会的，是本文重点介绍的 10 个高频入口；grilling、domain-modeling、tdd 和 code-review 会由主流程在内部调用。  面对一个任务应该从哪个 Skill 开始？ 第一次在仓库中使用先运行 /setup-matt-pocock-skills；不知道如何选择流程时运行 /ask-matt；如果需求本身还不清楚，通常从 /grill-with-docs 开始，而不是直接...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="giscus-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/Cecilia.jpeg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">秋风、萧瑟</div><div class="author-info-description">梦想是用技术创造一个美好的世界</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">66</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">25</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">7</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">本站于2024年12月25日正式上线,博客内容主要是记录个人学习和技术分享,也欢迎技术交流!!!</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#0-%E9%85%8D%E7%BD%AE%E5%86%B3%E7%AD%96%E9%80%9F%E6%9F%A5"><span class="toc-text">0. 配置决策速查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E6%8C%87%E5%AF%BC%E4%B8%8E%E6%89%A7%E8%A1%8C%E8%BE%B9%E7%95%8C"><span class="toc-text">1. 指导与执行边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BD%BF%E7%94%A8-CLAUDE-md-%E6%8F%8F%E8%BF%B0%E9%A1%B9%E7%9B%AE"><span class="toc-text">2. 使用 CLAUDE.md 描述项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-CLAUDE-md-%E4%B8%8E%E8%87%AA%E5%8A%A8%E8%AE%B0%E5%BF%86"><span class="toc-text">2.1 CLAUDE.md 与自动记忆</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E6%96%87%E4%BB%B6%E4%BD%8D%E7%BD%AE"><span class="toc-text">2.2 文件位置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E4%B8%BA%E7%A4%BA%E4%BE%8B%E9%A1%B9%E7%9B%AE%E5%88%9B%E5%BB%BA%E6%9C%80%E5%B0%8F%E6%96%87%E4%BB%B6"><span class="toc-text">2.3 为示例项目创建最小文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-%E4%BD%BF%E7%94%A8-init"><span class="toc-text">2.4 使用 &#x2F;init</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-5-%E5%AF%BC%E5%85%A5%E5%85%B6%E4%BB%96%E6%96%87%E4%BB%B6"><span class="toc-text">2.5 导入其他文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-6-%E4%B8%8E-AGENTS-md-%E5%85%B1%E5%AD%98"><span class="toc-text">2.6 与 AGENTS.md 共存</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E6%8C%89%E8%B7%AF%E5%BE%84%E7%BB%84%E7%BB%87-claude-rules"><span class="toc-text">3. 按路径组织 .claude&#x2F;rules&#x2F;</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E8%87%AA%E5%8A%A8%E8%AE%B0%E5%BF%86"><span class="toc-text">4. 自动记忆</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E8%AE%BE%E7%BD%AE%E6%96%87%E4%BB%B6%E4%B8%8E%E4%BD%9C%E7%94%A8%E5%9F%9F"><span class="toc-text">5. 设置文件与作用域</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E6%96%87%E4%BB%B6%E4%BD%8D%E7%BD%AE"><span class="toc-text">5.1 文件位置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E4%BC%98%E5%85%88%E7%BA%A7"><span class="toc-text">5.2 优先级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E8%AE%BE%E7%BD%AE%E5%8F%98%E6%9B%B4"><span class="toc-text">5.3 设置变更</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E5%AE%98%E6%96%B9-JSON-Schema"><span class="toc-text">5.4 官方 JSON Schema</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E6%9D%83%E9%99%90%E6%A8%A1%E5%BC%8F"><span class="toc-text">6. 权限模式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E6%A8%A1%E5%BC%8F%E5%AF%B9%E6%AF%94"><span class="toc-text">6.1 模式对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E6%A8%A1%E5%BC%8F%E4%B8%8D%E6%98%AF%E6%8E%88%E6%9D%83%E8%8C%83%E5%9B%B4"><span class="toc-text">6.2 模式不是授权范围</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E6%9D%83%E9%99%90%E8%A7%84%E5%88%99"><span class="toc-text">7. 权限规则</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-Allow%E3%80%81Ask-%E4%B8%8E-Deny"><span class="toc-text">7.1 Allow、Ask 与 Deny</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95"><span class="toc-text">7.2 基础语法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-Bash-%E9%80%9A%E9%85%8D%E7%AC%A6"><span class="toc-text">7.3 Bash 通配符</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-4-%E6%96%87%E4%BB%B6%E8%B7%AF%E5%BE%84%E8%A7%84%E5%88%99"><span class="toc-text">7.4 文件路径规则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-5-WebFetch-%E4%B8%8E-MCP"><span class="toc-text">7.5 WebFetch 与 MCP</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-%E6%8E%A8%E8%8D%90%E7%9A%84%E9%A1%B9%E7%9B%AE%E6%9D%83%E9%99%90%E9%85%8D%E7%BD%AE"><span class="toc-text">8. 推荐的项目权限配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-%E6%B2%99%E7%AE%B1"><span class="toc-text">9. 沙箱</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-%E6%B2%99%E7%AE%B1%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-text">9.1 沙箱解决什么问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E5%90%AF%E7%94%A8"><span class="toc-text">9.2 启用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-3-%E6%96%87%E4%BB%B6%E4%B8%8E%E7%BD%91%E7%BB%9C%E9%99%90%E5%88%B6"><span class="toc-text">9.3 文件与网络限制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-4-%E4%BF%9D%E6%8A%A4%E5%87%AD%E6%8D%AE"><span class="toc-text">9.4 保护凭据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-5-%E6%B2%99%E7%AE%B1%E4%B8%8D%E6%98%AF%E5%AE%8C%E6%95%B4%E5%AE%89%E5%85%A8%E5%AE%B9%E5%99%A8"><span class="toc-text">9.5 沙箱不是完整安全容器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#10-%E6%8F%90%E7%A4%BA%E6%B3%A8%E5%85%A5%E4%B8%8E%E4%B8%8D%E5%8F%AF%E4%BF%A1%E5%86%85%E5%AE%B9"><span class="toc-text">10. 提示注入与不可信内容</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#11-%E9%85%8D%E7%BD%AE%E9%AA%8C%E8%AF%81%E6%B5%81%E7%A8%8B"><span class="toc-text">11. 配置验证流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#12-%E5%9B%A2%E9%98%9F%E6%8F%90%E4%BA%A4%E5%89%8D%E6%A3%80%E6%9F%A5"><span class="toc-text">12. 团队提交前检查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="toc-text">参考资料</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（六）—设计题、业务模拟与三题实战"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%85%AD%EF%BC%89%E2%80%94%E8%AE%BE%E8%AE%A1%E9%A2%98%E3%80%81%E4%B8%9A%E5%8A%A1%E6%A8%A1%E6%8B%9F%E4%B8%8E%E4%B8%89%E9%A2%98%E5%AE%9E%E6%88%98/" title="C++上机考试冲刺（六）—设计题、业务模拟与三题实战">C++上机考试冲刺（六）—设计题、业务模拟与三题实战</a><time datetime="2026-08-08T09:02:00.000Z" title="发表于 2026-08-08 17:02:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%94%EF%BC%89%E2%80%94%E5%8F%8C%E6%8C%87%E9%92%88%E3%80%81%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E4%B8%8E%E9%AB%98%E9%A2%91%E7%BB%84%E5%90%88%E6%A8%A1%E5%BC%8F/" title="C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式">C++上机考试冲刺（五）—双指针、滑动窗口与高频组合模式</a><time datetime="2026-08-08T09:01:00.000Z" title="发表于 2026-08-08 17:01:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（四）—排序、查找与二分模板"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E5%9B%9B%EF%BC%89%E2%80%94%E6%8E%92%E5%BA%8F%E3%80%81%E6%9F%A5%E6%89%BE%E4%B8%8E%E4%BA%8C%E5%88%86%E6%A8%A1%E6%9D%BF/" title="C++上机考试冲刺（四）—排序、查找与二分模板">C++上机考试冲刺（四）—排序、查找与二分模板</a><time datetime="2026-08-08T09:00:00.000Z" title="发表于 2026-08-08 17:00:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（三）—STL容器与常用数据结构"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%B8%89%EF%BC%89%E2%80%94STL%E5%AE%B9%E5%99%A8%E4%B8%8E%E5%B8%B8%E7%94%A8%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" title="C++上机考试冲刺（三）—STL容器与常用数据结构">C++上机考试冲刺（三）—STL容器与常用数据结构</a><time datetime="2026-08-08T08:59:00.000Z" title="发表于 2026-08-08 16:59:00">2026-08-08</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"><img src="/img/36.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="C++上机考试冲刺（二）—字符串、进制、位运算与字节流"/></a><div class="content"><a class="title" href="/2026/08/08/C++%E4%B8%8A%E6%9C%BA%E8%80%83%E8%AF%95%E5%86%B2%E5%88%BA%EF%BC%88%E4%BA%8C%EF%BC%89%E2%80%94%E5%AD%97%E7%AC%A6%E4%B8%B2%E3%80%81%E8%BF%9B%E5%88%B6%E3%80%81%E4%BD%8D%E8%BF%90%E7%AE%97%E4%B8%8E%E5%AD%97%E8%8A%82%E6%B5%81/" title="C++上机考试冲刺（二）—字符串、进制、位运算与字节流">C++上机考试冲刺（二）—字符串、进制、位运算与字节流</a><time datetime="2026-08-08T08:58:00.000Z" title="发表于 2026-08-08 16:58:00">2026-08-08</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2024 - 2026 By 秋风、萧瑟</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"><script>(() => {
+  const loadMathjax = () => {
+    if (!window.MathJax) {
+      window.MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']],
+          tags: 'none',
+        },
+        chtml: {
+          scale: 1.1
+        },
+        options: {
+          enableMenu: true,
+          renderActions: {
+            findScript: [10, doc => {
+              for (const node of document.querySelectorAll('script[type^="math/tex"]')) {
+                const display = !!node.type.match(/; *mode=display/)
+                const math = new doc.options.MathItem(node.textContent, doc.inputJax[0], display)
+                const text = document.createTextNode('')
+                node.parentNode.replaceChild(text, node)
+                math.start = {node: text, delim: '', n: 0}
+                math.end = {node: text, delim: '', n: 0}
+                doc.math.push(math)
+              }
+            }, '']
+          }
+        }
+      }
+      
+      const script = document.createElement('script')
+      script.src = 'https://cdn.jsdelivr.net/npm/mathjax/es5/tex-mml-chtml.min.js'
+      script.id = 'MathJax-script'
+      script.async = true
+      document.head.appendChild(script)
+    } else {
+      MathJax.startup.document.state(0)
+      MathJax.texReset()
+      MathJax.typesetPromise()
+    }
+  }
+
+  btf.addGlobalFn('encrypt', loadMathjax, 'mathjax')
+  window.pjax ? loadMathjax() : window.addEventListener('load', loadMathjax)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.isShuoshuo
+  const option = null
+
+  const getGiscusTheme = theme => theme === 'dark' ? 'dark' : 'light'
+
+  const createScriptElement = config => {
+    const ele = document.createElement('script')
+    Object.entries(config).forEach(([key, value]) => {
+      ele.setAttribute(key, value)
+    })
+    return ele
+  }
+
+  const loadGiscus = (el = document, key) => {
+    const mappingConfig = isShuoshuo
+      ? { 'data-mapping': 'specific', 'data-term': key }
+      : { 'data-mapping': (option && option['data-mapping']) || 'pathname' }
+
+    const giscusConfig = {
+      src: 'https://giscus.app/client.js',
+      'data-repo': 'LX-Cel/lx-cel.github.io',
+      'data-repo-id': 'R_kgDONd3anw',
+      'data-category-id': 'DIC_kwDONd3an84ClwRS',
+      'data-theme': getGiscusTheme(document.documentElement.getAttribute('data-theme')),
+      'data-reactions-enabled': '1',
+      crossorigin: 'anonymous',
+      async: true,
+      ...option,
+      ...mappingConfig
+    }
+
+    const scriptElement = createScriptElement(giscusConfig)
+
+    el.querySelector('#giscus-wrap').appendChild(scriptElement)
+
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGiscus = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+  }
+
+  const changeGiscusTheme = theme => {
+    const iframe = document.querySelector('#giscus-wrap iframe')
+    if (iframe) {
+      const message = {
+        giscus: {
+          setConfig: {
+            theme: getGiscusTheme(theme)
+          }
+        }
+      }
+      iframe.contentWindow.postMessage(message, 'https://giscus.app')
+    }
+  }
+
+  btf.addGlobalFn('themeChange', changeGiscusTheme, 'giscus')
+
+  if (isShuoshuo) {
+    'Giscus' === 'Giscus'
+      ? window.shuoshuoComment = { loadComment: loadGiscus }
+      : window.loadOtherComment = loadGiscus
+    return
+  }
+
+  if ('Giscus' === 'Giscus' || !false) {
+    if (false) btf.loadComment(document.getElementById('giscus-wrap'), loadGiscus)
+    else loadGiscus()
+  } else {
+    window.loadOtherComment = loadGiscus
+  }
+})()</script></div><canvas class="fireworks" mobile="false"></canvas><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/fireworks.min.js"></script><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="false" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = false;
+document.body.addEventListener('input', POWERMODE);
+</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="输入要搜索的文章..." type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
